@@ -12,6 +12,8 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import globalErrorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import googleAuthRoutes from './routes/googleAuthRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 
 dotenv.config();
 
@@ -53,7 +55,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
-
+app.use('/api/auth', googleAuthRoutes);
+app.use('/api', profileRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
