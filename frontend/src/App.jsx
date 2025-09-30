@@ -12,10 +12,10 @@ import ProfilePage from "./pages/ProfilePage";
 
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
-
+// import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
 import PatientDashboard from "./pages/patient/PatientDashboard";
-
+import MedicineReminder from "./pages/patient/MedicineReminder";
 
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 
@@ -50,7 +50,7 @@ export default function App() {
           }
         >
           <Route index element={<PatientDashboard />} />
-  
+          <Route path="medicine-reminders" element={<MedicineReminder />} />
         </Route>
 
         {/* DOCTOR ROUTES */}
