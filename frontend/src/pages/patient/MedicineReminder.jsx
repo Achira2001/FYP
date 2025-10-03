@@ -59,7 +59,8 @@ import {
   Email,
   Notifications,
   CloudSync,
-  Timer
+  Timer,
+  Send
 } from '@mui/icons-material';
 
 // API base URL
@@ -71,11 +72,11 @@ const MedicalReminderSystem = () => {
   const [loading, setLoading] = useState(false);
   const [showMealTimes, setShowMealTimes] = useState(false);
   const [mealTimes, setMealTimes] = useState({
-  breakfast: '08:00',
-  lunch: '13:00',
-  dinner: '19:00',
-  night: '22:00' 
-});
+    breakfast: '08:00',
+    lunch: '13:00',
+    dinner: '19:00',
+    night: '22:00' 
+  });
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -88,6 +89,17 @@ const MedicalReminderSystem = () => {
     email: false
   });
   const [userProfile, setUserProfile] = useState(null);
+  
+  // Doctor Info States
+  const [doctorInfo, setDoctorInfo] = useState({
+    name: '',
+    hospital: '',
+    email: '',
+    phone: ''
+  });
+  const [showDoctorForm, setShowDoctorForm] = useState(false);
+  const [showAskDoctor, setShowAskDoctor] = useState(false);
+  const [doctorQuery, setDoctorQuery] = useState('');
 
   // Drug types configuration
   const drugTypes = [
@@ -188,7 +200,6 @@ const MedicalReminderSystem = () => {
       
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expired or invalid
           localStorage.removeItem('token');
           window.location.href = '/login';
           throw new Error('Authentication failed. Please login again.');
@@ -209,7 +220,6 @@ const MedicalReminderSystem = () => {
       const response = await apiRequest('/profile');
       setUserProfile(response.user);
       
-      // Set meal times from profile if available
       if (response.user.mealTimes) {
         setMealTimes(response.user.mealTimes);
       }
@@ -219,23 +229,19 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  // Load medications - FIXED VERSION
+  // Load medications
   const loadMedications = async () => {
     try {
       setLoading(true);
       const response = await apiRequest('/medications');
       
-      // Handle different possible response structures
       let medicationsData = [];
       
       if (Array.isArray(response)) {
-        // If response is directly an array
         medicationsData = response;
       } else if (response && Array.isArray(response.data)) {
-        // If response has a data property that's an array
         medicationsData = response.data;
       } else if (response && Array.isArray(response.medications)) {
-        // If response has a medications property that's an array
         medicationsData = response.medications;
       } else {
         console.warn('Unexpected API response structure:', response);
@@ -252,9 +258,72 @@ const MedicalReminderSystem = () => {
     }
   };
 
+  // Load doctor info
+  const loadDoctorInfo = async () => {
+    try {
+      const response = await apiRequest('/doctor-info');
+      if (response.data) {
+        setDoctorInfo(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load doctor info:', error);
+    }
+  };
+
+  // Save doctor info
+  const handleSaveDoctorInfo = async () => {
+    try {
+      setLoading(true);
+      await apiRequest('/doctor-info', {
+        method: 'PUT',
+        body: JSON.stringify(doctorInfo)
+      });
+      showSnackbar('Doctor information saved successfully!');
+      setShowDoctorForm(false);
+    } catch (error) {
+      console.error('Failed to save doctor info:', error);
+      showSnackbar('Failed to save doctor information', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Send query to doctor
+  const handleAskDoctor = async () => {
+    if (!doctorQuery.trim()) {
+      showSnackbar('Please describe your problem', 'error');
+      return;
+    }
+
+    if (!doctorInfo.email && !doctorInfo.phone) {
+      showSnackbar('Please add doctor information first', 'error');
+      setShowAskDoctor(false);
+      setShowDoctorForm(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await apiRequest('/doctor-query', {
+        method: 'POST',
+        body: JSON.stringify({ problem: doctorQuery })
+      });
+      
+      showSnackbar('Query sent to doctor successfully!');
+      setShowAskDoctor(false);
+      setDoctorQuery('');
+    } catch (error) {
+      console.error('Failed to send query:', error);
+      showSnackbar('Failed to send query to doctor', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadUserProfile();
     loadMedications();
+    loadDoctorInfo();
   }, []);
 
   const showSnackbar = (message, severity = 'success') => {
@@ -284,7 +353,6 @@ const MedicalReminderSystem = () => {
   const handleMealTimeChange = (meal, time) => {
     setMealTimes(prev => ({ ...prev, [meal]: time }));
     
-    // Update meal times in user profile
     if (userProfile) {
       const updatedProfile = {
         ...userProfile,
@@ -294,7 +362,6 @@ const MedicalReminderSystem = () => {
         }
       };
       
-      // Update profile with new meal times
       apiRequest('/profile', {
         method: 'PUT',
         body: JSON.stringify(updatedProfile)
@@ -305,38 +372,34 @@ const MedicalReminderSystem = () => {
   };
 
   const calculateReminderTime = (timePeriod, mealRelation) => {
-  // Map time periods to meal times
-  const mealTimeMap = {
-    morning: mealTimes.breakfast,
-    afternoon: mealTimes.lunch,
-    evening: mealTimes.dinner,
-    night: mealTimes.night 
-  };
-
-  const relation = mealRelations.find(r => r.key === mealRelation);
-  
-  // If independent of meals, use the default time period time
-  if (!relation || relation.offset === null) {
-    const defaultTimes = {
-      morning: '08:00',
-      afternoon: '14:00',
-      evening: '18:00',
-      night: '22:00'
+    const mealTimeMap = {
+      morning: mealTimes.breakfast,
+      afternoon: mealTimes.lunch,
+      evening: mealTimes.dinner,
+      night: mealTimes.night 
     };
-    return defaultTimes[timePeriod] || '12:00';
-  }
 
-  // Parse the base time from mealTimes
-  const baseTime = mealTimeMap[timePeriod] || '12:00';
-  const [hours, minutes] = baseTime.split(':').map(Number);
-  
-  // Apply the offset (before/after meals)
-  const totalMinutes = hours * 60 + minutes + relation.offset;
-  const finalHours = Math.floor(totalMinutes / 60) % 24;
-  const finalMinutes = totalMinutes % 60;
-  
-  return `${String(finalHours).padStart(2, '0')}:${String(finalMinutes).padStart(2, '0')}`;
-};
+    const relation = mealRelations.find(r => r.key === mealRelation);
+    
+    if (!relation || relation.offset === null) {
+      const defaultTimes = {
+        morning: '08:00',
+        afternoon: '14:00',
+        evening: '18:00',
+        night: '22:00'
+      };
+      return defaultTimes[timePeriod] || '12:00';
+    }
+
+    const baseTime = mealTimeMap[timePeriod] || '12:00';
+    const [hours, minutes] = baseTime.split(':').map(Number);
+    
+    const totalMinutes = hours * 60 + minutes + relation.offset;
+    const finalHours = Math.floor(totalMinutes / 60) % 24;
+    const finalMinutes = totalMinutes % 60;
+    
+    return `${String(finalHours).padStart(2, '0')}:${String(finalMinutes).padStart(2, '0')}`;
+  };
 
   const handleAddMedication = async () => {
     if (!currentMedication.name || !currentMedication.dosage || currentMedication.timePeriods.length === 0) {
@@ -347,7 +410,6 @@ const MedicalReminderSystem = () => {
     try {
       setLoading(true);
       
-      // Calculate reminder times
       const reminders = currentMedication.timePeriods.map(period => ({
         period,
         time: calculateReminderTime(period, currentMedication.mealRelation)
@@ -359,17 +421,14 @@ const MedicalReminderSystem = () => {
         mealTimesSnapshot: mealTimes
       };
 
-      // Save medication to backend
       const response = await apiRequest('/medications', {
         method: 'POST',
         body: JSON.stringify(medicationData)
       });
 
-      // Add to local state
       const newMedication = response.data || response.medication;
       setMedications(prev => [newMedication, ...prev]);
       
-      // Reset form
       setCurrentMedication({
         drugType: drugTypes[activeTab].key,
         drugSubcategory: drugTypes[activeTab].subcategories[0],
@@ -379,6 +438,7 @@ const MedicalReminderSystem = () => {
         timePeriods: [],
         mealRelation: 'before_meals',
         notes: '',
+        reminderDays: 7,
         reminderSettings: {
           smsEnabled: true,
           emailEnabled: true,
@@ -394,7 +454,6 @@ const MedicalReminderSystem = () => {
 
       showSnackbar('Medication added successfully!');
       
-      // Auto-sync if enabled
       if (currentMedication.reminderSettings.calendarEnabled) {
         handleSyncCalendar([newMedication]);
       }
@@ -442,7 +501,6 @@ const MedicalReminderSystem = () => {
     try {
       setLoading(true);
       
-      // Call backend to sync with Google Calendar
       const response = await apiRequest('/medications/sync/google-calendar', {
         method: 'POST',
         body: JSON.stringify({ medications: medicationsToSync })
@@ -474,7 +532,6 @@ const MedicalReminderSystem = () => {
     try {
       setLoading(true);
       
-      // Call backend to schedule SMS
       const response = await apiRequest('/medications/schedule/sms', {
         method: 'POST',
         body: JSON.stringify({ medications: medicationsToSync })
@@ -492,47 +549,44 @@ const MedicalReminderSystem = () => {
   };
 
   const handleScheduleEmailReminders = async (medicationsToSync = medications) => {
-  if (medicationsToSync.length === 0) {
-    showSnackbar('No medications to schedule', 'warning');
-    return;
-  }
-
-  if (!userProfile || !userProfile.email) {
-    showSnackbar('Please add your email in your profile to receive email reminders', 'warning');
-    return;
-  }
-
-  try {
-    setLoading(true);
-    
-    // Call backend to schedule email reminders
-    const response = await apiRequest('/medications/schedule/email', {
-      method: 'POST',
-      body: JSON.stringify({ medications: medicationsToSync })
-    });
-    
-    setSyncStatus(prev => ({ ...prev, email: true }));
-    
-    // Handle different response structures
-    const message = response.message || response.data?.message || 'Email reminders scheduled!';
-    showSnackbar(message);
-    
-  } catch (error) {
-    console.error('Email scheduling error:', error);
-    
-    // More user-friendly error message
-    let errorMessage = 'Email scheduling failed';
-    if (error.message.includes('email not configured')) {
-      errorMessage = 'Email service not configured (test mode only)';
-    } else if (error.message.includes('credentials')) {
-      errorMessage = 'Email service configuration issue';
+    if (medicationsToSync.length === 0) {
+      showSnackbar('No medications to schedule', 'warning');
+      return;
     }
-    
-    showSnackbar(errorMessage, 'warning');
-  } finally {
-    setLoading(false);
-  }
-};
+
+    if (!userProfile || !userProfile.email) {
+      showSnackbar('Please add your email in your profile to receive email reminders', 'warning');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const response = await apiRequest('/medications/schedule/email', {
+        method: 'POST',
+        body: JSON.stringify({ medications: medicationsToSync })
+      });
+      
+      setSyncStatus(prev => ({ ...prev, email: true }));
+      
+      const message = response.message || response.data?.message || 'Email reminders scheduled!';
+      showSnackbar(message);
+      
+    } catch (error) {
+      console.error('Email scheduling error:', error);
+      
+      let errorMessage = 'Email scheduling failed';
+      if (error.message.includes('email not configured')) {
+        errorMessage = 'Email service not configured (test mode only)';
+      } else if (error.message.includes('credentials')) {
+        errorMessage = 'Email service configuration issue';
+      }
+      
+      showSnackbar(errorMessage, 'warning');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const currentDrugType = drugTypes[activeTab] || drugTypes[0];
 
@@ -745,19 +799,19 @@ const MedicalReminderSystem = () => {
                   </Grid>
 
                   <Grid item xs={12} sm={4}>
-  <TextField
-    label="Reminder Duration (Days)"
-    type="number"
-    value={currentMedication.reminderDays}
-    onChange={(e) => setCurrentMedication(prev => ({ 
-      ...prev, 
-      reminderDays: parseInt(e.target.value) || 30 
-    }))}
-    fullWidth
-    inputProps={{ min: 1, max: 365 }}
-    helperText="Number of days to send reminders"
-  />
-</Grid>
+                    <TextField
+                      label="Reminder Duration (Days)"
+                      type="number"
+                      value={currentMedication.reminderDays}
+                      onChange={(e) => setCurrentMedication(prev => ({ 
+                        ...prev, 
+                        reminderDays: parseInt(e.target.value) || 30 
+                      }))}
+                      fullWidth
+                      inputProps={{ min: 1, max: 365 }}
+                      helperText="Number of days to send reminders"
+                    />
+                  </Grid>
 
                   {/* Timing Configuration */}
                   <Grid item xs={12}>
@@ -772,42 +826,42 @@ const MedicalReminderSystem = () => {
                       Time Periods * (Select when to take)
                     </Typography>
                     <ToggleButtonGroup
-  value={currentMedication.timePeriods}
-  onChange={handleTimePeriodChange}
-  aria-label="time periods"
-  sx={{ 
-    flexWrap: 'wrap',
-    '& .MuiToggleButton-root': {
-      m: 0.5,
-      textTransform: 'capitalize',
-      border: '1px solid #ddd',
-      minWidth: 100,
-      '&.Mui-selected': {
-        bgcolor: currentDrugType.color,
-        color: 'white',
-        '&:hover': {
-          bgcolor: currentDrugType.color,
-        }
-      }
-    }
-  }}
->
-  {timePeriods.map(period => {
-    const calculatedTime = calculateReminderTime(period.key, currentMedication.mealRelation);
-    return (
-      <ToggleButton key={period.key} value={period.key}>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-            {period.label}
-          </Typography>
-          <Typography variant="caption">
-            {calculatedTime}
-          </Typography>
-        </Box>
-      </ToggleButton>
-    );
-  })}
-</ToggleButtonGroup>
+                      value={currentMedication.timePeriods}
+                      onChange={handleTimePeriodChange}
+                      aria-label="time periods"
+                      sx={{ 
+                        flexWrap: 'wrap',
+                        '& .MuiToggleButton-root': {
+                          m: 0.5,
+                          textTransform: 'capitalize',
+                          border: '1px solid #ddd',
+                          minWidth: 100,
+                          '&.Mui-selected': {
+                            bgcolor: currentDrugType.color,
+                            color: 'white',
+                            '&:hover': {
+                              bgcolor: currentDrugType.color,
+                            }
+                          }
+                        }
+                      }}
+                    >
+                      {timePeriods.map(period => {
+                        const calculatedTime = calculateReminderTime(period.key, currentMedication.mealRelation);
+                        return (
+                          <ToggleButton key={period.key} value={period.key}>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                {period.label}
+                              </Typography>
+                              <Typography variant="caption">
+                                {calculatedTime}
+                              </Typography>
+                            </Box>
+                          </ToggleButton>
+                        );
+                      })}
+                    </ToggleButtonGroup>
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
@@ -841,64 +895,64 @@ const MedicalReminderSystem = () => {
                   </Grid>
 
                   <Grid item xs={12}>
-  <Collapse in={showMealTimes}>
-    <Paper sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
-      <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-        <Restaurant sx={{ mr: 1 }} />
-        Meal Times Configuration
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={3}>
-          <TextField
-            label="Breakfast (Morning)"
-            type="time"
-            value={mealTimes.breakfast}
-            onChange={(e) => handleMealTimeChange('breakfast', e.target.value)}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-        </Grid>
-        <Grid item xs={12} sm={3}>
-          <TextField
-            label="Lunch (Afternoon)"
-            type="time"
-            value={mealTimes.lunch}
-            onChange={(e) => handleMealTimeChange('lunch', e.target.value)}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-        </Grid>
-        <Grid item xs={12} sm={3}>
-          <TextField
-            label="Dinner (Evening)"
-            type="time"
-            value={mealTimes.dinner}
-            onChange={(e) => handleMealTimeChange('dinner', e.target.value)}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-        </Grid>
-        <Grid item xs={12} sm={3}>
-          <TextField
-            label="Night"
-            type="time"
-            value={mealTimes.night}
-            onChange={(e) => handleMealTimeChange('night', e.target.value)}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            size="small"
-          />
-        </Grid>
-      </Grid>
-      <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
-        These times will be used to calculate reminder schedules based on meal relations
-      </Typography>
-    </Paper>
-  </Collapse>
-</Grid>
+                    <Collapse in={showMealTimes}>
+                      <Paper sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                          <Restaurant sx={{ mr: 1 }} />
+                          Meal Times Configuration
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={3}>
+                          <TextField
+                              label="Breakfast (Morning)"
+                              type="time"
+                              value={mealTimes.breakfast}
+                              onChange={(e) => handleMealTimeChange('breakfast', e.target.value)}
+                              fullWidth
+                              InputLabelProps={{ shrink: true }}
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={3}>
+                            <TextField
+                              label="Lunch (Afternoon)"
+                              type="time"
+                              value={mealTimes.lunch}
+                              onChange={(e) => handleMealTimeChange('lunch', e.target.value)}
+                              fullWidth
+                              InputLabelProps={{ shrink: true }}
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={3}>
+                            <TextField
+                              label="Dinner (Evening)"
+                              type="time"
+                              value={mealTimes.dinner}
+                              onChange={(e) => handleMealTimeChange('dinner', e.target.value)}
+                              fullWidth
+                              InputLabelProps={{ shrink: true }}
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={3}>
+                            <TextField
+                              label="Night"
+                              type="time"
+                              value={mealTimes.night}
+                              onChange={(e) => handleMealTimeChange('night', e.target.value)}
+                              fullWidth
+                              InputLabelProps={{ shrink: true }}
+                              size="small"
+                            />
+                          </Grid>
+                        </Grid>
+                        <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
+                          These times will be used to calculate reminder schedules based on meal relations
+                        </Typography>
+                      </Paper>
+                    </Collapse>
+                  </Grid>
 
                   {/* Reminder Settings */}
                   <Grid item xs={12}>
@@ -1021,33 +1075,33 @@ const MedicalReminderSystem = () => {
 
                   {/* Reminder Preview */}
                   {currentMedication.timePeriods.length > 0 && (
-  <Grid item xs={12}>
-    <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #2196f3' }}>
-      <Typography variant="subtitle1" sx={{ mb: 2, color: '#1976d2', fontWeight: 'bold' }}>
-        <Timer sx={{ mr: 1 }} />
-        Reminder Schedule Preview ({currentMedication.reminderDays} days)
-      </Typography>
-      <Grid container spacing={1}>
-        {currentMedication.timePeriods.map(period => {
-          const reminderTime = calculateReminderTime(period, currentMedication.mealRelation);
-          return (
-            <Grid item xs={12} sm={6} key={period}>
-              <Box sx={{ display: 'flex', alignItems: 'center', p: 1, bgcolor: 'white', borderRadius: 1 }}>
-                <Schedule sx={{ mr: 1, color: currentDrugType.color }} />
-                <Typography variant="body2">
-                  <strong>{period.charAt(0).toUpperCase() + period.slice(1)}:</strong> {reminderTime}
-                </Typography>
-              </Box>
-            </Grid>
-          );
-        })}
-      </Grid>
-      <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#1976d2' }}>
-        Reminders will be sent for {currentMedication.reminderDays} days
-      </Typography>
-    </Paper>
-  </Grid>
-)}
+                    <Grid item xs={12}>
+                      <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #2196f3' }}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: '#1976d2', fontWeight: 'bold' }}>
+                          <Timer sx={{ mr: 1 }} />
+                          Reminder Schedule Preview ({currentMedication.reminderDays} days)
+                        </Typography>
+                        <Grid container spacing={1}>
+                          {currentMedication.timePeriods.map(period => {
+                            const reminderTime = calculateReminderTime(period, currentMedication.mealRelation);
+                            return (
+                              <Grid item xs={12} sm={6} key={period}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', p: 1, bgcolor: 'white', borderRadius: 1 }}>
+                                  <Schedule sx={{ mr: 1, color: currentDrugType.color }} />
+                                  <Typography variant="body2">
+                                    <strong>{period.charAt(0).toUpperCase() + period.slice(1)}:</strong> {reminderTime}
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#1976d2' }}>
+                          Reminders will be sent for {currentMedication.reminderDays} days
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  )}
                 </Grid>
               </CardContent>
               
@@ -1073,144 +1127,158 @@ const MedicalReminderSystem = () => {
             </Card>
           </Grid>
 
-          {/* Medications List & Actions */}
+          {/* Medications List & Doctor Info */}
           <Grid item xs={12} md={5}>
-            <Card 
-              elevation={4}
-              sx={{
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
-              }}
-            >
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                      <NotificationAdd />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight="bold">
-                        Active Medications
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {medications.length} medications with reminders
-                      </Typography>
+            <Grid container spacing={2}>
+              {/* Active Medications Card */}
+              <Grid item xs={12}>
+                <Card elevation={4} sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                          <NotificationAdd />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" fontWeight="bold">Active Medications</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {medications.length} medications with reminders
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {medications.length > 0 && (
+                        <Chip label={`${medications.length} Active`} color="success" size="small" icon={<CheckCircle />} />
+                      )}
                     </Box>
-                  </Box>
-                  {medications.length > 0 && (
-                    <Chip 
-                      label={`${medications.length} Active`} 
-                      color="success" 
-                      size="small"
-                      icon={<CheckCircle />}
-                    />
-                  )}
-                </Box>
 
-                {medications.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <Avatar sx={{ bgcolor: 'primary.light', width: 80, height: 80, mx: 'auto', mb: 2 }}>
-                      <Medication fontSize="large" />
-                    </Avatar>
-                    <Typography variant="h6" gutterBottom>
-                      No medications added yet
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3 }}>
-                      Add your first medication to get started with smart reminders and automated scheduling.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <>
-                    <Box sx={{ maxHeight: 400, overflow: 'auto', mb: 3 }}>
-                      {medications.map((med) => {
-                        const typeInfo = drugTypes.find(type => type.key === med.drugType);
-                        return (
-                          <Card key={med._id} sx={{ mb: 2, bgcolor: 'grey.50', border: '1px solid #e0e0e0' }}>
-                            <CardContent sx={{ pb: 1 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                                  <Avatar sx={{ bgcolor: typeInfo?.color || '#2196F3', mr: 2 }}>
-                                    {typeInfo?.icon || <Medication />}
-                                  </Avatar>
-                                  <Box sx={{ flex: 1 }}>
-                                    <Typography variant="h6" gutterBottom sx={{ color: typeInfo?.color || '#2196F3' }}>
-                                      {med.name}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" gutterBottom>
-  <strong>Dosage:</strong> {med.dosage} • <strong>Qty:</strong> {med.quantity}
-</Typography>
-<Typography variant="body2" color="text.secondary">
-  <strong>Duration:</strong> {med.reminderDays || 30} days
-</Typography>
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                                      {(med.timePeriods || []).map(period => (
-                                        <Chip
-                                          key={period}
-                                          label={period}
-                                          size="small"
-                                          sx={{ 
-                                            bgcolor: typeInfo?.color + '20',
-                                            color: typeInfo?.color,
-                                            fontWeight: 'bold'
-                                          }}
-                                        />
-                                      ))}
+                    {medications.length === 0 ? (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Avatar sx={{ bgcolor: 'primary.light', width: 80, height: 80, mx: 'auto', mb: 2 }}>
+                          <Medication fontSize="large" />
+                        </Avatar>
+                        <Typography variant="h6" gutterBottom>No medications added yet</Typography>
+                        <Typography color="text.secondary" sx={{ mb: 3 }}>
+                          Add your first medication to get started with smart reminders and automated scheduling.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <>
+                        <Box sx={{ maxHeight: 300, overflow: 'auto', mb: 3 }}>
+                          {medications.map((med) => {
+                            const typeInfo = drugTypes.find(type => type.key === med.drugType);
+                            return (
+                              <Card key={med._id} sx={{ mb: 2, bgcolor: 'grey.50', border: '1px solid #e0e0e0' }}>
+                                <CardContent sx={{ pb: 1 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                                      <Avatar sx={{ bgcolor: typeInfo?.color || '#2196F3', mr: 2 }}>
+                                        {typeInfo?.icon || <Medication />}
+                                      </Avatar>
+                                      <Box sx={{ flex: 1 }}>
+                                        <Typography variant="h6" gutterBottom sx={{ color: typeInfo?.color || '#2196F3' }}>
+                                          {med.name}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                          <strong>Dosage:</strong> {med.dosage} • <strong>Qty:</strong> {med.quantity}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                          <strong>Duration:</strong> {med.reminderDays || 30} days
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                                          {(med.timePeriods || []).map(period => (
+                                            <Chip key={period} label={period} size="small" 
+                                              sx={{ bgcolor: typeInfo?.color + '20', color: typeInfo?.color, fontWeight: 'bold' }} />
+                                          ))}
+                                        </Box>
+                                        <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+                                          {(med.mealRelation || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                        </Typography>
+                                        {med.notes && (
+                                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1, bgcolor: '#f9f9f9', p: 1, borderRadius: 1, fontSize: '0.75rem' }}>
+                                            {med.notes}
+                                          </Typography>
+                                        )}
+                                      </Box>
                                     </Box>
-                                    <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                                      {(med.mealRelation || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                    </Typography>
-                                    {med.notes && (
-                                      <Typography variant="body2" color="text.secondary" sx={{ 
-                                        fontStyle: 'italic', 
-                                        mt: 1, 
-                                        bgcolor: '#f9f9f9', 
-                                        p: 1, 
-                                        borderRadius: 1,
-                                        fontSize: '0.75rem'
-                                      }}>
-                                        {med.notes}
-                                      </Typography>
-                                    )}
+                                    <IconButton onClick={() => handleDeleteMedication(med._id)} color="error" size="small" disabled={loading}>
+                                      <Delete />
+                                    </IconButton>
                                   </Box>
-                                </Box>
-                                <IconButton
-                                  onClick={() => handleDeleteMedication(med._id)}
-                                  color="error"
-                                  size="small"
-                                  disabled={loading}
-                                >
-                                  <Delete />
-                                </IconButton>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </Box>
+
+                        <ButtonGroup variant="contained" fullWidth size="large" sx={{ mb: 2 }}>
+                          <Button onClick={() => handleSyncCalendar()} startIcon={<CalendarToday />} disabled={loading} sx={{ bgcolor: '#4CAF50' }}>
+                            Sync All
+                          </Button>
+                          <Button onClick={() => handleScheduleSMS()} startIcon={<Sms />} disabled={loading} sx={{ bgcolor: '#9C27B0' }}>
+                            SMS All
+                          </Button>
+                        </ButtonGroup>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Doctor Info Card */}
+              <Grid item xs={12}>
+                <Card elevation={4} sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar sx={{ bgcolor: '#4CAF50', mr: 2 }}>
+                          <LocalHospital />
+                        </Avatar>
+                        <Typography variant="h6" fontWeight="bold">Doctor Information</Typography>
+                      </Box>
+                      <IconButton onClick={() => setShowDoctorForm(!showDoctorForm)} color="primary" size="small">
+                        {showDoctorForm ? <ExpandMore sx={{ transform: 'rotate(180deg)' }} /> : <ExpandMore />}
+                      </IconButton>
                     </Box>
 
-                    {/* Bulk Actions */}
-                    <ButtonGroup variant="contained" fullWidth size="large" sx={{ mb: 2 }}>
-                      <Button
-                        onClick={() => handleSyncCalendar()}
-                        startIcon={<CalendarToday />}
-                        disabled={loading}
-                        sx={{ bgcolor: '#4CAF50' }}
-                      >
-                        Sync All
-                      </Button>
-                      <Button
-                        onClick={() => handleScheduleSMS()}
-                        startIcon={<Sms />}
-                        disabled={loading}
-                        sx={{ bgcolor: '#9C27B0' }}
-                      >
-                        SMS All
-                      </Button>
-                    </ButtonGroup>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                    <Collapse in={showDoctorForm}>
+                      <Grid container spacing={2} sx={{ mb: 2 }}>
+                        <Grid item xs={12}>
+                          <TextField label="Doctor Name" value={doctorInfo.name} onChange={(e) => setDoctorInfo(prev => ({ ...prev, name: e.target.value }))} fullWidth size="small" />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField label="Hospital/Clinic" value={doctorInfo.hospital} onChange={(e) => setDoctorInfo(prev => ({ ...prev, hospital: e.target.value }))} fullWidth size="small" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Email" type="email" value={doctorInfo.email} onChange={(e) => setDoctorInfo(prev => ({ ...prev, email: e.target.value }))} fullWidth size="small" />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Phone" value={doctorInfo.phone} onChange={(e) => setDoctorInfo(prev => ({ ...prev, phone: e.target.value }))} fullWidth size="small" />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Button variant="contained" onClick={handleSaveDoctorInfo} fullWidth disabled={loading} startIcon={<Save />}>
+                            Save Doctor Info
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </Collapse>
+
+                    {!showDoctorForm && doctorInfo.name && (
+                      <Box sx={{ bgcolor: '#f8f9fa', p: 2, borderRadius: 1, mb: 2 }}>
+                        <Typography variant="body2"><strong>Dr. {doctorInfo.name}</strong></Typography>
+                        {doctorInfo.hospital && <Typography variant="body2" color="text.secondary">{doctorInfo.hospital}</Typography>}
+                        {doctorInfo.email && <Typography variant="body2" color="text.secondary">{doctorInfo.email}</Typography>}
+                        {doctorInfo.phone && <Typography variant="body2" color="text.secondary">{doctorInfo.phone}</Typography>}
+                      </Box>
+                    )}
+
+                    <Button variant="outlined" onClick={() => setShowAskDoctor(true)} fullWidth startIcon={<Email />} 
+                      disabled={!doctorInfo.email && !doctorInfo.phone}>
+                      Ask Doctor
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       </Container>
@@ -1283,6 +1351,31 @@ const MedicalReminderSystem = () => {
         <DialogActions>
           <Button onClick={() => setReminderDialog(false)} variant="contained">
             Got it!
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Ask Doctor Dialog */}
+      <Dialog open={showAskDoctor} onClose={() => setShowAskDoctor(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Ask Your Doctor</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Describe your problem or question for Dr. {doctorInfo.name || 'your doctor'}
+          </Typography>
+          <TextField 
+            label="Describe your problem" 
+            value={doctorQuery} 
+            onChange={(e) => setDoctorQuery(e.target.value)} 
+            multiline 
+            rows={6} 
+            fullWidth 
+            placeholder="Please describe your symptoms, concerns, or questions..." 
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAskDoctor(false)}>Cancel</Button>
+          <Button onClick={handleAskDoctor} variant="contained" disabled={loading || !doctorQuery.trim()} startIcon={<Send />}>
+            Send Query
           </Button>
         </DialogActions>
       </Dialog>
