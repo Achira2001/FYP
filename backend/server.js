@@ -8,8 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
-import twilio from 'twilio';
-import nodemailer from 'nodemailer';
+import { twilioClient, transporter } from './services/notificationService.js';
 
 import connectDB from './config/db.js';
 import globalErrorHandler from './middleware/errorHandler.js';
@@ -20,6 +19,7 @@ import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import Medication from './models/Medication.js';
 import User from './models/User.js';
+import doctorRoutes from './routes/doctorRoutes.js';
 
 dotenv.config();
 
@@ -31,37 +31,7 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Initialize Twilio client
-let twilioClient;
-try {
-  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    console.log('✅ Twilio client initialized successfully');
-  } else {
-    console.log('⚠️ Twilio credentials not found, SMS functionality disabled');
-  }
-} catch (error) {
-  console.error('❌ Twilio initialization failed:', error);
-}
 
-// Initialize email transporter
-let transporter;
-try {
-  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-    console.log('✅ Email transporter initialized successfully');
-  } else {
-    console.log('⚠️ Email credentials not found, email functionality disabled');
-  }
-} catch (error) {
-  console.error('❌ Email transporter initialization failed:', error);
-}
 
 // CORS
 app.use(cors({
@@ -96,6 +66,7 @@ app.use('/api/auth', googleAuthRoutes);
 app.use('/api/medications', medicationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', profileRoutes);
+app.use('/api', doctorRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
