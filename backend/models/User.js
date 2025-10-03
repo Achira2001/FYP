@@ -18,6 +18,22 @@ const userSchema = new mongoose.Schema({
   },
   role: { type: String, enum: ['patient', 'doctor', 'admin'], default: 'patient' },
 
+
+  // Doctor Information
+doctorInfo: {
+  name: { type: String, trim: true, maxlength: 100 },
+  hospital: { type: String, trim: true, maxlength: 200 },
+  email: { 
+    type: String, 
+    lowercase: true, 
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Invalid email'] 
+  },
+  phone: { 
+    type: String, 
+    match: [/^[\+]?[1-9][\d]{0,15}$/] 
+  }
+},
+
   // Patient fields
   dateOfBirth: { type: Date, required: function() { return this.role === 'patient' && !this.googleId; } },
   address: { type: String, minlength: 10, maxlength: 500, required: function() { return this.role === 'patient' && !this.googleId; } },
