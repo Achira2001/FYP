@@ -59,7 +59,8 @@ import {
   FitnessCenter as FitnessIcon,
   Restaurant as RestaurantIcon,
   Add as AddIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  CheckCircle
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
@@ -147,6 +148,7 @@ const darkTheme = createTheme({
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
+  const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -170,7 +172,8 @@ const UserProfile = () => {
           throw new Error('No authentication token found. Please login again.');
         }
 
-        const response = await fetch('http://localhost:5000/api/profile', {
+        // Fetch user profile
+        const profileResponse = await fetch('http://localhost:5000/api/profile', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -178,19 +181,45 @@ const UserProfile = () => {
           credentials: 'include'
         });
         
-        const contentType = response.headers.get('content-type');
-        const responseText = await response.text();
+        const profileContentType = profileResponse.headers.get('content-type');
+        const profileText = await profileResponse.text();
         
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        if (!profileResponse.ok) {
+          throw new Error(`Server error: ${profileResponse.status} ${profileResponse.statusText}`);
         }
         
-        if (contentType && contentType.includes('application/json')) {
-          const data = JSON.parse(responseText);
-          setUser(data.user);
-          setEditData(data.user);
+        if (profileContentType && profileContentType.includes('application/json')) {
+          const profileData = JSON.parse(profileText);
+          setUser(profileData.user);
+          setEditData(profileData.user);
         } else {
           throw new Error('Server configuration error. Please check API endpoints.');
+        }
+
+        // Fetch medications from the Medication collection
+        try {
+          const medicationsResponse = await fetch('http://localhost:5000/api/medications', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          });
+
+          if (medicationsResponse.ok) {
+            const medicationsData = await medicationsResponse.json();
+            // Handle different response formats
+            if (Array.isArray(medicationsData)) {
+              setMedications(medicationsData);
+            } else if (medicationsData.data && Array.isArray(medicationsData.data)) {
+              setMedications(medicationsData.data);
+            } else if (medicationsData.medications && Array.isArray(medicationsData.medications)) {
+              setMedications(medicationsData.medications);
+            }
+          }
+        } catch (medError) {
+          console.error('Failed to load medications:', medError);
+          // Don't throw error, just continue without medications
         }
         
         setLoading(false);
@@ -572,6 +601,22 @@ const UserProfile = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Night"
+                type="time"
+                value={editData.mealTimes?.night || '22:00'}
+                onChange={(e) => handleInputChange('mealTimes', {
+                  ...editData.mealTimes,
+                  night: e.target.value
+                })}
+                disabled={!editMode}
+                variant="outlined"
+                size="small"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
           </Grid>
         </CardContent>
       </Card>
@@ -650,42 +695,51 @@ const UserProfile = () => {
           <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Current Medications
           </Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
-            disabled={!editMode}
-            size="small"
-            sx={{ borderRadius: 2 }}
-          >
-            Add Medication
-          </Button>
+          
         </Box>
         <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
           <Table>
             <TableHead sx={{ backgroundColor: 'rgba(118, 75, 162, 0.1)' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Medication</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Type</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Dosage</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Frequency</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Before Food</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Times</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Meal Relation</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Duration</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {user?.medications?.map((medication, index) => (
-                <TableRow key={index} hover sx={{ '&:hover': { bgcolor: 'rgba(102, 126, 234, 0.05)' } }}>
+              {medications.map((medication, index) => (
+                <TableRow key={medication._id || index} hover sx={{ '&:hover': { bgcolor: 'rgba(102, 126, 234, 0.05)' } }}>
                   <TableCell sx={{ fontWeight: 500 }}>{medication.name}</TableCell>
-                  <TableCell>{medication.dosage}</TableCell>
-                  <TableCell>{medication.frequency}</TableCell>
                   <TableCell>
-                    <Switch 
-                      checked={medication.beforeFood || false} 
-                      disabled 
-                      color="primary"
+                    <Chip 
+                      label={medication.drugType?.toUpperCase() || 'N/A'} 
                       size="small"
+                      sx={{ fontWeight: 500, fontSize: '0.7rem' }}
                     />
                   </TableCell>
+                  <TableCell>{medication.quantity}x {medication.dosage}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {medication.timePeriods?.map((period, idx) => (
+                        <Chip 
+                          key={idx}
+                          label={period} 
+                          size="small"
+                          sx={{ fontWeight: 500, fontSize: '0.7rem' }}
+                        />
+                      ))}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="caption">
+                      {medication.mealRelation?.replace('_', ' ') || 'N/A'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{medication.reminderDays || medication.frequency?.duration || 30} days</TableCell>
                   <TableCell>
                     <Chip 
                       label={medication.isActive ? 'Active' : 'Inactive'} 
@@ -694,23 +748,26 @@ const UserProfile = () => {
                       sx={{ fontWeight: 500, fontSize: '0.75rem' }}
                     />
                   </TableCell>
-                  <TableCell>
-                    <IconButton size="small" disabled={!editMode} color="primary">
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
                 </TableRow>
               ))}
-              {(!user?.medications || user.medications.length === 0) && (
+              {medications.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    No medications recorded
+                  <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                    No medications recorded. Add medications from the Medical Reminder System.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
+        {medications.length > 0 && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(3, 218, 198, 0.1)', borderRadius: 2, border: '1px solid rgba(3, 218, 198, 0.2)' }}>
+            <Typography variant="body2" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CheckCircle sx={{ fontSize: 18 }} />
+              <strong>{medications.length}</strong> active medication{medications.length !== 1 ? 's' : ''} with scheduled reminders
+            </Typography>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

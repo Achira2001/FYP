@@ -20,6 +20,7 @@ import profileRoutes from './routes/profileRoutes.js';
 import Medication from './models/Medication.js';
 import User from './models/User.js';
 import doctorRoutes from './routes/doctorRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -67,6 +68,7 @@ app.use('/api/medications', medicationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', doctorRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
