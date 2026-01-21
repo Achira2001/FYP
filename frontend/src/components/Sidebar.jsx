@@ -32,9 +32,9 @@ export default function Sidebar({ role }) {
 
   const roleLinks = {
     patient: [
-      { to: "/patient/dashboard", label: "Dashboard", icon: <Dashboard /> },
+      { to: "/patient/home-page", label: "Dashboard", icon: <Dashboard /> },
       { to: "/patient/medicine-reminders", label: "Medicine Reminders", icon: <Medication /> },
-      { to: "/patient/diet-plans", label: "Diet Plans", icon: <Restaurant /> },
+      { to: "/patient/diet-plan", label: "Diet Plans", icon: <Restaurant /> },
     ],
     doctor: [
       { to: "/doctor/patients", label: "My Patients", icon: <Group /> },
@@ -42,7 +42,7 @@ export default function Sidebar({ role }) {
       { to: "/doctor/appointments", label: "Appointments", icon: <LocalHospital /> },
     ],
     admin: [
-      { to: "/admin/users", label: "Manage Users", icon: <Group /> },
+      { to: "/admin/manage-users", label: "Manage Users", icon: <Group /> },
       { to: "/admin/reports", label: "System Reports", icon: <Assignment /> },
     ],
   };

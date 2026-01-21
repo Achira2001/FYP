@@ -12,12 +12,16 @@ import ProfilePage from "./pages/ProfilePage";
 
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageUsers from "./pages/admin/ManageUsers";
 // import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/Layout";
-import PatientDashboard from "./pages/patient/PatientDashboard";
+import HomePage from "./pages/patient/HomePage";
 import MedicineReminder from "./pages/patient/MedicineReminder";
+import DietPlan from "./pages/patient/DietPlan";
+
 
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
+import { Home } from "lucide-react";
 
 // PrivateRoute wrapper
 function PrivateRoute({ role, children }) {
@@ -49,8 +53,10 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<PatientDashboard />} />
+          <Route index element={<HomePage />} />
+          <Route path="home-page" element={<HomePage />} />
           <Route path="medicine-reminders" element={<MedicineReminder />} />
+          <Route path="diet-plan" element={<DietPlan />} />
         </Route>
 
         {/* DOCTOR ROUTES */}
@@ -77,6 +83,7 @@ export default function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
+          <Route path="manage-users" element={<ManageUsers />} />
         </Route>
 
         {/* PROFILE ROUTE - FIXED */}
