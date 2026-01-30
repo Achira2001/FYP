@@ -26,17 +26,16 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  AppBar,
-  Toolbar,
   Avatar,
-  Fab,
   CircularProgress,
-  Badge,
   Divider,
   Switch,
   FormControlLabel,
   Collapse,
-  ButtonGroup
+  ButtonGroup,
+  ThemeProvider,
+  createTheme,
+  CssBaseline
 } from '@mui/material';
 import {
   Medication,
@@ -51,19 +50,94 @@ import {
   Sms,
   NotificationAdd,
   Restaurant,
-  AccessTime,
   CheckCircle,
   Save,
   ExpandMore,
   Phone,
   Email,
-  Notifications,
-  CloudSync,
   Timer,
-  Send
+  Send,
 } from '@mui/icons-material';
 
-// API base URL
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#667eea',
+      light: '#8b9aee',
+      dark: '#4c63c9',
+    },
+    secondary: {
+      main: '#764ba2',
+      light: '#9567ba',
+      dark: '#5a3878',
+    },
+    success: {
+      main: '#03dac6',
+      light: '#66fff9',
+      dark: '#00a896',
+    },
+    error: {
+      main: '#f5576c',
+      light: '#ff8a95',
+      dark: '#c83349',
+    },
+    warning: {
+      main: '#ffc107',
+      light: '#ffecb3',
+      dark: '#c79100',
+    },
+    background: {
+      default: '#0f1419',
+      paper: '#1a1f2e',
+    },
+    text: {
+      primary: '#e4e6eb',
+      secondary: '#b0b3b8',
+    },
+  },
+  typography: {
+    fontFamily: "'Inter', 'Roboto', sans-serif",
+    h4: {
+      fontWeight: 700,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 12,
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'linear-gradient(135deg, #1a1f2e 0%, #252b4a 100%)',
+          border: '1px solid rgba(102, 126, 234, 0.15)',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'linear-gradient(135deg, #1a1f2e 0%, #252b4a 100%)',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+        },
+      },
+    },
+  },
+});
+
 const API_BASE = import.meta.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const MedicalReminderSystem = () => {
@@ -83,14 +157,8 @@ const MedicalReminderSystem = () => {
     severity: 'success'
   });
   const [reminderDialog, setReminderDialog] = useState(false);
-  const [syncStatus, setSyncStatus] = useState({
-    calendar: false,
-    sms: false,
-    email: false
-  });
   const [userProfile, setUserProfile] = useState(null);
   
-  // Doctor Info States
   const [doctorInfo, setDoctorInfo] = useState({
     name: '',
     hospital: '',
@@ -101,41 +169,40 @@ const MedicalReminderSystem = () => {
   const [showAskDoctor, setShowAskDoctor] = useState(false);
   const [doctorQuery, setDoctorQuery] = useState('');
 
-  // Drug types configuration
   const drugTypes = [
     {
       key: 'oral',
       label: 'Oral Medicines',
       icon: <Medication />,
-      color: '#2196F3',
+      color: '#667eea',
       subcategories: ['Tablets', 'Capsules', 'Syrups', 'Powders', 'Suspensions']
     },
     {
       key: 'inhalers',
       label: 'Inhalers',
       icon: <Air />,
-      color: '#4CAF50',
+      color: '#03dac6',
       subcategories: ['MDI (Metered Dose)', 'DPI (Dry Powder)', 'Nebulizer', 'Soft Mist']
     },
     {
       key: 'patches',
       label: 'Patches',
       icon: <LocalHospital />,
-      color: '#FF9800',
+      color: '#ffc107',
       subcategories: ['Transdermal', 'Nicotine Patches', 'Pain Relief', 'Hormone Patches']
     },
     {
       key: 'drops',
       label: 'Eye/Ear Drops',
       icon: <Visibility />,
-      color: '#9C27B0',
+      color: '#764ba2',
       subcategories: ['Eye Drops', 'Ear Drops', 'Nasal Drops', 'Nasal Spray']
     },
     {
       key: 'insulin',
       label: 'Insulin',
       icon: <Opacity />,
-      color: '#F44336',
+      color: '#f5576c',
       subcategories: ['Rapid Acting', 'Long Acting', 'Intermediate', 'Mixed Insulin']
     }
   ];
@@ -156,7 +223,7 @@ const MedicalReminderSystem = () => {
 
   const [currentMedication, setCurrentMedication] = useState({
     drugType: drugTypes[0].key,
-    drugSubcategory: '',
+    drugSubcategory: drugTypes[0].subcategories[0],
     name: '',
     dosage: '',
     quantity: 1,
@@ -177,15 +244,10 @@ const MedicalReminderSystem = () => {
     }
   });
 
-  // Get auth token
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
+  const getAuthToken = () => localStorage.getItem('token');
 
-  // API request helper
   const apiRequest = async (url, options = {}) => {
     const token = getAuthToken();
-    
     const defaultOptions = {
       headers: {
         'Content-Type': 'application/json',
@@ -197,7 +259,6 @@ const MedicalReminderSystem = () => {
 
     try {
       const response = await fetch(`${API_BASE}${url}`, defaultOptions);
-      
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem('token');
@@ -206,7 +267,6 @@ const MedicalReminderSystem = () => {
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       return await response.json();
     } catch (error) {
       console.error('API request failed:', error);
@@ -214,12 +274,10 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  // Load user profile
   const loadUserProfile = async () => {
     try {
       const response = await apiRequest('/profile');
       setUserProfile(response.user);
-      
       if (response.user.mealTimes) {
         setMealTimes(response.user.mealTimes);
       }
@@ -229,25 +287,18 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  // Load medications
   const loadMedications = async () => {
     try {
       setLoading(true);
       const response = await apiRequest('/medications');
-      
       let medicationsData = [];
-      
       if (Array.isArray(response)) {
         medicationsData = response;
       } else if (response && Array.isArray(response.data)) {
         medicationsData = response.data;
       } else if (response && Array.isArray(response.medications)) {
         medicationsData = response.medications;
-      } else {
-        console.warn('Unexpected API response structure:', response);
-        medicationsData = [];
       }
-      
       setMedications(medicationsData);
     } catch (error) {
       console.error('Failed to load medications:', error);
@@ -258,7 +309,6 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  // Load doctor info
   const loadDoctorInfo = async () => {
     try {
       const response = await apiRequest('/doctor-info');
@@ -270,7 +320,6 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  // Save doctor info
   const handleSaveDoctorInfo = async () => {
     try {
       setLoading(true);
@@ -288,7 +337,6 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  // Send query to doctor
   const handleAskDoctor = async () => {
     if (!doctorQuery.trim()) {
       showSnackbar('Please describe your problem', 'error');
@@ -304,11 +352,10 @@ const MedicalReminderSystem = () => {
 
     try {
       setLoading(true);
-      const response = await apiRequest('/doctor-query', {
+      await apiRequest('/doctor-query', {
         method: 'POST',
         body: JSON.stringify({ problem: doctorQuery })
       });
-      
       showSnackbar('Query sent to doctor successfully!');
       setShowAskDoctor(false);
       setDoctorQuery('');
@@ -352,22 +399,15 @@ const MedicalReminderSystem = () => {
 
   const handleMealTimeChange = (meal, time) => {
     setMealTimes(prev => ({ ...prev, [meal]: time }));
-    
     if (userProfile) {
       const updatedProfile = {
         ...userProfile,
-        mealTimes: {
-          ...userProfile.mealTimes,
-          [meal]: time
-        }
+        mealTimes: { ...userProfile.mealTimes, [meal]: time }
       };
-      
       apiRequest('/profile', {
         method: 'PUT',
         body: JSON.stringify(updatedProfile)
-      }).catch(error => {
-        console.error('Failed to update meal times:', error);
-      });
+      }).catch(error => console.error('Failed to update meal times:', error));
     }
   };
 
@@ -380,7 +420,6 @@ const MedicalReminderSystem = () => {
     };
 
     const relation = mealRelations.find(r => r.key === mealRelation);
-    
     if (!relation || relation.offset === null) {
       const defaultTimes = {
         morning: '08:00',
@@ -393,11 +432,9 @@ const MedicalReminderSystem = () => {
 
     const baseTime = mealTimeMap[timePeriod] || '12:00';
     const [hours, minutes] = baseTime.split(':').map(Number);
-    
     const totalMinutes = hours * 60 + minutes + relation.offset;
     const finalHours = Math.floor(totalMinutes / 60) % 24;
     const finalMinutes = totalMinutes % 60;
-    
     return `${String(finalHours).padStart(2, '0')}:${String(finalMinutes).padStart(2, '0')}`;
   };
 
@@ -409,7 +446,6 @@ const MedicalReminderSystem = () => {
 
     try {
       setLoading(true);
-      
       const reminders = currentMedication.timePeriods.map(period => ({
         period,
         time: calculateReminderTime(period, currentMedication.mealRelation)
@@ -453,17 +489,6 @@ const MedicalReminderSystem = () => {
       });
 
       showSnackbar('Medication added successfully!');
-      
-      if (currentMedication.reminderSettings.calendarEnabled) {
-        handleSyncCalendar([newMedication]);
-      }
-      if (currentMedication.reminderSettings.smsEnabled) {
-        handleScheduleSMS([newMedication]);
-      }
-      if (currentMedication.reminderSettings.emailEnabled) {
-        handleScheduleEmailReminders([newMedication]);
-      }
-
     } catch (error) {
       console.error('Add medication error:', error);
       showSnackbar('Failed to add medication: ' + error.message, 'error');
@@ -476,7 +501,6 @@ const MedicalReminderSystem = () => {
     try {
       setLoading(true);
       await apiRequest(`/medications/${id}`, { method: 'DELETE' });
-      
       setMedications(prev => prev.filter(med => med._id !== id));
       showSnackbar('Medication deleted successfully!');
     } catch (error) {
@@ -487,916 +511,723 @@ const MedicalReminderSystem = () => {
     }
   };
 
-  const handleSyncCalendar = async (medicationsToSync = medications) => {
-    if (medicationsToSync.length === 0) {
-      showSnackbar('No medications to sync', 'warning');
-      return;
-    }
-
-    if (!userProfile || !userProfile.email) {
-      showSnackbar('Please add your email in your profile to sync with calendar', 'warning');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const response = await apiRequest('/medications/sync/google-calendar', {
-        method: 'POST',
-        body: JSON.stringify({ medications: medicationsToSync })
-      });
-      
-      setSyncStatus(prev => ({ ...prev, calendar: true }));
-      showSnackbar(response.message || 'Calendar sync initiated!');
-      setReminderDialog(true);
-      
-    } catch (error) {
-      console.error('Calendar sync error:', error);
-      showSnackbar('Calendar sync failed: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleScheduleSMS = async (medicationsToSync = medications) => {
-    if (medicationsToSync.length === 0) {
-      showSnackbar('No medications to schedule', 'warning');
-      return;
-    }
-
-    if (!userProfile || !userProfile.phone) {
-      showSnackbar('Please add your phone number in your profile to receive SMS reminders', 'warning');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const response = await apiRequest('/medications/schedule/sms', {
-        method: 'POST',
-        body: JSON.stringify({ medications: medicationsToSync })
-      });
-      
-      setSyncStatus(prev => ({ ...prev, sms: true }));
-      showSnackbar(response.message || 'SMS reminders scheduled!');
-      
-    } catch (error) {
-      console.error('SMS scheduling error:', error);
-      showSnackbar('SMS scheduling failed: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleScheduleEmailReminders = async (medicationsToSync = medications) => {
-    if (medicationsToSync.length === 0) {
-      showSnackbar('No medications to schedule', 'warning');
-      return;
-    }
-
-    if (!userProfile || !userProfile.email) {
-      showSnackbar('Please add your email in your profile to receive email reminders', 'warning');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const response = await apiRequest('/medications/schedule/email', {
-        method: 'POST',
-        body: JSON.stringify({ medications: medicationsToSync })
-      });
-      
-      setSyncStatus(prev => ({ ...prev, email: true }));
-      
-      const message = response.message || response.data?.message || 'Email reminders scheduled!';
-      showSnackbar(message);
-      
-    } catch (error) {
-      console.error('Email scheduling error:', error);
-      
-      let errorMessage = 'Email scheduling failed';
-      if (error.message.includes('email not configured')) {
-        errorMessage = 'Email service not configured (test mode only)';
-      } else if (error.message.includes('credentials')) {
-        errorMessage = 'Email service configuration issue';
-      }
-      
-      showSnackbar(errorMessage, 'warning');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const currentDrugType = drugTypes[activeTab] || drugTypes[0];
 
   return (
-    <Box sx={{ flexGrow: 1, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
-      {/* App Bar */}
-      <AppBar 
-        position="static" 
-        elevation={0}
-        sx={{ 
-          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-          boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)'
-        }}
-      >
-        <Toolbar>
-          <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', mr: 2 }}>
-            <Medication />
-          </Avatar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            Smart Medical Reminder System
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Badge badgeContent={medications.length} color="error">
-              <NotificationAdd />
-            </Badge>
-            <Typography variant="body2" sx={{ ml: 1 }}>
-              {userProfile?.fullName || 'User'}
-            </Typography>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="xl" sx={{ mt: 3, mb: 3 }}>
-        {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            <CircularProgress />
-          </Box>
-        )}
-
-        {/* Sync Status Bar */}
-        <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-              <CloudSync sx={{ mr: 1 }} />
-              Sync Status
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Chip 
-                icon={<CalendarToday />} 
-                label={`Calendar ${syncStatus.calendar ? '✓' : '✗'}`}
-                color={syncStatus.calendar ? 'success' : 'default'}
-                size="small"
-              />
-              <Chip 
-                icon={<Sms />} 
-                label={`SMS ${syncStatus.sms ? '✓' : '✗'}`}
-                color={syncStatus.sms ? 'success' : 'default'}
-                size="small"
-              />
-              <Chip 
-                icon={<Email />} 
-                label={`Email ${syncStatus.email ? '✓' : '✗'}`}
-                color={syncStatus.email ? 'success' : 'default'}
-                size="small"
-              />
-              <Button 
-                size="small" 
-                variant="outlined"
-                onClick={() => handleScheduleEmailReminders()}
-                disabled={loading}
-              >
-                Setup Email
-              </Button>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pt: 2 }}>
+        <Container maxWidth="xl" sx={{ py: 1 }}>
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <CircularProgress />
             </Box>
-          </Box>
-        </Paper>
+          )}
 
-        {/* Drug Type Tabs */}
-        <Paper elevation={3} sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant="fullWidth"
-            textColor="primary"
-            indicatorColor="primary"
-            sx={{
-              '& .MuiTab-root': {
-                minHeight: 80,
-                textTransform: 'none',
-                fontSize: '0.9rem',
-                fontWeight: 'medium'
-              }
-            }}
-          >
-            {drugTypes.map((type, index) => (
-              <Tab
-                key={type.key}
-                icon={type.icon}
-                label={type.label}
-                iconPosition="top"
-                sx={{
-                  '&.Mui-selected': {
-                    color: type.color,
-                    bgcolor: `${type.color}10`
-                  }
-                }}
-              />
-            ))}
-          </Tabs>
-        </Paper>
-
-        <Grid container spacing={3}>
-          {/* Add Medication Form */}
-          <Grid item xs={12} md={7}>
-            <Card 
-              elevation={4}
+          {/* Drug Type Selection */}
+          <Paper elevation={0} sx={{ mb: 3, borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="fullWidth"
               sx={{
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                '& .MuiTab-root': {
+                  minHeight: 80,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  transition: 'all 0.3s',
+                  '&:hover': {
+                    bgcolor: 'rgba(102, 126, 234, 0.05)',
+                  }
+                },
+                '& .Mui-selected': {
+                  color: currentDrugType.color + ' !important',
+                }
               }}
             >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  <Avatar sx={{ bgcolor: currentDrugType.color, mr: 2, width: 48, height: 48 }}>
-                    {currentDrugType.icon}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h5" fontWeight="bold">
-                      Add {currentDrugType.label}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Configure medication details and reminder preferences
-                    </Typography>
+              {drugTypes.map((type) => (
+                <Tab
+                  key={type.key}
+                  icon={<Box sx={{ fontSize: 28, mb: 0.5 }}>{type.icon}</Box>}
+                  label={type.label}
+                />
+              ))}
+            </Tabs>
+          </Paper>
+
+          <Grid container spacing={2.5}>
+            {/* Left Column - Add Medication */}
+            <Grid item xs={12} lg={8}>
+              <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Avatar sx={{ bgcolor: currentDrugType.color, width: 48, height: 48, mr: 2 }}>
+                      {currentDrugType.icon}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h5" sx={{ color: currentDrugType.color, fontWeight: 700 }}>
+                        Add {currentDrugType.label}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Configure medication details and reminder preferences
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
 
-                <Grid container spacing={3}>
-                  {/* Basic Information */}
-                  <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mb: 2, color: currentDrugType.color }}>
-                      Basic Information
-                    </Typography>
-                  </Grid>
+                  <Grid container spacing={2.5}>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" sx={{ mb: 1.5, color: 'primary.main', fontSize: '1.1rem' }}>
+                        Basic Information
+                      </Typography>
+                    </Grid>
 
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Subcategory *</InputLabel>
-                      <Select
-                        value={currentMedication.drugSubcategory}
-                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, drugSubcategory: e.target.value }))}
-                        label="Subcategory *"
-                        required
-                      >
-                        {currentDrugType.subcategories.map(sub => (
-                          <MenuItem key={sub} value={sub}>{sub}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Subcategory *</InputLabel>
+                        <Select
+                          value={currentMedication.drugSubcategory}
+                          onChange={(e) => setCurrentMedication(prev => ({ ...prev, drugSubcategory: e.target.value }))}
+                          label="Subcategory *"
+                        >
+                          {currentDrugType.subcategories.map(sub => (
+                            <MenuItem key={sub} value={sub}>{sub}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Medicine Name *"
-                      value={currentMedication.name}
-                      onChange={(e) => setCurrentMedication(prev => ({ ...prev, name: e.target.value }))}
-                      fullWidth
-                      required
-                    />
-                  </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Medicine Name *"
+                        value={currentMedication.name}
+                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, name: e.target.value }))}
+                        fullWidth
+                        size="small"
+                      />
+                    </Grid>
 
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      label="Dosage *"
-                      value={currentMedication.dosage}
-                      onChange={(e) => setCurrentMedication(prev => ({ ...prev, dosage: e.target.value }))}
-                      placeholder="e.g., 500mg, 2 drops"
-                      fullWidth
-                      required
-                    />
-                  </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        label="Dosage *"
+                        value={currentMedication.dosage}
+                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, dosage: e.target.value }))}
+                        placeholder="e.g., 500mg"
+                        fullWidth
+                        size="small"
+                      />
+                    </Grid>
 
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      label="Quantity"
-                      type="number"
-                      value={currentMedication.quantity}
-                      onChange={(e) => setCurrentMedication(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                      fullWidth
-                      inputProps={{ min: 1 }}
-                    />
-                  </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        label="Quantity"
+                        type="number"
+                        value={currentMedication.quantity}
+                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                        fullWidth
+                        size="small"
+                      />
+                    </Grid>
 
-                  <Grid item xs={12} sm={4}>
-                    <FormControl fullWidth>
-                      <InputLabel>Frequency</InputLabel>
-                      <Select
-                        value={currentMedication.frequency.type}
-                        onChange={(e) => setCurrentMedication(prev => ({ 
-                          ...prev, 
-                          frequency: { ...prev.frequency, type: e.target.value }
-                        }))}
-                        label="Frequency"
-                      >
-                        <MenuItem value="daily">Daily</MenuItem>
-                        <MenuItem value="weekly">Weekly</MenuItem>
-                        <MenuItem value="monthly">Monthly</MenuItem>
-                        <MenuItem value="as_needed">As Needed</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        label="Duration (Days)"
+                        type="number"
+                        value={currentMedication.reminderDays}
+                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, reminderDays: parseInt(e.target.value) || 7 }))}
+                        fullWidth
+                        size="small"
+                      />
+                    </Grid>
 
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      label="Reminder Duration (Days)"
-                      type="number"
-                      value={currentMedication.reminderDays}
-                      onChange={(e) => setCurrentMedication(prev => ({ 
-                        ...prev, 
-                        reminderDays: parseInt(e.target.value) || 30 
-                      }))}
-                      fullWidth
-                      inputProps={{ min: 1, max: 365 }}
-                      helperText="Number of days to send reminders"
-                    />
-                  </Grid>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
+                      <Typography variant="h6" sx={{ mb: 1.5, color: 'primary.main', fontSize: '1.1rem' }}>
+                        Schedule & Timing
+                      </Typography>
+                    </Grid>
 
-                  {/* Timing Configuration */}
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 2, color: currentDrugType.color }}>
-                      Timing & Schedule
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
-                      Time Periods * (Select when to take)
-                    </Typography>
-                    <ToggleButtonGroup
-                      value={currentMedication.timePeriods}
-                      onChange={handleTimePeriodChange}
-                      aria-label="time periods"
-                      sx={{ 
-                        flexWrap: 'wrap',
-                        '& .MuiToggleButton-root': {
-                          m: 0.5,
-                          textTransform: 'capitalize',
-                          border: '1px solid #ddd',
-                          minWidth: 100,
-                          '&.Mui-selected': {
-                            bgcolor: currentDrugType.color,
-                            color: 'white',
-                            '&:hover': {
-                              bgcolor: currentDrugType.color,
+                    <Grid item xs={12}>
+                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
+                        Time Periods *
+                      </Typography>
+                      <ToggleButtonGroup
+                        value={currentMedication.timePeriods}
+                        onChange={handleTimePeriodChange}
+                        sx={{ 
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 1.5,
+                          '& .MuiToggleButton-root': {
+                            flex: '1 1 calc(25% - 12px)',
+                            minWidth: 120,
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            borderRadius: 2,
+                            p: 1.5,
+                            '&.Mui-selected': {
+                              bgcolor: currentDrugType.color + '20',
+                              borderColor: currentDrugType.color,
+                              color: currentDrugType.color,
                             }
                           }
-                        }
-                      }}
-                    >
-                      {timePeriods.map(period => {
-                        const calculatedTime = calculateReminderTime(period.key, currentMedication.mealRelation);
-                        return (
+                        }}
+                      >
+                        {timePeriods.map(period => (
                           <ToggleButton key={period.key} value={period.key}>
                             <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.3 }}>
                                 {period.label}
                               </Typography>
-                              <Typography variant="caption">
-                                {calculatedTime}
+                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                {calculateReminderTime(period.key, currentMedication.mealRelation)}
                               </Typography>
                             </Box>
                           </ToggleButton>
-                        );
-                      })}
-                    </ToggleButtonGroup>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                      <InputLabel>Meal Relation</InputLabel>
-                      <Select
-                        value={currentMedication.mealRelation}
-                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, mealRelation: e.target.value }))}
-                        label="Meal Relation"
-                      >
-                        {mealRelations.map(relation => (
-                          <MenuItem key={relation.key} value={relation.key}>
-                            {relation.label}
-                          </MenuItem>
                         ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
+                      </ToggleButtonGroup>
+                    </Grid>
 
-                  {/* Meal Times Configuration */}
-                  <Grid item xs={12} sm={6}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setShowMealTimes(!showMealTimes)}
-                      endIcon={<ExpandMore sx={{ transform: showMealTimes ? 'rotate(180deg)' : 'none' }} />}
-                      fullWidth
-                      sx={{ height: '56px' }}
-                    >
-                      Configure Meal Times
-                    </Button>
-                  </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Meal Relation</InputLabel>
+                        <Select
+                          value={currentMedication.mealRelation}
+                          onChange={(e) => setCurrentMedication(prev => ({ ...prev, mealRelation: e.target.value }))}
+                          label="Meal Relation"
+                        >
+                          {mealRelations.map(relation => (
+                            <MenuItem key={relation.key} value={relation.key}>
+                              {relation.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-                  <Grid item xs={12}>
-                    <Collapse in={showMealTimes}>
-                      <Paper sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
-                        <Typography variant="subtitle1" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
-                          <Restaurant sx={{ mr: 1 }} />
-                          Meal Times Configuration
-                        </Typography>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={3}>
-                          <TextField
-                              label="Breakfast (Morning)"
-                              type="time"
-                              value={mealTimes.breakfast}
-                              onChange={(e) => handleMealTimeChange('breakfast', e.target.value)}
-                              fullWidth
-                              InputLabelProps={{ shrink: true }}
-                              size="small"
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={3}>
-                            <TextField
-                              label="Lunch (Afternoon)"
-                              type="time"
-                              value={mealTimes.lunch}
-                              onChange={(e) => handleMealTimeChange('lunch', e.target.value)}
-                              fullWidth
-                              InputLabelProps={{ shrink: true }}
-                              size="small"
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={3}>
-                            <TextField
-                              label="Dinner (Evening)"
-                              type="time"
-                              value={mealTimes.dinner}
-                              onChange={(e) => handleMealTimeChange('dinner', e.target.value)}
-                              fullWidth
-                              InputLabelProps={{ shrink: true }}
-                              size="small"
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={3}>
-                            <TextField
-                              label="Night"
-                              type="time"
-                              value={mealTimes.night}
-                              onChange={(e) => handleMealTimeChange('night', e.target.value)}
-                              fullWidth
-                              InputLabelProps={{ shrink: true }}
-                              size="small"
-                            />
-                          </Grid>
-                        </Grid>
-                        <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
-                          These times will be used to calculate reminder schedules based on meal relations
-                        </Typography>
-                      </Paper>
-                    </Collapse>
-                  </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Button
+                        variant="outlined"
+                        onClick={() => setShowMealTimes(!showMealTimes)}
+                        endIcon={<ExpandMore sx={{ transform: showMealTimes ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />}
+                        fullWidth
+                        size="small"
+                        sx={{ height: '40px' }}
+                      >
+                        Meal Times Settings
+                      </Button>
+                    </Grid>
 
-                  {/* Reminder Settings */}
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 2, color: currentDrugType.color }}>
-                      Reminder Preferences
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Paper sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={3}>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={currentMedication.reminderSettings.calendarEnabled}
-                                onChange={(e) => setCurrentMedication(prev => ({
-                                  ...prev,
-                                  reminderSettings: {
-                                    ...prev.reminderSettings,
-                                    calendarEnabled: e.target.checked
-                                  }
-                                }))}
-                                color="primary"
-                              />
-                            }
-                            label={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <CalendarToday sx={{ mr: 1, fontSize: 18 }} />
-                                <Typography variant="body2">Calendar</Typography>
-                              </Box>
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={currentMedication.reminderSettings.smsEnabled}
-                                onChange={(e) => setCurrentMedication(prev => ({
-                                  ...prev,
-                                  reminderSettings: {
-                                    ...prev.reminderSettings,
-                                    smsEnabled: e.target.checked
-                                  }
-                                }))}
-                                color="secondary"
-                              />
-                            }
-                            label={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Sms sx={{ mr: 1, fontSize: 18 }} />
-                                <Typography variant="body2">SMS</Typography>
-                              </Box>
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={currentMedication.reminderSettings.emailEnabled}
-                                onChange={(e) => setCurrentMedication(prev => ({
-                                  ...prev,
-                                  reminderSettings: {
-                                    ...prev.reminderSettings,
-                                    emailEnabled: e.target.checked
-                                  }
-                                }))}
-                                color="success"
-                              />
-                            }
-                            label={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Email sx={{ mr: 1, fontSize: 18 }} />
-                                <Typography variant="body2">Email</Typography>
-                              </Box>
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={currentMedication.reminderSettings.phoneCallEnabled}
-                                onChange={(e) => setCurrentMedication(prev => ({
-                                  ...prev,
-                                  reminderSettings: {
-                                    ...prev.reminderSettings,
-                                    phoneCallEnabled: e.target.checked
-                                  }
-                                }))}
-                                color="warning"
-                              />
-                            }
-                            label={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Phone sx={{ mr: 1, fontSize: 18 }} />
-                                <Typography variant="body2">Phone</Typography>
-                              </Box>
-                            }
-                          />
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Additional Notes"
-                      value={currentMedication.notes}
-                      onChange={(e) => setCurrentMedication(prev => ({ ...prev, notes: e.target.value }))}
-                      multiline
-                      rows={3}
-                      placeholder="Special instructions, side effects to watch for, doctor's notes, etc."
-                      fullWidth
-                    />
-                  </Grid>
-
-                  {/* Reminder Preview */}
-                  {currentMedication.timePeriods.length > 0 && (
                     <Grid item xs={12}>
-                      <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #2196f3' }}>
-                        <Typography variant="subtitle1" sx={{ mb: 2, color: '#1976d2', fontWeight: 'bold' }}>
-                          <Timer sx={{ mr: 1 }} />
-                          Reminder Schedule Preview ({currentMedication.reminderDays} days)
-                        </Typography>
-                        <Grid container spacing={1}>
-                          {currentMedication.timePeriods.map(period => {
-                            const reminderTime = calculateReminderTime(period, currentMedication.mealRelation);
-                            return (
-                              <Grid item xs={12} sm={6} key={period}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', p: 1, bgcolor: 'white', borderRadius: 1 }}>
-                                  <Schedule sx={{ mr: 1, color: currentDrugType.color }} />
-                                  <Typography variant="body2">
-                                    <strong>{period.charAt(0).toUpperCase() + period.slice(1)}:</strong> {reminderTime}
+                      <Collapse in={showMealTimes}>
+                        <Paper sx={{ p: 2.5, bgcolor: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                          <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', color: 'primary.main' }}>
+                            <Restaurant sx={{ mr: 1, fontSize: 20 }} />
+                            Configure Your Meal Times
+                          </Typography>
+                          <Grid container spacing={1.5}>
+                            {Object.entries({ breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', night: 'Night' }).map(([key, label]) => (
+                              <Grid item xs={12} sm={6} md={3} key={key}>
+                                <TextField
+                                  label={label}
+                                  type="time"
+                                  value={mealTimes[key]}
+                                  onChange={(e) => handleMealTimeChange(key, e.target.value)}
+                                  fullWidth
+                                  size="small"
+                                  InputLabelProps={{ shrink: true }}
+                                />
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Collapse>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
+                      <Typography variant="h6" sx={{ mb: 1.5, color: 'primary.main', fontSize: '1.1rem' }}>
+                        Reminder Methods
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <Paper sx={{ p: 2.5, bgcolor: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                        <Grid container spacing={2}>
+                          {[
+                            { key: 'calendarEnabled', icon: <CalendarToday />, label: 'Calendar' },
+                            { key: 'smsEnabled', icon: <Sms />, label: 'SMS' },
+                            { key: 'emailEnabled', icon: <Email />, label: 'Email' },
+                            { key: 'phoneCallEnabled', icon: <Phone />, label: 'Phone' }
+                          ].map(method => (
+                            <Grid item xs={6} sm={3} key={method.key}>
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={currentMedication.reminderSettings[method.key]}
+                                    onChange={(e) => setCurrentMedication(prev => ({
+                                      ...prev,
+                                      reminderSettings: {
+                                        ...prev.reminderSettings,
+                                        [method.key]: e.target.checked
+                                      }
+                                    }))}
+                                    color="primary"
+                                    size="small"
+                                  />
+                                }
+                                label={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                                    {React.cloneElement(method.icon, { sx: { fontSize: 18 } })}
+                                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{method.label}</Typography>
+                                  </Box>
+                                }
+                              />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Paper>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Additional Notes"
+                        value={currentMedication.notes}
+                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, notes: e.target.value }))}
+                        multiline
+                        rows={2}
+                        placeholder="Special instructions, side effects, doctor's notes..."
+                        fullWidth
+                        size="small"
+                      />
+                    </Grid>
+
+                    {currentMedication.timePeriods.length > 0 && (
+                      <Grid item xs={12}>
+                        <Paper sx={{ p: 2.5, bgcolor: 'rgba(3, 218, 198, 0.1)', border: '1px solid rgba(3, 218, 198, 0.3)', borderRadius: 2 }}>
+                          <Typography variant="subtitle1" sx={{ mb: 1.5, color: 'success.main', display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                            <Timer />
+                            Reminder Schedule Preview
+                          </Typography>
+                          <Grid container spacing={1.5}>
+                            {currentMedication.timePeriods.map(period => (
+                              <Grid item xs={12} sm={6} md={3} key={period}>
+                                <Box sx={{ 
+                                  p: 1.5, 
+                                  bgcolor: 'background.paper', 
+                                  borderRadius: 2,
+                                  border: '1px solid rgba(3, 218, 198, 0.2)',
+                                  textAlign: 'center'
+                                }}>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                                    {period}
+                                  </Typography>
+                                  <Typography variant="h6" sx={{ color: 'success.main', fontWeight: 700, my: 0.5 }}>
+                                    {calculateReminderTime(period, currentMedication.mealRelation)}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                    {currentMedication.reminderDays} days
                                   </Typography>
                                 </Box>
                               </Grid>
-                            );
-                          })}
-                        </Grid>
-                        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#1976d2' }}>
-                          Reminders will be sent for {currentMedication.reminderDays} days
-                        </Typography>
-                      </Paper>
-                    </Grid>
-                  )}
-                </Grid>
-              </CardContent>
-              
-              <CardActions sx={{ p: 3, pt: 0 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleAddMedication}
-                  startIcon={<Add />}
-                  fullWidth
-                  size="large"
-                  disabled={loading}
-                  sx={{
-                    background: `linear-gradient(45deg, ${currentDrugType.color} 30%, ${currentDrugType.color}AA 90%)`,
-                    '&:hover': {
-                      background: `linear-gradient(45deg, ${currentDrugType.color}DD 30%, ${currentDrugType.color} 90%)`
-                    },
-                    height: 48
-                  }}
-                >
-                  Add Medication & Schedule Reminders
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+                            ))}
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    )}
+                  </Grid>
+                </CardContent>
+                
+                <CardActions sx={{ p: 3, pt: 0 }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleAddMedication}
+                    startIcon={<Add />}
+                    fullWidth
+                    size="large"
+                    disabled={loading}
+                    sx={{
+                      background: `linear-gradient(135deg, ${currentDrugType.color} 0%, ${currentDrugType.color}AA 100%)`,
+                      height: 48,
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      '&:hover': {
+                        background: `linear-gradient(135deg, ${currentDrugType.color}DD 0%, ${currentDrugType.color} 100%)`,
+                      }
+                    }}
+                  >
+                    Add Medication & Schedule Reminders
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
 
-          {/* Medications List & Doctor Info */}
-          <Grid item xs={12} md={5}>
-            <Grid container spacing={2}>
-              {/* Active Medications Card */}
-              <Grid item xs={12}>
-                <Card elevation={4} sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                          <NotificationAdd />
-                        </Avatar>
+            {/* Right Column - Medications List & Doctor */}
+            <Grid item xs={12} lg={4}>
+              <Grid container spacing={2.5}>
+                {/* Active Medications */}
+                <Grid item xs={12}>
+                  <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)', height: '100%' }}>
+                    <CardContent sx={{ p: 2.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
                         <Box>
-                          <Typography variant="h6" fontWeight="bold">Active Medications</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {medications.length} medications with reminders
+                          <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.3, fontSize: '1.1rem' }}>
+                            Active Medications
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                            {medications.length} active reminder{medications.length !== 1 ? 's' : ''}
                           </Typography>
                         </Box>
-                      </Box>
-                      {medications.length > 0 && (
-                        <Chip label={`${medications.length} Active`} color="success" size="small" icon={<CheckCircle />} />
-                      )}
-                    </Box>
-
-                    {medications.length === 0 ? (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Avatar sx={{ bgcolor: 'primary.light', width: 80, height: 80, mx: 'auto', mb: 2 }}>
-                          <Medication fontSize="large" />
+                        <Avatar sx={{ bgcolor: 'success.main', width: 44, height: 44 }}>
+                          <Typography variant="h6" fontWeight="bold">{medications.length}</Typography>
                         </Avatar>
-                        <Typography variant="h6" gutterBottom>No medications added yet</Typography>
-                        <Typography color="text.secondary" sx={{ mb: 3 }}>
-                          Add your first medication to get started with smart reminders and automated scheduling.
-                        </Typography>
                       </Box>
-                    ) : (
-                      <>
-                        <Box sx={{ maxHeight: 300, overflow: 'auto', mb: 3 }}>
-                          {medications.map((med) => {
-                            const typeInfo = drugTypes.find(type => type.key === med.drugType);
-                            return (
-                              <Card key={med._id} sx={{ mb: 2, bgcolor: 'grey.50', border: '1px solid #e0e0e0' }}>
-                                <CardContent sx={{ pb: 1 }}>
-                                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                                      <Avatar sx={{ bgcolor: typeInfo?.color || '#2196F3', mr: 2 }}>
-                                        {typeInfo?.icon || <Medication />}
-                                      </Avatar>
-                                      <Box sx={{ flex: 1 }}>
-                                        <Typography variant="h6" gutterBottom sx={{ color: typeInfo?.color || '#2196F3' }}>
-                                          {med.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                          <strong>Dosage:</strong> {med.dosage} • <strong>Qty:</strong> {med.quantity}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                          <strong>Duration:</strong> {med.reminderDays || 30} days
-                                        </Typography>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                                          {(med.timePeriods || []).map(period => (
-                                            <Chip key={period} label={period} size="small" 
-                                              sx={{ bgcolor: typeInfo?.color + '20', color: typeInfo?.color, fontWeight: 'bold' }} />
-                                          ))}
-                                        </Box>
-                                        <Typography variant="body2" sx={{ color: '#1976d2', fontWeight: 'bold' }}>
-                                          {(med.mealRelation || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                        </Typography>
-                                        {med.notes && (
-                                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1, bgcolor: '#f9f9f9', p: 1, borderRadius: 1, fontSize: '0.75rem' }}>
-                                            {med.notes}
-                                          </Typography>
-                                        )}
+
+                      {medications.length === 0 ? (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                          <Box sx={{ 
+                            width: 70, 
+                            height: 70, 
+                            borderRadius: '50%', 
+                            bgcolor: 'rgba(102, 126, 234, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mx: 'auto',
+                            mb: 1.5
+                          }}>
+                            <Medication sx={{ fontSize: 36, color: 'primary.main' }} />
+                          </Box>
+                          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>No medications yet</Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                            Add your first medication to start tracking
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <>
+                          <Box sx={{ maxHeight: 350, overflow: 'auto', mb: 2 }}>
+                            {medications.map((med) => {
+                              const typeInfo = drugTypes.find(type => type.key === med.drugType);
+                              return (
+                                <Paper 
+                                  key={med._id} 
+                                  sx={{ 
+                                    mb: 1.5, 
+                                    p: 1.5, 
+                                    bgcolor: 'rgba(102, 126, 234, 0.05)',
+                                    border: '1px solid rgba(102, 126, 234, 0.2)',
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      bgcolor: 'rgba(102, 126, 234, 0.08)',
+                                      borderColor: 'rgba(102, 126, 234, 0.4)',
+                                    }
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', gap: 1.5 }}>
+                                    <Avatar sx={{ bgcolor: typeInfo?.color || 'primary.main', width: 36, height: 36 }}>
+                                      {React.cloneElement(typeInfo?.icon || <Medication />, { sx: { fontSize: 20 } })}
+                                    </Avatar>
+                                    <Box sx={{ flex: 1 }}>
+                                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: typeInfo?.color, fontSize: '0.9rem' }}>
+                                        {med.name}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                                        {med.dosage} • {med.quantity}x • {med.reminderDays || 30} days
+                                      </Typography>
+                                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.8 }}>
+                                        {(med.timePeriods || []).map(period => (
+                                          <Chip 
+                                            key={period} 
+                                            label={period} 
+                                            size="small"
+                                            sx={{ 
+                                              bgcolor: typeInfo?.color + '30',
+                                              color: typeInfo?.color,
+                                              fontWeight: 600,
+                                              fontSize: '0.65rem',
+                                              height: 20
+                                            }} 
+                                          />
+                                        ))}
                                       </Box>
                                     </Box>
-                                    <IconButton onClick={() => handleDeleteMedication(med._id)} color="error" size="small" disabled={loading}>
-                                      <Delete />
+                                    <IconButton 
+                                      onClick={() => handleDeleteMedication(med._id)} 
+                                      size="small"
+                                      sx={{ 
+                                        color: 'error.main',
+                                        width: 32,
+                                        height: 32,
+                                        '&:hover': { bgcolor: 'rgba(245, 87, 108, 0.1)' }
+                                      }}
+                                    >
+                                      <Delete fontSize="small" />
                                     </IconButton>
                                   </Box>
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
+                                </Paper>
+                              );
+                            })}
+                          </Box>
+
+                          <ButtonGroup variant="contained" fullWidth size="small">
+                            <Button startIcon={<CalendarToday fontSize="small" />} sx={{ bgcolor: 'success.main', fontSize: '0.8rem' }}>
+                              Sync
+                            </Button>
+                            <Button startIcon={<Sms fontSize="small" />} sx={{ bgcolor: 'secondary.main', fontSize: '0.8rem' }}>
+                              SMS
+                            </Button>
+                            <Button startIcon={<Email fontSize="small" />} sx={{ bgcolor: 'primary.main', fontSize: '0.8rem' }}>
+                              Email
+                            </Button>
+                          </ButtonGroup>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Doctor Info */}
+                <Grid item xs={12}>
+                  <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                    <CardContent sx={{ p: 2.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar sx={{ bgcolor: 'success.main', width: 36, height: 36 }}>
+                            <LocalHospital sx={{ fontSize: 20 }} />
+                          </Avatar>
+                          <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem' }}>Doctor Info</Typography>
                         </Box>
-
-                        <ButtonGroup variant="contained" fullWidth size="large" sx={{ mb: 2 }}>
-                          <Button onClick={() => handleSyncCalendar()} startIcon={<CalendarToday />} disabled={loading} sx={{ bgcolor: '#4CAF50' }}>
-                            Sync All
-                          </Button>
-                          <Button onClick={() => handleScheduleSMS()} startIcon={<Sms />} disabled={loading} sx={{ bgcolor: '#9C27B0' }}>
-                            SMS All
-                          </Button>
-                        </ButtonGroup>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Doctor Info Card */}
-              <Grid item xs={12}>
-                <Card elevation={4} sx={{ borderRadius: 2, background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: '#4CAF50', mr: 2 }}>
-                          <LocalHospital />
-                        </Avatar>
-                        <Typography variant="h6" fontWeight="bold">Doctor Information</Typography>
+                        <IconButton 
+                          onClick={() => setShowDoctorForm(!showDoctorForm)}
+                          size="small"
+                          sx={{ 
+                            transform: showDoctorForm ? 'rotate(180deg)' : 'none',
+                            transition: 'transform 0.3s'
+                          }}
+                        >
+                          <ExpandMore />
+                        </IconButton>
                       </Box>
-                      <IconButton onClick={() => setShowDoctorForm(!showDoctorForm)} color="primary" size="small">
-                        {showDoctorForm ? <ExpandMore sx={{ transform: 'rotate(180deg)' }} /> : <ExpandMore />}
-                      </IconButton>
-                    </Box>
 
-                    <Collapse in={showDoctorForm}>
-                      <Grid container spacing={2} sx={{ mb: 2 }}>
-                        <Grid item xs={12}>
-                          <TextField label="Doctor Name" value={doctorInfo.name} onChange={(e) => setDoctorInfo(prev => ({ ...prev, name: e.target.value }))} fullWidth size="small" />
+                      <Collapse in={showDoctorForm}>
+                        <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                          <Grid item xs={12}>
+                            <TextField 
+                              label="Doctor Name" 
+                              value={doctorInfo.name} 
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, name: e.target.value }))} 
+                              fullWidth 
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField 
+                              label="Hospital/Clinic" 
+                              value={doctorInfo.hospital} 
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, hospital: e.target.value }))} 
+                              fullWidth 
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <TextField 
+                              label="Email" 
+                              type="email" 
+                              value={doctorInfo.email} 
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, email: e.target.value }))} 
+                              fullWidth 
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <TextField 
+                              label="Phone" 
+                              value={doctorInfo.phone} 
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, phone: e.target.value }))} 
+                              fullWidth 
+                              size="small"
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Button 
+                              variant="contained" 
+                              onClick={handleSaveDoctorInfo} 
+                              fullWidth 
+                              startIcon={<Save />}
+                              size="small"
+                              sx={{ bgcolor: 'success.main' }}
+                            >
+                              Save Doctor Info
+                            </Button>
+                          </Grid>
                         </Grid>
-                        <Grid item xs={12}>
-                          <TextField label="Hospital/Clinic" value={doctorInfo.hospital} onChange={(e) => setDoctorInfo(prev => ({ ...prev, hospital: e.target.value }))} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Email" type="email" value={doctorInfo.email} onChange={(e) => setDoctorInfo(prev => ({ ...prev, email: e.target.value }))} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Phone" value={doctorInfo.phone} onChange={(e) => setDoctorInfo(prev => ({ ...prev, phone: e.target.value }))} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Button variant="contained" onClick={handleSaveDoctorInfo} fullWidth disabled={loading} startIcon={<Save />}>
-                            Save Doctor Info
-                          </Button>
-                        </Grid>
-                      </Grid>
-                    </Collapse>
+                      </Collapse>
 
-                    {!showDoctorForm && doctorInfo.name && (
-                      <Box sx={{ bgcolor: '#f8f9fa', p: 2, borderRadius: 1, mb: 2 }}>
-                        <Typography variant="body2"><strong>Dr. {doctorInfo.name}</strong></Typography>
-                        {doctorInfo.hospital && <Typography variant="body2" color="text.secondary">{doctorInfo.hospital}</Typography>}
-                        {doctorInfo.email && <Typography variant="body2" color="text.secondary">{doctorInfo.email}</Typography>}
-                        {doctorInfo.phone && <Typography variant="body2" color="text.secondary">{doctorInfo.phone}</Typography>}
-                      </Box>
-                    )}
+                      {!showDoctorForm && doctorInfo.name && (
+                        <Paper sx={{ p: 2, bgcolor: 'rgba(3, 218, 198, 0.1)', border: '1px solid rgba(3, 218, 198, 0.2)', mb: 2 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, mb: 1 }}>
+                            Dr. {doctorInfo.name}
+                          </Typography>
+                          {doctorInfo.hospital && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.5 }}>
+                              <LocalHospital sx={{ fontSize: 16 }} /> {doctorInfo.hospital}
+                            </Typography>
+                          )}
+                          {doctorInfo.email && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.5 }}>
+                              <Email sx={{ fontSize: 16 }} /> {doctorInfo.email}
+                            </Typography>
+                          )}
+                          {doctorInfo.phone && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                              <Phone sx={{ fontSize: 16 }} /> {doctorInfo.phone}
+                            </Typography>
+                          )}
+                        </Paper>
+                      )}
 
-                    <Button variant="outlined" onClick={() => setShowAskDoctor(true)} fullWidth startIcon={<Email />} 
-                      disabled={!doctorInfo.email && !doctorInfo.phone}>
-                      Ask Doctor
-                    </Button>
-                  </CardContent>
-                </Card>
+                      <Button 
+                        variant="outlined" 
+                        onClick={() => setShowAskDoctor(true)} 
+                        fullWidth 
+                        startIcon={<Send />}
+                        size="small"
+                        disabled={!doctorInfo.email && !doctorInfo.phone}
+                      >
+                        Contact Doctor
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>
-        </Grid>
-      </Container>
+        </Container>
 
-      {/* Floating Action Button */}
-      <Fab
-        color="primary"
-        aria-label="scroll to top"
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
-        }}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      >
-        <Notifications />
-      </Fab>
-
-      {/* Success Dialog */}
-      <Dialog open={reminderDialog} onClose={() => setReminderDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <CheckCircle color="success" sx={{ mr: 2 }} />
-            Reminders Successfully Scheduled
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Typography gutterBottom sx={{ mb: 3 }}>
-            Your medication reminders have been successfully configured across all enabled platforms:
-          </Typography>
-          
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 2, bgcolor: '#e8f5e8', textAlign: 'center' }}>
-                <CalendarToday color="success" sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h6">Google Calendar</Typography>
-                <Typography variant="body2">
-                  Events created with 10-30 minute advance notifications
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 2, bgcolor: '#f3e5f5', textAlign: 'center' }}>
-                <Sms color="secondary" sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h6">SMS Alerts</Typography>
-                <Typography variant="body2">
-                  Text messages scheduled for medication times
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 2, bgcolor: '#e3f2fd', textAlign: 'center' }}>
-                <Email color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h6">Email Reminders</Typography>
-                <Typography variant="body2">
-                  Daily summary and individual medication alerts
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-
-          <Alert severity="info" sx={{ mt: 3 }}>
-            <Typography variant="body2">
-              <strong>Next Steps:</strong> Check your Google Calendar, phone, and email for the scheduled reminders. 
-              You can modify or disable individual reminders anytime from this dashboard.
-            </Typography>
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setReminderDialog(false)} variant="contained">
-            Got it!
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Ask Doctor Dialog */}
-      <Dialog open={showAskDoctor} onClose={() => setShowAskDoctor(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Ask Your Doctor</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Describe your problem or question for Dr. {doctorInfo.name || 'your doctor'}
-          </Typography>
-          <TextField 
-            label="Describe your problem" 
-            value={doctorQuery} 
-            onChange={(e) => setDoctorQuery(e.target.value)} 
-            multiline 
-            rows={6} 
-            fullWidth 
-            placeholder="Please describe your symptoms, concerns, or questions..." 
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowAskDoctor(false)}>Cancel</Button>
-          <Button onClick={handleAskDoctor} variant="contained" disabled={loading || !doctorQuery.trim()} startIcon={<Send />}>
-            Send Query
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity} 
-          sx={{ width: '100%' }}
-          variant="filled"
+        {/* Success Dialog */}
+        <Dialog 
+          open={reminderDialog} 
+          onClose={() => setReminderDialog(false)} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              border: '1px solid rgba(102, 126, 234, 0.2)'
+            }
+          }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'success.main' }}>
+                <CheckCircle />
+              </Avatar>
+              <Box>
+                <Typography variant="h6" fontWeight="bold">Reminders Scheduled!</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Your medication reminders are now active
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 0.5 }}>
+              {[
+                { icon: <CalendarToday />, title: 'Google Calendar', desc: 'Events with advance notifications', color: 'success.main' },
+                { icon: <Sms />, title: 'SMS Alerts', desc: 'Text messages at medication times', color: 'secondary.main' },
+                { icon: <Email />, title: 'Email Reminders', desc: 'Daily summary and alerts', color: 'primary.main' }
+              ].map((item, idx) => (
+                <Grid item xs={12} md={4} key={idx}>
+                  <Paper sx={{ 
+                    p: 2.5, 
+                    textAlign: 'center',
+                    bgcolor: 'rgba(102, 126, 234, 0.05)',
+                    border: '1px solid rgba(102, 126, 234, 0.2)'
+                  }}>
+                    <Avatar sx={{ bgcolor: item.color, width: 48, height: 48, mx: 'auto', mb: 1.5 }}>
+                      {item.icon}
+                    </Avatar>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>{item.title}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>{item.desc}</Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setReminderDialog(false)} variant="contained" fullWidth>
+              Got it!
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Ask Doctor Dialog */}
+        <Dialog 
+          open={showAskDoctor} 
+          onClose={() => setShowAskDoctor(false)} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              border: '1px solid rgba(102, 126, 234, 0.2)'
+            }
+          }}
+        >
+          <DialogTitle>
+            <Typography variant="h6" fontWeight="bold">Contact Your Doctor</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Dr. {doctorInfo.name || 'your doctor'}
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <TextField 
+              label="Describe your concern" 
+              value={doctorQuery} 
+              onChange={(e) => setDoctorQuery(e.target.value)} 
+              multiline 
+              rows={5} 
+              fullWidth 
+              placeholder="Please describe your symptoms, concerns, or questions..."
+              sx={{ mt: 1.5 }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setShowAskDoctor(false)} variant="outlined">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAskDoctor} 
+              variant="contained" 
+              disabled={loading || !doctorQuery.trim()} 
+              startIcon={<Send />}
+            >
+              Send Message
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={handleCloseSnackbar} 
+            severity={snackbar.severity} 
+            sx={{ 
+              width: '100%',
+              borderRadius: 2,
+              border: '1px solid rgba(102, 126, 234, 0.2)'
+            }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </ThemeProvider>
   );
 };
 
