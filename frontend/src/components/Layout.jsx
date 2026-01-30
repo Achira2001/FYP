@@ -22,13 +22,12 @@ export default function Layout() {
       <Box sx={{ display: "flex", flex: 1 }}>
         <Sidebar role={role} />
 
-        <Box component="main" sx={{ flex: 1, p: 3, bgcolor: "grey.50" }}>
-          <Toolbar /> {/* Pushes content below AppBar */}
+        <Box component="main" sx={{ flex: 1, p: 0, bgcolor: "grey.50" }}>
           <Outlet />
         </Box>
       </Box>
 
-      <Footer />
+      {/* <Footer /> */}
     </Box>
   );
 }
