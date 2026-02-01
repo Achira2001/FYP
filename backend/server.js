@@ -84,7 +84,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/auth', googleAuthRoutes);
 app.use('/api/medications', medicationRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api', profileRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api', doctorRoutes);
 app.use('/api/admin', adminRoutes);
 
