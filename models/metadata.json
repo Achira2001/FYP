@@ -1,0 +1,184 @@
+{
+  "feature_columns": [
+    "Age",
+    "Gender",
+    "Height_cm",
+    "Weight_kg",
+    "BMI",
+    "Chronic_Disease",
+    "Blood_Pressure_Systolic",
+    "Blood_Pressure_Diastolic",
+    "Cholesterol_Level",
+    "Blood_Sugar_Level",
+    "Genetic_Risk_Factor",
+    "Allergies",
+    "Daily_Steps",
+    "Exercise_Frequency",
+    "Sleep_Hours",
+    "Alcohol_Consumption",
+    "Smoking_Habit",
+    "Dietary_Habits",
+    "Caloric_Intake",
+    "Protein_Intake",
+    "Carbohydrate_Intake",
+    "Fat_Intake",
+    "Preferred_Cuisine",
+    "Food_Aversions"
+  ],
+  "encoder_info": {
+    "Gender": {
+      "classes": [
+        "Female",
+        "Male",
+        "Other"
+      ],
+      "mapping": {
+        "Female": 0,
+        "Male": 1,
+        "Other": 2
+      }
+    },
+    "Chronic_Disease": {
+      "classes": [
+        "Diabetes",
+        "Heart Disease",
+        "Hypertension",
+        "None",
+        "Obesity"
+      ],
+      "mapping": {
+        "Diabetes": 0,
+        "Heart Disease": 1,
+        "Hypertension": 2,
+        "None": 3,
+        "Obesity": 4
+      }
+    },
+    "Genetic_Risk_Factor": {
+      "classes": [
+        "No",
+        "Yes"
+      ],
+      "mapping": {
+        "No": 0,
+        "Yes": 1
+      }
+    },
+    "Allergies": {
+      "classes": [
+        "Gluten Intolerance",
+        "Lactose Intolerance",
+        "None",
+        "Nut Allergy"
+      ],
+      "mapping": {
+        "Gluten Intolerance": 0,
+        "Lactose Intolerance": 1,
+        "None": 2,
+        "Nut Allergy": 3
+      }
+    },
+    "Alcohol_Consumption": {
+      "classes": [
+        "No",
+        "Yes"
+      ],
+      "mapping": {
+        "No": 0,
+        "Yes": 1
+      }
+    },
+    "Smoking_Habit": {
+      "classes": [
+        "No",
+        "Yes"
+      ],
+      "mapping": {
+        "No": 0,
+        "Yes": 1
+      }
+    },
+    "Dietary_Habits": {
+      "classes": [
+        "Keto",
+        "Regular",
+        "Vegan",
+        "Vegetarian"
+      ],
+      "mapping": {
+        "Keto": 0,
+        "Regular": 1,
+        "Vegan": 2,
+        "Vegetarian": 3
+      }
+    },
+    "Preferred_Cuisine": {
+      "classes": [
+        "Asian",
+        "Indian",
+        "Mediterranean",
+        "Western"
+      ],
+      "mapping": {
+        "Asian": 0,
+        "Indian": 1,
+        "Mediterranean": 2,
+        "Western": 3
+      }
+    },
+    "Food_Aversions": {
+      "classes": [
+        "None",
+        "Salty",
+        "Spicy",
+        "Sweet"
+      ],
+      "mapping": {
+        "None": 0,
+        "Salty": 1,
+        "Spicy": 2,
+        "Sweet": 3
+      }
+    },
+    "Recommended_Meal_Plan": {
+      "classes": [
+        "Balanced Diet",
+        "High-Protein Diet",
+        "Low-Carb Diet",
+        "Low-Fat Diet"
+      ],
+      "mapping": {
+        "Balanced Diet": 0,
+        "High-Protein Diet": 1,
+        "Low-Carb Diet": 2,
+        "Low-Fat Diet": 3
+      }
+    }
+  },
+  "metrics": {
+    "calories": {
+      "mae": 105.6952133178711,
+      "rmse": 124.86992450896653,
+      "r2": 0.9655327796936035
+    },
+    "protein": {
+      "mae": 7.801029205322266,
+      "rmse": 9.184456872721162,
+      "r2": 0.9573510885238647
+    },
+    "carbs": {
+      "mae": 26.43448829650879,
+      "rmse": 31.027720209301854,
+      "r2": 0.8840054273605347
+    },
+    "fats": {
+      "mae": 8.096266746520996,
+      "rmse": 9.485409021964463,
+      "r2": 0.9396364688873291
+    },
+    "meal_plan": {
+      "accuracy": 0.251
+    }
+  },
+  "random_state": 42
+}
