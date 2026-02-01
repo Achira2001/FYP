@@ -115,7 +115,7 @@ const MedivaHomepage = () => {
                       "linear-gradient(90deg,#7c3aed,#06b6d4)",
                   }}
                   onClick={() =>
-                    navigate("/patient/medicine-reminders")
+                    navigate("/login")
                   }
                 >
                   Start Free Trial
@@ -127,7 +127,7 @@ const MedivaHomepage = () => {
                   endIcon={<ArrowForwardIcon />}
                   sx={{ color: "#22d3ee", borderColor: "#22d3ee" }}
                   onClick={() =>
-                    navigate("/patient/medicine-reminders")
+                    navigate("/login")
                   }
                 >
                   Watch Demo
@@ -260,7 +260,7 @@ const MedivaHomepage = () => {
             variant="contained"
             sx={{ bgcolor: "white", color: "#7c3aed" }}
             onClick={() =>
-              navigate("/patient/medicine-reminders")
+              navigate("/login")
             }
           >
             Get Started Today

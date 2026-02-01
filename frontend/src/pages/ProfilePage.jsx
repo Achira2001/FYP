@@ -25,7 +25,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Switch,
   Card,
   CardContent,
   Divider,
@@ -52,7 +51,6 @@ import {
   MonitorWeight as WeightIcon,
   Bloodtype as BloodTypeIcon,
   LocalHospital as HospitalIcon,
-  AccessTime as TimeIcon,
   AttachMoney as MoneyIcon,
   Verified as VerifiedIcon,
   Schedule as ScheduleIcon,
@@ -63,6 +61,7 @@ import {
   CheckCircle
 } from '@mui/icons-material';
 import { format } from 'date-fns';
+import axios from 'axios';
 
 const darkTheme = createTheme({
   palette: {
@@ -103,18 +102,10 @@ const darkTheme = createTheme({
   },
   typography: {
     fontFamily: "'Inter', 'Roboto', sans-serif",
-    h3: {
-      fontWeight: 700,
-    },
-    h4: {
-      fontWeight: 700,
-    },
-    h5: {
-      fontWeight: 600,
-    },
-    h6: {
-      fontWeight: 600,
-    },
+    h3: { fontWeight: 700 },
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
   },
   shape: {
     borderRadius: 12,
@@ -146,6 +137,8 @@ const darkTheme = createTheme({
   },
 });
 
+const API_BASE_URL = 'http://localhost:5000/api';
+
 const UserProfile = () => {
   const [user, setUser] = useState(null);
   const [medications, setMedications] = useState([]);
@@ -163,75 +156,51 @@ const UserProfile = () => {
   });
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          throw new Error('No authentication token found. Please login again.');
-        }
-
-        // Fetch user profile
-        const profileResponse = await fetch('http://localhost:5000/api/profile', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        const profileContentType = profileResponse.headers.get('content-type');
-        const profileText = await profileResponse.text();
-        
-        if (!profileResponse.ok) {
-          throw new Error(`Server error: ${profileResponse.status} ${profileResponse.statusText}`);
-        }
-        
-        if (profileContentType && profileContentType.includes('application/json')) {
-          const profileData = JSON.parse(profileText);
-          setUser(profileData.user);
-          setEditData(profileData.user);
-        } else {
-          throw new Error('Server configuration error. Please check API endpoints.');
-        }
-
-        // Fetch medications from the Medication collection
-        try {
-          const medicationsResponse = await fetch('http://localhost:5000/api/medications', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-          });
-
-          if (medicationsResponse.ok) {
-            const medicationsData = await medicationsResponse.json();
-            // Handle different response formats
-            if (Array.isArray(medicationsData)) {
-              setMedications(medicationsData);
-            } else if (medicationsData.data && Array.isArray(medicationsData.data)) {
-              setMedications(medicationsData.data);
-            } else if (medicationsData.medications && Array.isArray(medicationsData.medications)) {
-              setMedications(medicationsData.medications);
-            }
-          }
-        } catch (medError) {
-          console.error('Failed to load medications:', medError);
-          // Don't throw error, just continue without medications
-        }
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Profile fetch error:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
     fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please login again.');
+      }
+
+      // Fetch user profile
+      const profileResponse = await axios.get(`${API_BASE_URL}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      setUser(profileResponse.data.user);
+      setEditData(profileResponse.data.user);
+
+      // Fetch medications from the Medication collection
+      try {
+        const medicationsResponse = await axios.get(`${API_BASE_URL}/medications`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const medicationsData = medicationsResponse.data;
+        if (Array.isArray(medicationsData)) {
+          setMedications(medicationsData);
+        } else if (medicationsData.data && Array.isArray(medicationsData.data)) {
+          setMedications(medicationsData.data);
+        } else if (medicationsData.medications && Array.isArray(medicationsData.medications)) {
+          setMedications(medicationsData.medications);
+        }
+      } catch (medError) {
+        console.error('Failed to load medications:', medError);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+      setError(err.response?.data?.message || err.message);
+      setLoading(false);
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -254,56 +223,40 @@ const UserProfile = () => {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(editData)
+      const response = await axios.put(`${API_BASE_URL}/profile`, editData, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-      
-      const data = await response.json();
-      setUser(data.user);
+      setUser(response.data.user);
       setEditMode(false);
       setSuccess('Profile updated successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
+      setTimeout(() => setError(''), 3000);
     }
   };
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setError('New passwords do not match');
+      setTimeout(() => setError(''), 3000);
       return;
     }
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/update-password', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(passwordData)
+      await axios.patch(`${API_BASE_URL}/profile/update-password`, passwordData, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to change password');
-      }
       
       setChangePasswordDialog(false);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setSuccess('Password changed successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -315,14 +268,6 @@ const UserProfile = () => {
         return <AdminIcon sx={{ fontSize: 60 }} />;
       default:
         return <PersonIcon sx={{ fontSize: 60 }} />;
-    }
-  };
-
-  const getRoleColor = (role) => {
-    switch (role) {
-      case 'admin': return 'error';
-      case 'doctor': return 'primary';
-      default: return 'secondary';
     }
   };
 
@@ -549,11 +494,11 @@ const UserProfile = () => {
       <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
         <CardContent sx={{ p: 3 }}>
           <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
-            <RestaurantIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            <Restaurant sx={{ mr: 1, verticalAlign: 'middle' }} />
             Meal Times
           </Typography>
           <Grid container spacing={2.5}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 label="Breakfast"
@@ -569,7 +514,7 @@ const UserProfile = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 label="Lunch"
@@ -585,7 +530,7 @@ const UserProfile = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 label="Dinner"
@@ -601,7 +546,7 @@ const UserProfile = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 label="Night"
@@ -695,7 +640,6 @@ const UserProfile = () => {
           <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
             Current Medications
           </Typography>
-          
         </Box>
         <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
           <Table>
@@ -753,7 +697,7 @@ const UserProfile = () => {
               {medications.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    No medications recorded. Add medications from the Medical Reminder System.
+                    No medications recorded. Add medications from the Medicine Reminders page.
                   </TableCell>
                 </TableRow>
               )}
@@ -816,7 +760,7 @@ const UserProfile = () => {
                     select
                     value={slot.day || ''}
                     onChange={(e) => {
-                      const newAvailability = [...editData.availability];
+                      const newAvailability = [...(editData.availability || [])];
                       newAvailability[index].day = e.target.value;
                       handleInputChange('availability', newAvailability);
                     }}
@@ -836,7 +780,7 @@ const UserProfile = () => {
                     type="time"
                     value={slot.startTime || ''}
                     onChange={(e) => {
-                      const newAvailability = [...editData.availability];
+                      const newAvailability = [...(editData.availability || [])];
                       newAvailability[index].startTime = e.target.value;
                       handleInputChange('availability', newAvailability);
                     }}
@@ -853,7 +797,7 @@ const UserProfile = () => {
                     type="time"
                     value={slot.endTime || ''}
                     onChange={(e) => {
-                      const newAvailability = [...editData.availability];
+                      const newAvailability = [...(editData.availability || [])];
                       newAvailability[index].endTime = e.target.value;
                       handleInputChange('availability', newAvailability);
                     }}
@@ -867,7 +811,7 @@ const UserProfile = () => {
                   <IconButton 
                     disabled={!editMode}
                     onClick={() => {
-                      const newAvailability = [...editData.availability];
+                      const newAvailability = [...(editData.availability || [])];
                       newAvailability.splice(index, 1);
                       handleInputChange('availability', newAvailability);
                     }}
@@ -885,7 +829,7 @@ const UserProfile = () => {
                 startIcon={<AddIcon />}
                 onClick={() => {
                   handleInputChange('availability', [
-                    ...editData.availability,
+                    ...(editData.availability || []),
                     { day: 'Monday', startTime: '09:00', endTime: '17:00' }
                   ]);
                 }}
@@ -933,10 +877,7 @@ const UserProfile = () => {
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <Container maxWidth="lg" sx={{ py: 4, bgcolor: 'background.default', minHeight: '100vh' }}>
-          <Alert 
-            severity="error" 
-            sx={{ borderRadius: 2 }}
-          >
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
             Failed to load user profile
           </Alert>
         </Container>
@@ -947,11 +888,7 @@ const UserProfile = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Box sx={{ 
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        py: 4
-      }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
         <Container maxWidth="lg">
           <Fade in timeout={800}>
             <Box>
@@ -981,7 +918,6 @@ const UserProfile = () => {
                   mb: 4,
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   border: '1px solid rgba(102, 126, 234, 0.3)',
-                  overflow: 'visible'
                 }}>
                   <CardContent sx={{ p: 4 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
@@ -1047,10 +983,7 @@ const UserProfile = () => {
                               />
                             )}
                           </Stack>
-                          <Typography variant="body1" sx={{ 
-                            color: 'rgba(255,255,255,0.9)',
-                            maxWidth: 400
-                          }}>
+                          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', maxWidth: 400 }}>
                             {user.role === 'doctor' ? 
                               `${user.specialization || 'Medical Professional'} at ${user.workplace || 'Healthcare Facility'}` :
                               user.role === 'admin' ? 'System Administrator' :
@@ -1092,9 +1025,7 @@ const UserProfile = () => {
                               fontWeight: 600,
                               px: 2,
                               backgroundColor: 'success.main',
-                              '&:hover': {
-                                backgroundColor: 'success.dark'
-                              }
+                              '&:hover': { backgroundColor: 'success.dark' }
                             }}
                           >
                             Save Changes
@@ -1137,9 +1068,7 @@ const UserProfile = () => {
                       fontWeight: 600,
                       fontSize: '0.95rem',
                       py: 2,
-                      '&.Mui-selected': {
-                        color: 'primary.main'
-                      },
+                      '&.Mui-selected': { color: 'primary.main' },
                       '&:hover': {
                         color: 'primary.light',
                         bgcolor: 'rgba(102, 126, 234, 0.05)'
@@ -1175,18 +1104,14 @@ const UserProfile = () => {
             </Box>
           </Fade>
 
-          {/* Enhanced Change Password Dialog */}
+          {/* Change Password Dialog */}
           <Dialog 
             open={changePasswordDialog} 
             onClose={() => setChangePasswordDialog(false)}
             maxWidth="sm"
             fullWidth
             PaperProps={{
-              sx: { 
-                borderRadius: 3, 
-                border: '1px solid rgba(102, 126, 234, 0.2)',
-                p: 1 
-              }
+              sx: { borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)', p: 1 }
             }}
           >
             <DialogTitle sx={{ 
@@ -1241,11 +1166,7 @@ const UserProfile = () => {
                 onClick={() => setChangePasswordDialog(false)}
                 variant="outlined"
                 size="small"
-                sx={{ 
-                  borderRadius: 2,
-                  fontWeight: 600,
-                  px: 3
-                }}
+                sx={{ borderRadius: 2, fontWeight: 600, px: 3 }}
               >
                 Cancel
               </Button>
@@ -1253,11 +1174,7 @@ const UserProfile = () => {
                 onClick={handlePasswordChange} 
                 variant="contained"
                 size="small"
-                sx={{ 
-                  borderRadius: 2,
-                  fontWeight: 600,
-                  px: 3
-                }}
+                sx={{ borderRadius: 2, fontWeight: 600, px: 3 }}
               >
                 Change Password
               </Button>
@@ -1266,7 +1183,7 @@ const UserProfile = () => {
         </Container>
       </Box>
     </ThemeProvider>
-    );
+  );
 };
 
 export default UserProfile;
