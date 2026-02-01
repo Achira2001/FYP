@@ -21,6 +21,7 @@ import Medication from './models/Medication.js';
 import User from './models/User.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import dietPlanRoutes from './routes/dietPlanRoutes.js';
 
 dotenv.config();
 
@@ -36,10 +37,9 @@ connectDB();
 
 // CORS
 app.use(cors({
-  origin: 'http://localhost:5173', // frontend URL
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
-
 // Security middleware
 app.use(helmet());
 
@@ -61,14 +61,6 @@ app.use(morgan('combined'));
 // Serve uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/auth', googleAuthRoutes);
-app.use('/api/medications', medicationRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api', profileRoutes);
-app.use('/api', doctorRoutes);
-app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -83,6 +75,20 @@ app.get('/api/health', (req, res) => {
     }
   });
 });
+
+
+// Routes
+app.use('/api/diet-plans', dietPlanRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/auth', googleAuthRoutes);
+app.use('/api/medications', medicationRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api', profileRoutes);
+app.use('/api', doctorRoutes);
+app.use('/api/admin', adminRoutes);
+
+
 
 // CORRECTED: Schedule reminder checks every minute
 cron.schedule('* * * * *', async () => {
