@@ -9,42 +9,36 @@ import {
   Avatar,
   Chip,
   Button,
-  LinearProgress,
   IconButton,
   Divider,
   Paper,
   Tab,
   Tabs,
   Alert,
-  Badge,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   CircularProgress,
-  Tooltip,
+  TextField,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
-  Person as PersonIcon,
-  Medication as MedicationIcon,
-  Restaurant as RestaurantIcon,
-  Timeline as TimelineIcon,
-  Notifications as NotificationsIcon,
-  TrendingUp as TrendingUpIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  LocalHospital as HospitalIcon,
-  CalendarToday as CalendarIcon,
-  AccessTime as ClockIcon,
   FitnessCenter as FitnessIcon,
-  Favorite as HeartIcon,
-  Speed as SpeedIcon,
+  Restaurant as RestaurantIcon,
+  Medication as MedicationIcon,
+  LocalHospital as HospitalIcon,
+  Height as HeightIcon,
+  MonitorWeight as WeightIcon,
+  Bloodtype as BloodTypeIcon,
   Add as AddIcon,
   Edit as EditIcon,
-  Schedule as ScheduleIcon,
+  CheckCircle,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { format } from 'date-fns';
 import axios from 'axios';
 
 // ========================================
@@ -113,10 +107,10 @@ export default function PatientDashboard() {
   const [selectedTab, setSelectedTab] = useState(0);
   const [userData, setUserData] = useState(null);
   const [medications, setMedications] = useState([]);
-  const [dietPlans, setDietPlans] = useState([]);
-  const [todaysMedications, setTodaysMedications] = useState([]);
-  const [adherenceData, setAdherenceData] = useState([]);
-  const [activeDietPlan, setActiveDietPlan] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // ========================================
   // FETCH DATA
@@ -128,43 +122,39 @@ export default function PatientDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Fetch user profile
-      const userResponse = await axios.get(`${API_BASE_URL}/users/profile`);
-      setUserData(userResponse.data.data);
+      const token = localStorage.getItem('token');
 
-      // Fetch medications
-      const medsResponse = await axios.get(`${API_BASE_URL}/medications`);
-      setMedications(medsResponse.data.data || []);
-
-      // Fetch diet plans
-      const dietResponse = await axios.get(`${API_BASE_URL}/diet-plans/recent`);
-      setDietPlans(dietResponse.data.data || []);
-      
-      if (dietResponse.data.data && dietResponse.data.data.length > 0) {
-        setActiveDietPlan(dietResponse.data.data[0]);
+      if (!token) {
+        throw new Error('Please login to continue');
       }
 
-      // Fetch adherence stats
-      const adherenceResponse = await axios.get(`${API_BASE_URL}/medications/adherence/stats`);
-      setAdherenceData(adherenceResponse.data.data || []);
+      // Fetch user profile
+      const userResponse = await axios.get(`${API_BASE_URL}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setUserData(userResponse.data.user);
+      setEditData(userResponse.data.user);
 
-      // Get today's medications
-      const today = new Date();
-      const currentHour = today.getHours();
-      let currentPeriod = 'morning';
-      
-      if (currentHour >= 12 && currentHour < 17) currentPeriod = 'afternoon';
-      else if (currentHour >= 17 && currentHour < 21) currentPeriod = 'evening';
-      else if (currentHour >= 21 || currentHour < 6) currentPeriod = 'night';
-
-      const todayMeds = medsResponse.data.data?.filter(med => 
-        med.isActive && med.timePeriods.includes(currentPeriod)
-      ) || [];
-      setTodaysMedications(todayMeds);
+      // Fetch medications
+      try {
+        const medsResponse = await axios.get(`${API_BASE_URL}/medications`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const medsData = medsResponse.data;
+        if (Array.isArray(medsData)) {
+          setMedications(medsData);
+        } else if (medsData.data && Array.isArray(medsData.data)) {
+          setMedications(medsData.data);
+        } else if (medsData.medications && Array.isArray(medsData.medications)) {
+          setMedications(medsData.medications);
+        }
+      } catch (medError) {
+        console.error('Failed to load medications:', medError);
+      }
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setError(error.response?.data?.message || error.message);
     } finally {
       setLoading(false);
     }
@@ -173,37 +163,30 @@ export default function PatientDashboard() {
   // ========================================
   // HELPER FUNCTIONS
   // ========================================
-  const getBMIStatus = (bmi) => {
-    if (!bmi) return { status: 'Unknown', color: 'default' };
-    if (bmi < 18.5) return { status: 'Underweight', color: 'info' };
-    if (bmi < 25) return { status: 'Normal', color: 'success' };
-    if (bmi < 30) return { status: 'Overweight', color: 'warning' };
-    return { status: 'Obese', color: 'error' };
+  const handleInputChange = (field, value) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const getAdherenceRate = () => {
-    if (!adherenceData || adherenceData.length === 0) return 0;
-    const total = adherenceData.reduce((sum, day) => sum + day.total, 0);
-    const taken = adherenceData.reduce((sum, day) => sum + day.taken, 0);
-    return total > 0 ? Math.round((taken / total) * 100) : 0;
-  };
-
-  const getUpcomingReminders = () => {
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
-    return medications
-      .filter(med => med.isActive)
-      .flatMap(med => 
-        med.reminders.map(reminder => ({
-          medication: med.name,
-          time: reminder.time,
-          period: reminder.period,
-        }))
-      )
-      .filter(reminder => reminder.time > currentTime)
-      .sort((a, b) => a.time.localeCompare(b.time))
-      .slice(0, 3);
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${API_BASE_URL}/profile`, editData, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      setUserData(response.data.user);
+      setEditData(response.data.user);
+      setEditMode(false);
+      setSuccess('Health information updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error saving profile:', err);
+      setError(err.response?.data?.message || err.message);
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
   // ========================================
@@ -227,581 +210,334 @@ export default function PatientDashboard() {
     );
   }
 
-  const bmiInfo = getBMIStatus(userData?.bmi);
-  const adherenceRate = getAdherenceRate();
-  const upcomingReminders = getUpcomingReminders();
-
   // ========================================
-  // RENDER: OVERVIEW TAB
+  // RENDER: HEALTH INFO TAB
   // ========================================
-  const renderOverviewTab = () => (
+  const renderHealthInfo = () => (
     <Grid container spacing={3}>
-      {/* Welcome Card */}
       <Grid item xs={12}>
-        <Card elevation={3}>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={3}>
-              <Avatar
-                sx={{
-                  width: 80,
-                  height: 80,
-                  bgcolor: 'primary.main',
-                  fontSize: '2rem',
-                }}
-              >
-                {userData?.fullName?.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box flex={1}>
-                <Typography variant="h4" gutterBottom>
-                  Welcome back, {userData?.fullName}! 👋
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  Here's your health summary for today
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                startIcon={<EditIcon />}
-                onClick={() => {/* Navigate to profile edit */}}
-              >
-                Edit Profile
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h5">
+            💪 Health Information
+          </Typography>
+          <Button
+            variant={editMode ? "contained" : "outlined"}
+            startIcon={editMode ? <CheckCircle /> : <EditIcon />}
+            onClick={() => {
+              if (editMode) {
+                handleSave();
+              } else {
+                setEditMode(true);
+              }
+            }}
+          >
+            {editMode ? 'Save Changes' : 'Edit'}
+          </Button>
+        </Box>
       </Grid>
 
-      {/* Quick Stats */}
-      <Grid item xs={12} md={3}>
+      {/* Health Metrics Card */}
+      <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Avatar sx={{ bgcolor: 'primary.main' }}>
-                <MedicationIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h4">{medications.filter(m => m.isActive).length}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Active Medications
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Avatar sx={{ bgcolor: 'success.main' }}>
-                <CheckCircleIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h4">{adherenceRate}%</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Adherence Rate
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                <RestaurantIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h4">{dietPlans.length}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Diet Plans
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid item xs={12} md={3}>
-        <Card>
-          <CardContent>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Avatar sx={{ bgcolor: 'warning.main' }}>
-                <SpeedIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h4">{userData?.bmi?.toFixed(1) || 'N/A'}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  BMI
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Health Status Card */}
-      <Grid item xs={12} md={8}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              📊 Health Status
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FitnessIcon /> Health Metrics
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Body Mass Index (BMI)
-                  </Typography>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Typography variant="h6">{userData?.bmi?.toFixed(1) || 'N/A'}</Typography>
-                    <Chip
-                      label={bmiInfo.status}
-                      color={bmiInfo.color}
-                      size="small"
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Blood Type"
+                  select
+                  value={editData.bloodType || ''}
+                  onChange={(e) => handleInputChange('bloodType', e.target.value)}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <BloodTypeIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  }}
+                >
+                  {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
+                    <MenuItem key={type} value={type}>{type}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Height (cm)"
+                  type="number"
+                  value={editData.height || ''}
+                  onChange={(e) => handleInputChange('height', e.target.value)}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <HeightIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  label="Weight (kg)"
+                  type="number"
+                  value={editData.weight || ''}
+                  onChange={(e) => handleInputChange('weight', e.target.value)}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: <WeightIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  }}
+                />
+              </Grid>
+              {userData?.height && userData?.weight && (
+                <Grid item xs={12}>
+                  <Box display="flex" justifyContent="center" mt={1}>
+                    <Chip 
+                      label={`BMI: ${(userData.weight / ((userData.height / 100) ** 2)).toFixed(1)}`} 
+                      color="success"
+                      sx={{ fontSize: '1rem', py: 2.5, px: 3 }}
                     />
                   </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min((userData?.bmi / 40) * 100, 100)}
-                    sx={{ mt: 1 }}
-                  />
-                </Box>
-
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Height / Weight
-                  </Typography>
-                  <Typography variant="body1">
-                    {userData?.height || 'N/A'} cm / {userData?.weight || 'N/A'} kg
-                  </Typography>
-                </Box>
-
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Blood Type
-                  </Typography>
-                  <Typography variant="body1">
-                    {userData?.bloodType || 'Not specified'}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              <Grid item xs={6}>
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Age
-                  </Typography>
-                  <Typography variant="body1">
-                    {userData?.age || 'N/A'} years
-                  </Typography>
-                </Box>
-
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Medical Conditions
-                  </Typography>
-                  {userData?.medicalHistory && userData.medicalHistory.length > 0 ? (
-                    <Box display="flex" flexWrap="wrap" gap={1}>
-                      {userData.medicalHistory
-                        .filter(h => h.isActive)
-                        .map((history, idx) => (
-                          <Chip
-                            key={idx}
-                            label={history.condition}
-                            size="small"
-                            color="warning"
-                          />
-                        ))}
-                    </Box>
-                  ) : (
-                    <Typography variant="body2">None reported</Typography>
-                  )}
-                </Box>
-              </Grid>
+                </Grid>
+              )}
             </Grid>
           </CardContent>
         </Card>
       </Grid>
 
-      {/* Today's Schedule */}
-      <Grid item xs={12} md={4}>
+      {/* Meal Times Card */}
+      <Grid item xs={12}>
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
-              🕐 Today's Schedule
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <RestaurantIcon /> Meal Times
             </Typography>
             <Divider sx={{ mb: 2 }} />
-
-            {todaysMedications.length > 0 ? (
-              <List dense>
-                {todaysMedications.map((med, idx) => (
-                  <ListItem key={idx} divider={idx < todaysMedications.length - 1}>
-                    <ListItemIcon>
-                      <MedicationIcon color="primary" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={med.name}
-                      secondary={`${med.dosage} - ${med.quantity} dose(s)`}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Alert severity="info">No medications scheduled for this period</Alert>
-            )}
-
-            <Box mt={2}>
-              <Typography variant="subtitle2" gutterBottom>
-                Upcoming Reminders:
-              </Typography>
-              {upcomingReminders.length > 0 ? (
-                <List dense>
-                  {upcomingReminders.map((reminder, idx) => (
-                    <ListItem key={idx}>
-                      <ListItemIcon>
-                        <ClockIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={reminder.medication}
-                        secondary={`${reminder.time} (${reminder.period})`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  No upcoming reminders today
-                </Typography>
-              )}
-            </Box>
+            
+            <Grid container spacing={2.5}>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  label="Breakfast"
+                  type="time"
+                  value={editData.mealTimes?.breakfast || '08:00'}
+                  onChange={(e) => handleInputChange('mealTimes', {
+                    ...editData.mealTimes,
+                    breakfast: e.target.value
+                  })}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  label="Lunch"
+                  type="time"
+                  value={editData.mealTimes?.lunch || '13:00'}
+                  onChange={(e) => handleInputChange('mealTimes', {
+                    ...editData.mealTimes,
+                    lunch: e.target.value
+                  })}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  label="Dinner"
+                  type="time"
+                  value={editData.mealTimes?.dinner || '19:00'}
+                  onChange={(e) => handleInputChange('mealTimes', {
+                    ...editData.mealTimes,
+                    dinner: e.target.value
+                  })}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={3}>
+                <TextField
+                  fullWidth
+                  label="Night"
+                  type="time"
+                  value={editData.mealTimes?.night || '22:00'}
+                  onChange={(e) => handleInputChange('mealTimes', {
+                    ...editData.mealTimes,
+                    night: e.target.value
+                  })}
+                  disabled={!editMode}
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
           </CardContent>
         </Card>
       </Grid>
+    </Grid>
+  );
 
-      {/* Active Diet Plan */}
-      {activeDietPlan && (
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">
-                  🍽️ Active Diet Plan
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => setSelectedTab(2)}
-                >
-                  View Details
-                </Button>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" color="primary.main">
-                      {activeDietPlan.recommendations.daily_calories}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Daily Calories
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" color="success.main">
-                      {activeDietPlan.recommendations.protein_grams}g
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Protein
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" color="warning.main">
-                      {activeDietPlan.recommendations.carbs_grams}g
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Carbs
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" color="secondary.main">
-                      {activeDietPlan.recommendations.fats_grams}g
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Fats
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-
-              <Box mt={2}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Meal Plan Type:
-                </Typography>
-                <Chip
-                  label={activeDietPlan.recommendations.meal_plan_type}
-                  color="primary"
-                  sx={{ mt: 0.5 }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      )}
+  // ========================================
+  // RENDER: MEDICAL HISTORY TAB
+  // ========================================
+  const renderMedicalHistory = () => (
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <Card>
+          <CardContent>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+              <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <HospitalIcon /> Medical History
+              </Typography>
+              <Button 
+                variant="contained" 
+                startIcon={<AddIcon />}
+                onClick={() => {/* Add medical history */}}
+              >
+                Add Condition
+              </Button>
+            </Box>
+            <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+              <Table>
+                <TableHead sx={{ bgcolor: 'rgba(99, 102, 241, 0.1)' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Condition</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Diagnosed Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Notes</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {userData?.medicalHistory?.map((condition, index) => (
+                    <TableRow key={index} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>{condition.condition}</TableCell>
+                      <TableCell>
+                        {condition.diagnosedDate ? format(new Date(condition.diagnosedDate), 'MMM dd, yyyy') : 'N/A'}
+                      </TableCell>
+                      <TableCell>{condition.notes || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={condition.isActive ? 'Active' : 'Inactive'} 
+                          color={condition.isActive ? 'success' : 'default'} 
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small" color="primary">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!userData?.medicalHistory || userData.medicalHistory.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                        No medical history recorded
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </Grid>
     </Grid>
   );
 
   // ========================================
   // RENDER: MEDICATIONS TAB
   // ========================================
-  const renderMedicationsTab = () => (
+  const renderMedications = () => (
     <Grid container spacing={3}>
       <Grid item xs={12}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">
-            💊 My Medications
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {/* Navigate to add medication */}}
-          >
-            Add Medication
-          </Button>
-        </Box>
+        <Card>
+          <CardContent>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+              <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <MedicationIcon /> Current Medications
+              </Typography>
+            </Box>
+            <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+              <Table>
+                <TableHead sx={{ bgcolor: 'rgba(168, 85, 247, 0.1)' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Medication</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Dosage</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Times</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Meal Relation</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {medications.map((medication, index) => (
+                    <TableRow key={medication._id || index} hover>
+                      <TableCell sx={{ fontWeight: 500 }}>{medication.name}</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={medication.drugType?.toUpperCase() || 'N/A'} 
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>{medication.quantity}x {medication.dosage}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {medication.timePeriods?.map((period, idx) => (
+                            <Chip 
+                              key={idx}
+                              label={period} 
+                              size="small"
+                            />
+                          ))}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption">
+                          {medication.mealRelation?.replace('_', ' ') || 'N/A'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{medication.reminderDays || 30} days</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={medication.isActive ? 'Active' : 'Inactive'} 
+                          color={medication.isActive ? 'success' : 'default'} 
+                          size="small"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {medications.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                        No medications recorded. Add medications from the Medicine Reminders page.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {medications.length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(16, 185, 129, 0.1)', borderRadius: 2 }}>
+                <Typography variant="body2" color="success.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CheckCircle sx={{ fontSize: 18 }} />
+                  <strong>{medications.length}</strong> active medication{medications.length !== 1 ? 's' : ''} with scheduled reminders
+                </Typography>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
       </Grid>
-
-      {medications.filter(m => m.isActive).map((med) => (
-        <Grid item xs={12} md={6} key={med._id}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    {med.name}
-                  </Typography>
-                  <Chip
-                    label={med.drugType}
-                    size="small"
-                    color="primary"
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={med.drugSubcategory}
-                    size="small"
-                    variant="outlined"
-                  />
-                </Box>
-                <IconButton size="small" onClick={() => {/* Edit medication */}}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Box>
-
-              <Divider sx={{ mb: 2 }} />
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Dosage
-                  </Typography>
-                  <Typography variant="body1">
-                    {med.quantity} {med.dosage}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Meal Relation
-                  </Typography>
-                  <Typography variant="body1">
-                    {med.mealRelation.replace(/_/g, ' ')}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Schedule
-                  </Typography>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
-                    {med.reminders.map((reminder, idx) => (
-                      <Chip
-                        key={idx}
-                        icon={<ClockIcon />}
-                        label={`${reminder.period} - ${reminder.time}`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </Grid>
-
-                {med.notes && (
-                  <Grid item xs={12}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Notes
-                    </Typography>
-                    <Typography variant="body2">
-                      {med.notes}
-                    </Typography>
-                  </Grid>
-                )}
-
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Reminders
-                  </Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap">
-                    {med.reminderSettings.smsEnabled && (
-                      <Chip label="SMS" size="small" color="success" />
-                    )}
-                    {med.reminderSettings.emailEnabled && (
-                      <Chip label="Email" size="small" color="success" />
-                    )}
-                    {med.reminderSettings.calendarEnabled && (
-                      <Chip label="Calendar" size="small" color="success" />
-                    )}
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-
-      {medications.filter(m => m.isActive).length === 0 && (
-        <Grid item xs={12}>
-          <Alert severity="info">
-            No active medications. Click "Add Medication" to add your first one!
-          </Alert>
-        </Grid>
-      )}
-    </Grid>
-  );
-
-  // ========================================
-  // RENDER: DIET PLANS TAB
-  // ========================================
-  const renderDietPlansTab = () => (
-    <Grid container spacing={3}>
-      <Grid item xs={12}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h5">
-            🥗 My Diet Plans
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {/* Navigate to create diet plan */}}
-          >
-            Create New Plan
-          </Button>
-        </Box>
-      </Grid>
-
-      {dietPlans.map((plan, idx) => (
-        <Grid item xs={12} md={6} key={plan._id}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="start" mb={2}>
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    {plan.userInfo.name}'s Plan
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Created: {new Date(plan.createdAt).toLocaleDateString()}
-                  </Typography>
-                </Box>
-                {idx === 0 && (
-                  <Chip label="Active" color="success" size="small" />
-                )}
-              </Box>
-
-              <Divider sx={{ mb: 2 }} />
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Goal
-                  </Typography>
-                  <Typography variant="body1">
-                    {plan.userInfo.goal}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    BMI
-                  </Typography>
-                  <Typography variant="body1">
-                    {plan.userInfo.bmi.toFixed(1)}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Daily Targets
-                  </Typography>
-                  <Box display="flex" gap={2}>
-                    <Chip
-                      label={`${plan.recommendations.daily_calories} kcal`}
-                      size="small"
-                      color="primary"
-                    />
-                    <Chip
-                      label={`${plan.recommendations.protein_grams}g protein`}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Meal Plan
-                  </Typography>
-                  <Typography variant="body1">
-                    {plan.recommendations.meal_plan_type}
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              <Box mt={2}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={() => {/* View plan details */}}
-                >
-                  View Full Plan
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-
-      {dietPlans.length === 0 && (
-        <Grid item xs={12}>
-          <Alert severity="info">
-            No diet plans yet. Create your first personalized diet plan!
-          </Alert>
-        </Grid>
-      )}
     </Grid>
   );
 
@@ -818,6 +554,44 @@ export default function PatientDashboard() {
         }}
       >
         <Container maxWidth="xl">
+          {/* Alerts */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+              {success}
+            </Alert>
+          )}
+
+          {/* Welcome Header */}
+          <Card elevation={3} sx={{ mb: 3 }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" gap={3}>
+                <Avatar
+                  sx={{
+                    width: 70,
+                    height: 70,
+                    bgcolor: 'primary.main',
+                    fontSize: '1.8rem',
+                  }}
+                >
+                  {userData?.fullName?.charAt(0).toUpperCase()}
+                </Avatar>
+                <Box>
+                  <Typography variant="h4" gutterBottom>
+                    Welcome, {userData?.fullName}! 👋
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Manage your health information and medical records
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
           {/* Tabs */}
           <Paper sx={{ mb: 3 }}>
             <Tabs
@@ -827,16 +601,16 @@ export default function PatientDashboard() {
               textColor="primary"
               indicatorColor="primary"
             >
-              <Tab icon={<PersonIcon />} label="Overview" iconPosition="start" />
+              <Tab icon={<FitnessIcon />} label="Health Info" iconPosition="start" />
+              <Tab icon={<HospitalIcon />} label="Medical History" iconPosition="start" />
               <Tab icon={<MedicationIcon />} label="Medications" iconPosition="start" />
-              <Tab icon={<RestaurantIcon />} label="Diet Plans" iconPosition="start" />
             </Tabs>
           </Paper>
 
           {/* Tab Content */}
-          {selectedTab === 0 && renderOverviewTab()}
-          {selectedTab === 1 && renderMedicationsTab()}
-          {selectedTab === 2 && renderDietPlansTab()}
+          {selectedTab === 0 && renderHealthInfo()}
+          {selectedTab === 1 && renderMedicalHistory()}
+          {selectedTab === 2 && renderMedications()}
         </Container>
       </Box>
     </ThemeProvider>
