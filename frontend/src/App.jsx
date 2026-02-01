@@ -10,41 +10,80 @@ import OTPVerifyPage from "./pages/OTPVerifyPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
 
-
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageUsers from "./pages/admin/ManageUsers";
-// import ProfilePage from "./pages/ProfilePage";
+
 import Layout from "./components/Layout";
-import HomePage from "./pages/patient/HomePage";
 import MedicineReminder from "./pages/patient/MedicineReminder";
 import DietPlan from "./pages/patient/DietPlan";
-
+import HomePage from "./pages/HomePage";
 
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
-import { Home } from "lucide-react";
+import PatientDashboard from "./pages/patient/PatientDashboard";
 
-// PrivateRoute wrapper
+/* ================================
+   PRIVATE ROUTE
+================================ */
 function PrivateRoute({ role, children }) {
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
 
-  if (!token) return <Navigate to="/login" replace />;
-  if (role && role !== userRole) return <Navigate to="/login" replace />;
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (role && role !== userRole) {
+    return <Navigate to="/login" replace />;
+  }
 
   return children;
+}
+
+/* ================================
+   DASHBOARD REDIRECT
+   Shows HomePage for non-authenticated users
+   Redirects authenticated users to their dashboard
+================================ */
+function DashboardRedirect() {
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+
+  // If not authenticated, show HomePage
+  if (!token) {
+    return <HomePage />;
+  }
+
+  // If authenticated, redirect to appropriate dashboard
+  if (role === "patient") {
+    return <Navigate to="/patient" replace />;
+  }
+
+  if (role === "doctor") {
+    return <Navigate to="/doctor" replace />;
+  }
+
+  if (role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  // Fallback to login
+  return <Navigate to="/login" replace />;
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* ================= ROOT / HOMEPAGE ================= */}
+        <Route path="/" element={<DashboardRedirect />} />
+
+        {/* ================= AUTH ROUTES ================= */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-otp" element={<OTPVerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* PATIENT ROUTES */}
+        {/* ================= PATIENT ROUTES ================= */}
         <Route
           path="/patient"
           element={
@@ -53,13 +92,13 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<HomePage />} />
-          <Route path="home-page" element={<HomePage />} />
+          <Route index element={<PatientDashboard />} />
+          <Route path="patient-dashboard" element={<PatientDashboard />} />
           <Route path="medicine-reminders" element={<MedicineReminder />} />
           <Route path="diet-plan" element={<DietPlan />} />
         </Route>
 
-        {/* DOCTOR ROUTES */}
+        {/* ================= DOCTOR ROUTES ================= */}
         <Route
           path="/doctor"
           element={
@@ -69,11 +108,9 @@ export default function App() {
           }
         >
           <Route index element={<DoctorDashboard />} />
-
         </Route>
 
-
-        {/* ADMIN ROUTES */}
+        {/* ================= ADMIN ROUTES ================= */}
         <Route
           path="/admin"
           element={
@@ -86,7 +123,7 @@ export default function App() {
           <Route path="manage-users" element={<ManageUsers />} />
         </Route>
 
-        {/* PROFILE ROUTE - FIXED */}
+        {/* ================= PROFILE ROUTE ================= */}
         <Route
           path="/profile"
           element={
@@ -98,11 +135,10 @@ export default function App() {
           <Route index element={<ProfilePage />} />
         </Route>
 
-        {/* CATCH-ALL */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* ================= CATCH ALL ================= */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Toast container for global notifications */}
       <ToastContainer position="bottom-right" />
     </BrowserRouter>
   );
