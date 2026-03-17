@@ -17,7 +17,7 @@ import Layout from "./components/Layout";
 import MedicineReminder from "./pages/patient/MedicineReminder";
 import DietPlan from "./pages/patient/DietPlan";
 import HomePage from "./pages/HomePage";
-
+import NotificationsPage from './pages/NotificationsPage';
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 
@@ -82,7 +82,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-otp" element={<OTPVerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
+        <Route path="/notifications" element={<NotificationsPage />} />
         {/* ================= PATIENT ROUTES ================= */}
         <Route
           path="/patient"

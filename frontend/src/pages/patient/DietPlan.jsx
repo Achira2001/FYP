@@ -55,9 +55,15 @@ import {
   Assignment as ReportIcon,
   History as HistoryIcon,
   Refresh as RefreshIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
+
+// ── NEW IMPORTS ──────────────────────────────────────────
+import MealSummaryCard from './MealSummaryCard';
+import DietPlanPage from './DietPlanPage';
+// ────────────────────────────────────────────────────────
 
 // ========================================
 // THEME CONFIGURATION
@@ -124,8 +130,8 @@ const medivaTheme = createTheme({
 // ========================================
 // API CONFIGURATION
 // ========================================
-const ML_API_BASE_URL = 'http://localhost:5001/api'; // Flask ML backend
-const MERN_API_BASE_URL = 'http://localhost:5000/api'; // MERN backend
+const ML_API_BASE_URL = 'http://localhost:5001/api';
+const MERN_API_BASE_URL = 'http://localhost:5000/api';
 
 // ========================================
 // CONSTANTS
@@ -160,10 +166,10 @@ const goals = [
 // ========================================
 export default function DietPlanForm() {
   const theme = useTheme();
-  
+
   // Tab selection (0 = Manual Form, 1 = Report Upload)
   const [selectedTab, setSelectedTab] = useState(0);
-  
+
   // Manual form states
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -172,7 +178,7 @@ export default function DietPlanForm() {
     allergies: '', mealsPerDay: '3',
   });
   const [anchorEl, setAnchorEl] = useState(null);
-  
+
   // Report upload states
   const [uploadedFile, setUploadedFile] = useState(null);
   const [ocrProcessing, setOcrProcessing] = useState(false);
@@ -186,17 +192,21 @@ export default function DietPlanForm() {
     goal: 'Maintenance',
     mealsPerDay: '3',
   });
-  
+
   // Common states
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [recommendations, setRecommendations] = useState(null);
-  
+
   // History states
   const [savedPlans, setSavedPlans] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // ── NEW STATE: controls whether to show the full DietPlanPage ──
+  const [showDietPlanPage, setShowDietPlanPage] = useState(false);
+  // ──────────────────────────────────────────────────────────────
 
   const steps = ['Basic Info', 'Health Details', 'Diet Preferences'];
 
@@ -214,13 +224,11 @@ export default function DietPlanForm() {
     try {
       setLoadingHistory(true);
       const response = await axios.get(`${MERN_API_BASE_URL}/diet-plans/recent`);
-      
       if (response.data.success) {
         setSavedPlans(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching saved plans:', error);
-      // Don't show error to user, just log it
     } finally {
       setLoadingHistory(false);
     }
@@ -229,7 +237,6 @@ export default function DietPlanForm() {
   const saveDietPlanToMongoDB = async (mlResponse, sourceData, dataSource) => {
     try {
       console.log('Saving diet plan to MongoDB...');
-
       const dietPlanData = {
         userInfo: {
           name: mlResponse.user_info.name,
@@ -260,19 +267,14 @@ export default function DietPlanForm() {
         },
       };
 
-      const response = await axios.post(
-        `${MERN_API_BASE_URL}/diet-plans`,
-        dietPlanData
-      );
-
+      const response = await axios.post(`${MERN_API_BASE_URL}/diet-plans`, dietPlanData);
       if (response.data.success) {
         console.log('✓ Diet plan saved to MongoDB:', response.data.data._id);
-        fetchSavedPlans(); // Refresh the list
+        fetchSavedPlans();
         return response.data.data._id;
       }
     } catch (error) {
       console.error('Error saving to MongoDB:', error);
-      // Don't fail the whole process
       return null;
     }
   };
@@ -280,11 +282,8 @@ export default function DietPlanForm() {
   const loadSavedPlan = async (planId) => {
     try {
       const response = await axios.get(`${MERN_API_BASE_URL}/diet-plans/${planId}`);
-      
       if (response.data.success) {
         const plan = response.data.data;
-        
-        // Convert to recommendations format
         const recommendationsData = {
           success: true,
           user_info: plan.userInfo,
@@ -292,8 +291,11 @@ export default function DietPlanForm() {
           macro_percentages: plan.macro_percentages,
           meal_breakdown: plan.meal_breakdown,
           health_insights: plan.health_insights,
+          // ── NEW: restore diseases & allergies from saved plan ──
+          userDiseases: plan.inputData?.diseases || [],
+          userAllergies: plan.inputData?.allergies || '',
+          // ──────────────────────────────────────────────────────
         };
-        
         setRecommendations(recommendationsData);
         setSuccess(true);
         setShowHistory(false);
@@ -305,13 +307,9 @@ export default function DietPlanForm() {
   };
 
   const deleteSavedPlan = async (planId) => {
-    if (!window.confirm('Are you sure you want to delete this diet plan?')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete this diet plan?')) return;
     try {
       const response = await axios.delete(`${MERN_API_BASE_URL}/diet-plans/${planId}`);
-      
       if (response.data.success) {
         fetchSavedPlans();
         alert('Diet plan deleted successfully');
@@ -328,7 +326,6 @@ export default function DietPlanForm() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
     if (name === 'height' || name === 'weight') {
       const height = name === 'height' ? value : formData.height;
       const weight = name === 'weight' ? value : formData.weight;
@@ -345,7 +342,7 @@ export default function DietPlanForm() {
       ...prev,
       diseases: prev.diseases.includes(disease)
         ? prev.diseases.filter(d => d !== disease)
-        : [...prev.diseases, disease]
+        : [...prev.diseases, disease],
     }));
   };
 
@@ -353,17 +350,19 @@ export default function DietPlanForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      // Get recommendations from ML backend
       const mlResponse = await axios.post(`${ML_API_BASE_URL}/predict`, formData);
-
       if (mlResponse.data.success) {
-        // Save to MongoDB
         await saveDietPlanToMongoDB(mlResponse.data, formData, 'manual_form');
-        
-        // Show results
-        setRecommendations(mlResponse.data);
+
+        // ── CHANGED: store diseases & allergies alongside ML response ──
+        setRecommendations({
+          ...mlResponse.data,
+          userDiseases: formData.diseases,
+          userAllergies: formData.allergies,
+        });
+        // ──────────────────────────────────────────────────────────────
+
         setSuccess(true);
       } else {
         setError(mlResponse.data.error || 'Failed to get recommendations');
@@ -392,28 +391,15 @@ export default function DietPlanForm() {
   };
 
   const handleProcessReport = async () => {
-    if (!uploadedFile) {
-      setError('Please select a file first');
-      return;
-    }
-
+    if (!uploadedFile) { setError('Please select a file first'); return; }
     setOcrProcessing(true);
     setError('');
-
     try {
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
-
-      const response = await axios.post(
-        `${ML_API_BASE_URL}/process-report`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
+      const fd = new FormData();
+      fd.append('file', uploadedFile);
+      const response = await axios.post(`${ML_API_BASE_URL}/process-report`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       if (response.data.success) {
         setOcrData(response.data);
         console.log('OCR Result:', response.data);
@@ -434,7 +420,6 @@ export default function DietPlanForm() {
   const handleReportInputChange = (e) => {
     const { name, value } = e.target;
     setReportFormData(prev => ({ ...prev, [name]: value }));
-    
     if (name === 'height' || name === 'weight') {
       const height = name === 'height' ? value : reportFormData.height;
       const weight = name === 'weight' ? value : reportFormData.weight;
@@ -450,9 +435,7 @@ export default function DietPlanForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      // Merge OCR data with report form data
       const submitData = {
         name: ocrData.patient_details?.name || 'Patient',
         age: ocrData.patient_details?.age?.toString() || '30',
@@ -468,25 +451,25 @@ export default function DietPlanForm() {
         mealsPerDay: reportFormData.mealsPerDay,
       };
 
-      // Get recommendations from ML backend
       const mlResponse = await axios.post(`${ML_API_BASE_URL}/predict`, submitData);
-
       if (mlResponse.data.success) {
-        // Save to MongoDB
         await saveDietPlanToMongoDB(mlResponse.data, submitData, 'medical_report');
-        
-        // Show results
-        setRecommendations(mlResponse.data);
+
+        // ── CHANGED: store diseases & allergies alongside ML response ──
+        setRecommendations({
+          ...mlResponse.data,
+          userDiseases: ocrData?.diseases || [],
+          userAllergies: ocrData?.allergies || '',
+        });
+        // ──────────────────────────────────────────────────────────────
+
         setSuccess(true);
       } else {
         setError(mlResponse.data.error || 'Failed to get recommendations');
       }
     } catch (err) {
       console.error('Error:', err);
-      setError(
-        err.response?.data?.error ||
-        'Failed to connect to the AI server.'
-      );
+      setError(err.response?.data?.error || 'Failed to connect to the AI server.');
     } finally {
       setLoading(false);
     }
@@ -513,18 +496,14 @@ export default function DietPlanForm() {
     return '#F87171';
   };
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
+  const handleClick = (event) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
+  // ── CHANGED: resetForm now also resets showDietPlanPage ──
   const resetForm = () => {
     setSuccess(false);
+    setShowDietPlanPage(false);       // ← NEW
     setSelectedTab(0);
     setActiveStep(0);
     setFormData({
@@ -542,6 +521,7 @@ export default function DietPlanForm() {
     setRecommendations(null);
     setError('');
   };
+  // ────────────────────────────────────────────────────────
 
   // ========================================
   // RENDER: HISTORY SECTION
@@ -551,26 +531,16 @@ export default function DietPlanForm() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <HistoryIcon sx={{ color: 'primary.main' }} />
-          <Typography variant="h6">
-            Your Diet Plan History
-          </Typography>
+          <Typography variant="h6">Your Diet Plan History</Typography>
           {savedPlans.length > 0 && (
             <Badge badgeContent={savedPlans.length} color="primary" />
           )}
         </Stack>
         <Stack direction="row" spacing={1}>
-          <IconButton
-            onClick={fetchSavedPlans}
-            disabled={loadingHistory}
-            size="small"
-            sx={{ color: 'primary.main' }}
-          >
+          <IconButton onClick={fetchSavedPlans} disabled={loadingHistory} size="small" sx={{ color: 'primary.main' }}>
             <RefreshIcon />
           </IconButton>
-          <Button
-            variant="outlined"
-            onClick={() => setShowHistory(!showHistory)}
-          >
+          <Button variant="outlined" onClick={() => setShowHistory(!showHistory)}>
             {showHistory ? 'Hide History' : 'Show History'}
           </Button>
         </Stack>
@@ -578,13 +548,9 @@ export default function DietPlanForm() {
 
       <Collapse in={showHistory}>
         {loadingHistory ? (
-          <Box textAlign="center" py={3}>
-            <CircularProgress />
-          </Box>
+          <Box textAlign="center" py={3}><CircularProgress /></Box>
         ) : savedPlans.length === 0 ? (
-          <Alert severity="info">
-            No saved diet plans yet. Create your first one!
-          </Alert>
+          <Alert severity="info">No saved diet plans yet. Create your first one!</Alert>
         ) : (
           <Grid container spacing={2} mt={1}>
             {savedPlans.map((plan) => (
@@ -592,28 +558,20 @@ export default function DietPlanForm() {
                 <Card sx={{ bgcolor: 'background.default' }}>
                   <CardContent>
                     <Stack direction="row" justifyContent="space-between" alignItems="start" mb={1}>
-                      <Typography variant="h6">
-                        {plan.userInfo.name}
-                      </Typography>
+                      <Typography variant="h6">{plan.userInfo.name}</Typography>
                       <Chip
                         label={plan.generatedFrom === 'medical_report' ? 'Report' : 'Manual'}
                         size="small"
                         color={plan.generatedFrom === 'medical_report' ? 'secondary' : 'primary'}
                       />
                     </Stack>
-                    
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Created: {new Date(plan.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
                       })}
                     </Typography>
-                    
                     <Divider sx={{ my: 1 }} />
-                    
                     <Stack spacing={0.5}>
                       <Typography variant="body2">
                         <strong>Age:</strong> {plan.userInfo.age} years | <strong>Gender:</strong> {plan.userInfo.gender}
@@ -621,9 +579,7 @@ export default function DietPlanForm() {
                       <Typography variant="body2">
                         <strong>BMI:</strong> {plan.userInfo.bmi} ({getBMIStatus(plan.userInfo.bmi)})
                       </Typography>
-                      <Typography variant="body2">
-                        <strong>Goal:</strong> {plan.userInfo.goal}
-                      </Typography>
+                      <Typography variant="body2"><strong>Goal:</strong> {plan.userInfo.goal}</Typography>
                       <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 600 }}>
                         {plan.recommendations.meal_plan_type}
                       </Typography>
@@ -631,22 +587,11 @@ export default function DietPlanForm() {
                         <strong>Calories:</strong> {plan.recommendations.daily_calories} kcal/day
                       </Typography>
                     </Stack>
-                    
                     <Stack direction="row" spacing={1} mt={2}>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => loadSavedPlan(plan._id)}
-                        fullWidth
-                      >
+                      <Button size="small" variant="contained" onClick={() => loadSavedPlan(plan._id)} fullWidth>
                         View Details
                       </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        onClick={() => deleteSavedPlan(plan._id)}
-                      >
+                      <Button size="small" variant="outlined" color="error" onClick={() => deleteSavedPlan(plan._id)}>
                         <DeleteIcon fontSize="small" />
                       </Button>
                     </Stack>
@@ -664,7 +609,37 @@ export default function DietPlanForm() {
   // RENDER: SUCCESS SCREEN
   // ========================================
   if (success && recommendations) {
-    const { user_info, recommendations: recs, macro_percentages, meal_breakdown, health_insights } = recommendations;
+    // ── CHANGED: destructure userDiseases & userAllergies too ──
+    const {
+      user_info,
+      recommendations: recs,
+      macro_percentages,
+      meal_breakdown,
+      health_insights,
+      userDiseases,
+      userAllergies,
+    } = recommendations;
+    // ──────────────────────────────────────────────────────────
+
+    // ── NEW: if patient clicked "See Full Plan", render DietPlanPage ──
+    if (showDietPlanPage) {
+      return (
+        <ThemeProvider theme={medivaTheme}>
+          <DietPlanPage
+            mealPlanType={recs.meal_plan_type}
+            diseases={userDiseases || []}
+            allergies={userAllergies || ''}
+            dailyCalories={recs.daily_calories}
+            proteinGrams={recs.protein_grams}
+            carbsGrams={recs.carbs_grams}
+            fatsGrams={recs.fats_grams}
+            patientName={user_info.name}
+            onBack={() => setShowDietPlanPage(false)}
+          />
+        </ThemeProvider>
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────
 
     return (
       <ThemeProvider theme={medivaTheme}>
@@ -678,6 +653,7 @@ export default function DietPlanForm() {
         >
           <Container maxWidth="lg">
             <Paper elevation={3} sx={{ p: 4, borderRadius: 4 }}>
+
               {/* Header */}
               <Box textAlign="center" mb={4}>
                 <CheckCircleIcon sx={{ fontSize: 80, color: '#6366F1', mb: 2 }} />
@@ -691,9 +667,7 @@ export default function DietPlanForm() {
 
               {/* User Summary */}
               <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: 'background.default' }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  📋 Your Profile
-                </Typography>
+                <Typography variant="h6" sx={{ mb: 2 }}>📋 Your Profile</Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={6} md={3}>
                     <Typography variant="body2" color="text.secondary">Name</Typography>
@@ -735,7 +709,6 @@ export default function DietPlanForm() {
                     </CardContent>
                   </Card>
                 </Grid>
-
                 <Grid item xs={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
@@ -750,7 +723,6 @@ export default function DietPlanForm() {
                     </CardContent>
                   </Card>
                 </Grid>
-
                 <Grid item xs={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
@@ -765,7 +737,6 @@ export default function DietPlanForm() {
                     </CardContent>
                   </Card>
                 </Grid>
-
                 <Grid item xs={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
@@ -784,9 +755,7 @@ export default function DietPlanForm() {
 
               {/* Macronutrient Distribution */}
               <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  📊 Macronutrient Distribution
-                </Typography>
+                <Typography variant="h6" sx={{ mb: 2 }}>📊 Macronutrient Distribution</Typography>
                 <Stack spacing={2}>
                   <Box>
                     <Stack direction="row" justifyContent="space-between" mb={0.5}>
@@ -826,9 +795,7 @@ export default function DietPlanForm() {
 
               {/* Meal Breakdown */}
               <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  🍽️ Meal Breakdown
-                </Typography>
+                <Typography variant="h6" sx={{ mb: 2 }}>🍽️ Meal Breakdown</Typography>
                 <Grid container spacing={2}>
                   {meal_breakdown.map((meal, index) => (
                     <Grid item xs={12} md={6} key={index}>
@@ -838,9 +805,7 @@ export default function DietPlanForm() {
                             {meal.name}
                           </Typography>
                           <Stack spacing={0.5}>
-                            <Typography variant="body2">
-                              Calories: {meal.calories} kcal
-                            </Typography>
+                            <Typography variant="body2">Calories: {meal.calories} kcal</Typography>
                             <Typography variant="body2">
                               Protein: {meal.protein}g | Carbs: {meal.carbs}g | Fats: {meal.fats}g
                             </Typography>
@@ -855,16 +820,10 @@ export default function DietPlanForm() {
               {/* Health Insights */}
               {health_insights && health_insights.length > 0 && (
                 <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    💡 Personalized Health Insights
-                  </Typography>
+                  <Typography variant="h6" sx={{ mb: 2 }}>💡 Personalized Health Insights</Typography>
                   <Stack spacing={1.5}>
                     {health_insights.map((insight, index) => (
-                      <Alert
-                        key={index}
-                        severity="info"
-                        sx={{ bgcolor: 'background.default' }}
-                      >
+                      <Alert key={index} severity="info" sx={{ bgcolor: 'background.default' }}>
                         {insight}
                       </Alert>
                     ))}
@@ -872,25 +831,38 @@ export default function DietPlanForm() {
                 </Paper>
               )}
 
+              {/* ── NEW: Meal Summary Card with Spoonacular recipes ── */}
+              <MealSummaryCard
+                mealPlanType={recs.meal_plan_type}
+                diseases={userDiseases || []}
+                allergies={userAllergies || ''}
+                dailyCalories={recs.daily_calories}
+                onViewFullPlan={() => setShowDietPlanPage(true)}
+              />
+              {/* ───────────────────────────────────────────────────── */}
+
               {/* Action Buttons */}
-              <Stack direction="row" spacing={2} justifyContent="center">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={resetForm}
-                  size="large"
-                >
+              <Stack direction="row" spacing={2} justifyContent="center" mt={4}>
+                <Button variant="contained" color="primary" onClick={resetForm} size="large">
                   Create Another Plan
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={() => window.print()}
-                  size="large"
-                >
+                <Button variant="outlined" color="secondary" onClick={() => window.print()} size="large">
                   Print Plan
                 </Button>
+                {/* ── NEW: shortcut button to full plan page ── */}
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => setShowDietPlanPage(true)}
+                  sx={{ background: 'linear-gradient(135deg, #6366F1, #A855F7)' }}
+                >
+                  View Full Food Plan
+                </Button>
+                {/* ─────────────────────────────────────────── */}
               </Stack>
+
             </Paper>
           </Container>
         </Box>
@@ -899,7 +871,7 @@ export default function DietPlanForm() {
   }
 
   // ========================================
-  // RENDER: MAIN FORM
+  // RENDER: MAIN FORM (unchanged)
   // ========================================
   return (
     <ThemeProvider theme={medivaTheme}>
@@ -935,24 +907,13 @@ export default function DietPlanForm() {
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
               <Tabs
                 value={selectedTab}
-                onChange={(e, newValue) => {
-                  setSelectedTab(newValue);
-                  setError('');
-                }}
+                onChange={(e, newValue) => { setSelectedTab(newValue); setError(''); }}
                 centered
                 textColor="primary"
                 indicatorColor="primary"
               >
-                <Tab
-                  icon={<FormIcon />}
-                  label="Fill Form Manually"
-                  iconPosition="start"
-                />
-                <Tab
-                  icon={<ReportIcon />}
-                  label="Upload Medical Report"
-                  iconPosition="start"
-                />
+                <Tab icon={<FormIcon />} label="Fill Form Manually" iconPosition="start" />
+                <Tab icon={<ReportIcon />} label="Upload Medical Report" iconPosition="start" />
               </Tabs>
             </Box>
 
@@ -968,9 +929,7 @@ export default function DietPlanForm() {
               <>
                 <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
                   {steps.map((label) => (
-                    <Step key={label}>
-                      <StepLabel>{label}</StepLabel>
-                    </Step>
+                    <Step key={label}><StepLabel>{label}</StepLabel></Step>
                   ))}
                 </Stepper>
 
@@ -989,25 +948,15 @@ export default function DietPlanForm() {
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                           <TextField
-                            label="Age *"
-                            name="age"
-                            type="number"
-                            value={formData.age}
-                            onChange={handleInputChange}
-                            fullWidth
-                            required
-                            inputProps={{ min: 1, max: 120 }}
+                            label="Age *" name="age" type="number"
+                            value={formData.age} onChange={handleInputChange}
+                            fullWidth required inputProps={{ min: 1, max: 120 }}
                           />
                         </Grid>
                         <Grid item xs={12} md={6}>
                           <FormControl component="fieldset">
                             <FormLabel component="legend">Gender *</FormLabel>
-                            <RadioGroup
-                              row
-                              name="gender"
-                              value={formData.gender}
-                              onChange={handleInputChange}
-                            >
+                            <RadioGroup row name="gender" value={formData.gender} onChange={handleInputChange}>
                               <FormControlLabel value="Male" control={<Radio />} label="Male" />
                               <FormControlLabel value="Female" control={<Radio />} label="Female" />
                               <FormControlLabel value="Other" control={<Radio />} label="Other" />
@@ -1018,40 +967,22 @@ export default function DietPlanForm() {
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={4}>
                           <TextField
-                            label="Height (cm) *"
-                            name="height"
-                            type="number"
-                            value={formData.height}
-                            onChange={handleInputChange}
-                            fullWidth
-                            required
-                            inputProps={{ min: 50, max: 250 }}
+                            label="Height (cm) *" name="height" type="number"
+                            value={formData.height} onChange={handleInputChange}
+                            fullWidth required inputProps={{ min: 50, max: 250 }}
                           />
                         </Grid>
                         <Grid item xs={12} md={4}>
                           <TextField
-                            label="Weight (kg) *"
-                            name="weight"
-                            type="number"
-                            value={formData.weight}
-                            onChange={handleInputChange}
-                            fullWidth
-                            required
-                            inputProps={{ min: 20, max: 300 }}
+                            label="Weight (kg) *" name="weight" type="number"
+                            value={formData.weight} onChange={handleInputChange}
+                            fullWidth required inputProps={{ min: 20, max: 300 }}
                           />
                         </Grid>
                         <Grid item xs={12} md={4}>
-                          <TextField
-                            label="BMI"
-                            value={formData.bmi}
-                            disabled
-                            fullWidth
-                          />
+                          <TextField label="BMI" value={formData.bmi} disabled fullWidth />
                           {formData.bmi && (
-                            <Typography
-                              variant="body2"
-                              sx={{ mt: 1, color: getBMIColor(formData.bmi) }}
-                            >
+                            <Typography variant="body2" sx={{ mt: 1, color: getBMIColor(formData.bmi) }}>
                               {getBMIStatus(formData.bmi)}
                             </Typography>
                           )}
@@ -1060,15 +991,11 @@ export default function DietPlanForm() {
                       <FormControl fullWidth required>
                         <InputLabel>Activity Level *</InputLabel>
                         <Select
-                          name="activityLevel"
-                          value={formData.activityLevel}
-                          onChange={handleInputChange}
-                          label="Activity Level *"
+                          name="activityLevel" value={formData.activityLevel}
+                          onChange={handleInputChange} label="Activity Level *"
                         >
                           {activityLevels.map(level => (
-                            <MenuItem key={level.value} value={level.value}>
-                              {level.label}
-                            </MenuItem>
+                            <MenuItem key={level.value} value={level.value}>{level.label}</MenuItem>
                           ))}
                         </Select>
                       </FormControl>
@@ -1079,28 +1006,18 @@ export default function DietPlanForm() {
                   {activeStep === 1 && (
                     <Stack spacing={2}>
                       <Box>
-                        <FormLabel sx={{ mb: 1, display: 'block' }}>
-                          Medical Conditions
-                        </FormLabel>
+                        <FormLabel sx={{ mb: 1, display: 'block' }}>Medical Conditions</FormLabel>
                         <Button
-                          variant="outlined"
-                          onClick={handleClick}
-                          fullWidth
+                          variant="outlined" onClick={handleClick} fullWidth
                           sx={{ justifyContent: 'space-between', textTransform: 'none' }}
                         >
                           {formData.diseases.length === 0
                             ? 'Select conditions...'
-                            : `${formData.diseases.length} selected`
-                          }
+                            : `${formData.diseases.length} selected`}
                         </Button>
                         <Popover
-                          open={open}
-                          anchorEl={anchorEl}
-                          onClose={handleClose}
-                          anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'left',
-                          }}
+                          open={open} anchorEl={anchorEl} onClose={handleClose}
+                          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                         >
                           <Box sx={{ maxHeight: 240, overflowY: 'auto', p: 1 }}>
                             {diseases.map(disease => (
@@ -1115,26 +1032,19 @@ export default function DietPlanForm() {
                           <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
                             {formData.diseases.map(disease => (
                               <Chip
-                                key={disease}
-                                label={disease}
+                                key={disease} label={disease}
                                 onDelete={() => toggleDisease(disease)}
-                                color="primary"
-                                sx={{ mb: 1 }}
+                                color="primary" sx={{ mb: 1 }}
                               />
                             ))}
                           </Stack>
                         )}
                       </Box>
-
                       <TextField
-                        label="Allergies"
-                        name="allergies"
-                        value={formData.allergies}
-                        onChange={handleInputChange}
+                        label="Allergies" name="allergies"
+                        value={formData.allergies} onChange={handleInputChange}
                         placeholder="e.g., Peanuts, Shellfish, Dairy"
-                        multiline
-                        rows={3}
-                        fullWidth
+                        multiline rows={3} fullWidth
                         helperText="Separate multiple allergies with commas"
                       />
                     </Stack>
@@ -1148,15 +1058,11 @@ export default function DietPlanForm() {
                           <FormControl fullWidth required>
                             <InputLabel>Diet Preference *</InputLabel>
                             <Select
-                              name="dietPreference"
-                              value={formData.dietPreference}
-                              onChange={handleInputChange}
-                              label="Diet Preference *"
+                              name="dietPreference" value={formData.dietPreference}
+                              onChange={handleInputChange} label="Diet Preference *"
                             >
                               {dietPreferences.map(pref => (
-                                <MenuItem key={pref} value={pref}>
-                                  {pref}
-                                </MenuItem>
+                                <MenuItem key={pref} value={pref}>{pref}</MenuItem>
                               ))}
                             </Select>
                           </FormControl>
@@ -1165,45 +1071,31 @@ export default function DietPlanForm() {
                           <FormControl fullWidth required>
                             <InputLabel>Goal *</InputLabel>
                             <Select
-                              name="goal"
-                              value={formData.goal}
-                              onChange={handleInputChange}
-                              label="Goal *"
+                              name="goal" value={formData.goal}
+                              onChange={handleInputChange} label="Goal *"
                             >
                               {goals.map(goal => (
-                                <MenuItem key={goal} value={goal}>
-                                  {goal}
-                                </MenuItem>
+                                <MenuItem key={goal} value={goal}>{goal}</MenuItem>
                               ))}
                             </Select>
                           </FormControl>
                         </Grid>
                       </Grid>
-
                       <FormControl fullWidth>
                         <InputLabel>Meals Per Day</InputLabel>
                         <Select
-                          name="mealsPerDay"
-                          value={formData.mealsPerDay}
-                          onChange={handleInputChange}
-                          label="Meals Per Day"
+                          name="mealsPerDay" value={formData.mealsPerDay}
+                          onChange={handleInputChange} label="Meals Per Day"
                         >
                           {[3, 4, 5, 6].map(num => (
-                            <MenuItem key={num} value={num}>
-                              {num} Meals
-                            </MenuItem>
+                            <MenuItem key={num} value={num}>{num} Meals</MenuItem>
                           ))}
                         </Select>
                       </FormControl>
-
                       <Paper variant="outlined" sx={{ p: 3, mt: 3, bgcolor: 'background.default' }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                          📋 Summary
-                        </Typography>
+                        <Typography variant="h6" sx={{ mb: 2 }}>📋 Summary</Typography>
                         <Stack spacing={1}>
-                          <Typography>
-                            <strong>Name:</strong> {formData.name || 'N/A'}
-                          </Typography>
+                          <Typography><strong>Name:</strong> {formData.name || 'N/A'}</Typography>
                           <Typography>
                             <strong>Age/Gender:</strong> {formData.age || 'N/A'} years, {formData.gender || 'N/A'}
                           </Typography>
@@ -1211,20 +1103,16 @@ export default function DietPlanForm() {
                             <strong>BMI:</strong> {formData.bmi || 'N/A'} ({getBMIStatus(formData.bmi) || 'N/A'})
                           </Typography>
                           <Typography>
-                            <strong>Activity:</strong> {formData.activityLevel ?
-                              activityLevels.find(l => l.value === formData.activityLevel)?.label : 'N/A'}
+                            <strong>Activity:</strong> {formData.activityLevel
+                              ? activityLevels.find(l => l.value === formData.activityLevel)?.label
+                              : 'N/A'}
                           </Typography>
                           <Typography>
-                            <strong>Conditions:</strong> {formData.diseases.length > 0
-                              ? formData.diseases.join(', ')
-                              : 'None'}
+                            <strong>Conditions:</strong>{' '}
+                            {formData.diseases.length > 0 ? formData.diseases.join(', ') : 'None'}
                           </Typography>
-                          <Typography>
-                            <strong>Diet:</strong> {formData.dietPreference || 'N/A'}
-                          </Typography>
-                          <Typography>
-                            <strong>Goal:</strong> {formData.goal || 'N/A'}
-                          </Typography>
+                          <Typography><strong>Diet:</strong> {formData.dietPreference || 'N/A'}</Typography>
+                          <Typography><strong>Goal:</strong> {formData.goal || 'N/A'}</Typography>
                         </Stack>
                       </Paper>
                     </Stack>
@@ -1233,8 +1121,7 @@ export default function DietPlanForm() {
 
                 <Box display="flex" justifyContent="space-between" mt={4}>
                   <Button
-                    variant="contained"
-                    color="secondary"
+                    variant="contained" color="secondary"
                     disabled={activeStep === 0}
                     onClick={() => setActiveStep(prev => prev - 1)}
                     startIcon={<ChevronLeftIcon />}
@@ -1243,20 +1130,20 @@ export default function DietPlanForm() {
                   </Button>
                   {activeStep === steps.length - 1 ? (
                     <Button
-                      variant="contained"
-                      color="primary"
+                      variant="contained" color="primary"
                       onClick={handleManualSubmit}
-                      disabled={loading || !formData.name || !formData.age || !formData.gender ||
+                      disabled={
+                        loading || !formData.name || !formData.age || !formData.gender ||
                         !formData.height || !formData.weight || !formData.activityLevel ||
-                        !formData.dietPreference || !formData.goal}
+                        !formData.dietPreference || !formData.goal
+                      }
                       endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
                     >
                       {loading ? 'Generating...' : 'Generate AI Diet Plan'}
                     </Button>
                   ) : (
                     <Button
-                      variant="contained"
-                      color="primary"
+                      variant="contained" color="primary"
                       onClick={() => setActiveStep(prev => prev + 1)}
                       endIcon={<ChevronRightIcon />}
                     >
@@ -1277,7 +1164,6 @@ export default function DietPlanForm() {
                   Our AI will automatically extract your health information from the report
                 </Typography>
 
-                {/* File Upload Section */}
                 <Paper variant="outlined" sx={{ p: 4, mb: 4, textAlign: 'center', borderStyle: 'dashed' }}>
                   <CloudUploadIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
                   <Typography variant="h6" sx={{ mb: 2 }}>
@@ -1289,31 +1175,18 @@ export default function DietPlanForm() {
                   <Stack direction="row" spacing={2} justifyContent="center">
                     <Button variant="outlined" component="label">
                       Choose File
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileSelect}
-                        hidden
-                      />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} hidden />
                     </Button>
                     {uploadedFile && (
                       <>
                         <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleProcessReport}
-                          disabled={ocrProcessing}
+                          variant="contained" color="primary"
+                          onClick={handleProcessReport} disabled={ocrProcessing}
                           startIcon={ocrProcessing ? <CircularProgress size={20} /> : <SendIcon />}
                         >
                           {ocrProcessing ? 'Processing...' : 'Process Report'}
                         </Button>
-                        <IconButton
-                          color="error"
-                          onClick={() => {
-                            setUploadedFile(null);
-                            setOcrData(null);
-                          }}
-                        >
+                        <IconButton color="error" onClick={() => { setUploadedFile(null); setOcrData(null); }}>
                           <DeleteIcon />
                         </IconButton>
                       </>
@@ -1321,7 +1194,6 @@ export default function DietPlanForm() {
                   </Stack>
                 </Paper>
 
-                {/* OCR Results */}
                 {ocrData && (
                   <>
                     <Alert severity="success" sx={{ mb: 3 }}>
@@ -1329,27 +1201,19 @@ export default function DietPlanForm() {
                     </Alert>
 
                     <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: 'background.default' }}>
-                      <Typography variant="h6" sx={{ mb: 2 }}>
-                        📄 Extracted from Report
-                      </Typography>
+                      <Typography variant="h6" sx={{ mb: 2 }}>📄 Extracted from Report</Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={4}>
                           <Typography variant="body2" color="text.secondary">Name</Typography>
-                          <Typography variant="body1">
-                            {ocrData.patient_details?.name || 'Not found'}
-                          </Typography>
+                          <Typography variant="body1">{ocrData.patient_details?.name || 'Not found'}</Typography>
                         </Grid>
                         <Grid item xs={12} md={4}>
                           <Typography variant="body2" color="text.secondary">Age</Typography>
-                          <Typography variant="body1">
-                            {ocrData.patient_details?.age || 'Not found'}
-                          </Typography>
+                          <Typography variant="body1">{ocrData.patient_details?.age || 'Not found'}</Typography>
                         </Grid>
                         <Grid item xs={12} md={4}>
                           <Typography variant="body2" color="text.secondary">Gender</Typography>
-                          <Typography variant="body1">
-                            {ocrData.patient_details?.gender || 'Not found'}
-                          </Typography>
+                          <Typography variant="body1">{ocrData.patient_details?.gender || 'Not found'}</Typography>
                         </Grid>
                         <Grid item xs={12}>
                           <Typography variant="body2" color="text.secondary">Medical Conditions</Typography>
@@ -1372,39 +1236,25 @@ export default function DietPlanForm() {
                       </Grid>
                     </Paper>
 
-                    {/* Additional Required Information */}
                     <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 3 }}>
-                        📝 Complete Your Profile
-                      </Typography>
+                      <Typography variant="h6" sx={{ mb: 3 }}>📝 Complete Your Profile</Typography>
                       <Stack spacing={3}>
                         <Grid container spacing={2}>
                           <Grid item xs={12} md={6}>
                             <TextField
-                              label="Height (cm) *"
-                              name="height"
-                              type="number"
-                              value={reportFormData.height}
-                              onChange={handleReportInputChange}
-                              fullWidth
-                              required
-                              inputProps={{ min: 50, max: 250 }}
+                              label="Height (cm) *" name="height" type="number"
+                              value={reportFormData.height} onChange={handleReportInputChange}
+                              fullWidth required inputProps={{ min: 50, max: 250 }}
                             />
                           </Grid>
                           <Grid item xs={12} md={6}>
                             <TextField
-                              label="Weight (kg) *"
-                              name="weight"
-                              type="number"
-                              value={reportFormData.weight}
-                              onChange={handleReportInputChange}
-                              fullWidth
-                              required
-                              inputProps={{ min: 20, max: 300 }}
+                              label="Weight (kg) *" name="weight" type="number"
+                              value={reportFormData.weight} onChange={handleReportInputChange}
+                              fullWidth required inputProps={{ min: 20, max: 300 }}
                             />
                           </Grid>
                         </Grid>
-
                         {reportFormData.bmi && (
                           <Alert severity="info">
                             <Typography variant="body2">
@@ -1412,21 +1262,16 @@ export default function DietPlanForm() {
                             </Typography>
                           </Alert>
                         )}
-
                         <Grid container spacing={2}>
                           <Grid item xs={12} md={6}>
                             <FormControl fullWidth required>
                               <InputLabel>Activity Level *</InputLabel>
                               <Select
-                                name="activityLevel"
-                                value={reportFormData.activityLevel}
-                                onChange={handleReportInputChange}
-                                label="Activity Level *"
+                                name="activityLevel" value={reportFormData.activityLevel}
+                                onChange={handleReportInputChange} label="Activity Level *"
                               >
                                 {activityLevels.map(level => (
-                                  <MenuItem key={level.value} value={level.value}>
-                                    {level.label}
-                                  </MenuItem>
+                                  <MenuItem key={level.value} value={level.value}>{level.label}</MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
@@ -1435,35 +1280,26 @@ export default function DietPlanForm() {
                             <FormControl fullWidth required>
                               <InputLabel>Goal *</InputLabel>
                               <Select
-                                name="goal"
-                                value={reportFormData.goal}
-                                onChange={handleReportInputChange}
-                                label="Goal *"
+                                name="goal" value={reportFormData.goal}
+                                onChange={handleReportInputChange} label="Goal *"
                               >
                                 {goals.map(goal => (
-                                  <MenuItem key={goal} value={goal}>
-                                    {goal}
-                                  </MenuItem>
+                                  <MenuItem key={goal} value={goal}>{goal}</MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
                           </Grid>
                         </Grid>
-
                         <Grid container spacing={2}>
                           <Grid item xs={12} md={6}>
                             <FormControl fullWidth>
                               <InputLabel>Diet Preference</InputLabel>
                               <Select
-                                name="dietPreference"
-                                value={reportFormData.dietPreference}
-                                onChange={handleReportInputChange}
-                                label="Diet Preference"
+                                name="dietPreference" value={reportFormData.dietPreference}
+                                onChange={handleReportInputChange} label="Diet Preference"
                               >
                                 {dietPreferences.map(pref => (
-                                  <MenuItem key={pref} value={pref}>
-                                    {pref}
-                                  </MenuItem>
+                                  <MenuItem key={pref} value={pref}>{pref}</MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
@@ -1472,15 +1308,11 @@ export default function DietPlanForm() {
                             <FormControl fullWidth>
                               <InputLabel>Meals Per Day</InputLabel>
                               <Select
-                                name="mealsPerDay"
-                                value={reportFormData.mealsPerDay}
-                                onChange={handleReportInputChange}
-                                label="Meals Per Day"
+                                name="mealsPerDay" value={reportFormData.mealsPerDay}
+                                onChange={handleReportInputChange} label="Meals Per Day"
                               >
                                 {[3, 4, 5, 6].map(num => (
-                                  <MenuItem key={num} value={num}>
-                                    {num} Meals
-                                  </MenuItem>
+                                  <MenuItem key={num} value={num}>{num} Meals</MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
@@ -1491,9 +1323,7 @@ export default function DietPlanForm() {
 
                     <Box display="flex" justifyContent="center">
                       <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
+                        variant="contained" color="primary" size="large"
                         onClick={handleReportSubmit}
                         disabled={loading || !reportFormData.height || !reportFormData.weight}
                         endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
