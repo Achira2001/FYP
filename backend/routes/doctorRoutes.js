@@ -18,30 +18,43 @@ import { protect, restrictTo } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Patient routes (protected, any authenticated user)
+// All routes require authentication
 router.use(protect);
 
+// ─────────────────────────────────────────────────────────────
+// PATIENT ROUTES  (any authenticated user — patient or doctor)
+// ─────────────────────────────────────────────────────────────
+
+// Doctor info management (patient stores their doctor's contact)
 router.route('/doctor-info')
   .get(getDoctorInfo)
   .put(updateDoctorInfo);
 
+// Send a query to the patient's doctor
 router.post('/doctor-query', sendDoctorQuery);
 
+// Patient views their own queries and doctor responses
+router.get('/patient/queries',               getPatientQueries);
+router.get('/patient/queries/unread/count',  getUnreadResponseCount);
+router.get('/patient/queries/:id',           getPatientQueryDetails);
+router.patch('/patient/queries/:id/read',    markQueryAsRead);
 
-// Patient query routes
-router.get('/patient/queries', getPatientQueries);
-router.get('/patient/queries/:id', getPatientQueryDetails);
-router.patch('/patient/queries/:id/read', markQueryAsRead);
-router.get('/patient/queries/unread/count', getUnreadResponseCount);
+// ─────────────────────────────────────────────────────────────
+// DOCTOR-ONLY ROUTES  (role: 'doctor' required)
+// ─────────────────────────────────────────────────────────────
 
-// Doctor-only routes
 router.use(restrictTo('doctor'));
 
-router.get('/queries', getDoctorQueries);
-router.get('/queries/:id', getQueryDetails);
-router.post('/queries/:id/reply', replyToQuery);
-router.get('/patients', getDoctorPatients);
-router.get('/patients/:patientId', getPatientDetails);
-router.get('/dashboard/stats', getDoctorDashboardStats);
+// Doctor views and responds to patient queries
+router.get('/queries',               getDoctorQueries);
+router.get('/queries/:id',           getQueryDetails);
+router.post('/queries/:id/reply',    replyToQuery);
+
+// Doctor views their patient list
+router.get('/patients',              getDoctorPatients);
+router.get('/patients/:patientId',   getPatientDetails);
+
+// Doctor dashboard statistics
+router.get('/dashboard/stats',       getDoctorDashboardStats);
 
 export default router;
