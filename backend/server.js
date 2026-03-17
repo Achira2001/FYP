@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import path from 'path';
@@ -22,6 +21,8 @@ import User from './models/User.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import dietPlanRoutes from './routes/dietPlanRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import { apiLimiter, notificationLimiter } from './middleware/rateLimiter.js';
 
 dotenv.config();
 
@@ -33,22 +34,14 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-
-
-// CORS
+// CORS configuration
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
+
 // Security middleware
 app.use(helmet());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-});
-app.use('/api', limiter);
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -61,8 +54,7 @@ app.use(morgan('combined'));
 // Serve uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-
-// Health check
+// Health check (before rate limiting)
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -76,77 +68,81 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ✅ Apply rate limiting to API routes
+app.use('/api', apiLimiter);
+app.use('/api/notifications', notificationLimiter);
 
 // Routes
 app.use('/api/diet-plans', dietPlanRoutes);
-
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', googleAuthRoutes);
 app.use('/api/medications', medicationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api', doctorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
+app.use('/api', doctorRoutes);
 
+// ========== CRON JOBS ==========
 
-// CORRECTED: Schedule reminder checks every minute
+// Schedule reminder checks every minute
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    
-    console.log(`🔍 Running medication reminder check at ${currentTime}...`);
-    
+
+    console.log(`⏰ Running medication reminder check at ${currentTime}...`);
+
     // Find medications due for reminders using the corrected query
     const medications = await Medication.getMedicationsDueForReminder(currentTime);
-    
+
     console.log(`📋 Found ${medications.length} medications due for reminders`);
 
     for (const medication of medications) {
       const user = medication.userId;
-      
+
       if (!user) {
-        console.log(`⚠️ No user found for medication: ${medication.name}`);
+        console.log(`❌ No user found for medication: ${medication.name}`);
         continue;
       }
 
       // Check if medication is still within reminder days period
       const medicationStartDate = new Date(medication.startDate);
       const daysSinceStart = Math.floor((now - medicationStartDate) / (1000 * 60 * 60 * 24));
-      
+
       if (daysSinceStart > (medication.reminderDays || 7)) {
-        console.log(`⏰ Medication ${medication.name} has exceeded reminder period (${daysSinceStart} days)`);
+        console.log(`⏭️ Medication ${medication.name} has exceeded reminder period (${daysSinceStart} days)`);
         continue;
       }
 
-      console.log(`📞 Processing reminders for ${user.fullName} - ${medication.name} (Day ${daysSinceStart + 1} of ${medication.reminderDays || 7})`);
+      console.log(`✅ Processing reminders for ${user.fullName} - ${medication.name} (Day ${daysSinceStart + 1} of ${medication.reminderDays || 7})`);
 
       // Send SMS if enabled and user has phone number
-      if (medication.reminderSettings?.smsEnabled && 
-          user.notificationPreferences?.sms && 
-          user.phone && 
-          twilioClient) {
+      if (medication.reminderSettings?.smsEnabled &&
+        user.notificationPreferences?.sms &&
+        user.phone &&
+        twilioClient) {
         try {
           const message = `💊 MEDICATION REMINDER\n\nTime to take: ${medication.name}\nDosage: ${medication.quantity} ${medication.dosage}\nTime: ${currentTime}\n\n${medication.notes ? 'Notes: ' + medication.notes : 'Stay healthy!'}`;
-          
+
           const smsResult = await twilioClient.messages.create({
             body: message,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: user.phone
           });
-          
-          console.log(`✅ SMS sent to ${user.phone} for ${medication.name} - SID: ${smsResult.sid}`);
+
+          console.log(`📱 SMS sent to ${user.phone} for ${medication.name} - SID: ${smsResult.sid}`);
         } catch (error) {
           console.error(`❌ Failed to send SMS to ${user.phone}:`, error.message);
         }
       }
 
       // Send email if enabled and user has email
-      if (medication.reminderSettings?.emailEnabled && 
-          user.notificationPreferences?.email && 
-          user.email && 
-          transporter) {
+      if (medication.reminderSettings?.emailEnabled &&
+        user.notificationPreferences?.email &&
+        user.email &&
+        transporter) {
         try {
           const mailOptions = {
             from: `"${process.env.FROM_NAME || 'Smart Medical Reminder'}" <${process.env.FROM_EMAIL || process.env.EMAIL_USER}>`,
@@ -178,7 +174,7 @@ cron.schedule('* * * * *', async () => {
           };
 
           const emailResult = await transporter.sendMail(mailOptions);
-          console.log(`✅ Email sent to ${user.email} for ${medication.name} - ID: ${emailResult.messageId}`);
+          console.log(`📧 Email sent to ${user.email} for ${medication.name} - ID: ${emailResult.messageId}`);
         } catch (error) {
           console.error(`❌ Failed to send email to ${user.email}:`, error.message);
         }
@@ -198,18 +194,18 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
-// IMPROVED: Schedule daily summary at 7 AM
+// Schedule daily summary at 7 AM
 cron.schedule('0 7 * * *', async () => {
   try {
-    console.log('📧 Running daily medication summary...');
-    
+    console.log('📅 Running daily medication summary...');
+
     const users = await User.find({
       'notificationPreferences.email': true,
       email: { $exists: true, $ne: null },
       isActive: true
     });
 
-    console.log(`📬 Found ${users.length} users for daily summary`);
+    console.log(`📋 Found ${users.length} users for daily summary`);
 
     for (const user of users) {
       try {
@@ -285,14 +281,16 @@ cron.schedule('*/5 * * * *', async () => {
     const now = new Date();
     const medicationCount = await Medication.countDocuments({ isActive: true });
     const userCount = await User.countDocuments({ isActive: true });
-    
-    console.log(`🔄 System Status Check - ${now.toLocaleTimeString()}`);
+
+    console.log(`🔍 System Status Check - ${now.toLocaleTimeString()}`);
     console.log(`📊 Active medications: ${medicationCount}, Active users: ${userCount}`);
-    console.log(`🌐 Services: Twilio=${!!twilioClient}, Email=${!!transporter}`);
+    console.log(`🛠️ Services: Twilio=${!!twilioClient}, Email=${!!transporter}`);
   } catch (error) {
     console.error('❌ Error in status check:', error);
   }
 });
+
+// ========== ERROR HANDLERS ==========
 
 // Global error handler
 app.use(globalErrorHandler);
@@ -305,25 +303,34 @@ app.use((req, res) => {
   });
 });
 
-// Graceful shutdown
+// ========== GRACEFUL SHUTDOWN ==========
+
 process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received, shutting down gracefully');
+  console.log('⚠️ SIGTERM received, shutting down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('👋 SIGINT received, shutting down gracefully');
+  console.log('⚠️ SIGINT received, shutting down gracefully');
   process.exit(0);
 });
 
-// Start server
+// ========== START SERVER ==========
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`📧 Email service: ${transporter ? 'Active' : 'Inactive'}`);
-  console.log(`📱 SMS service: ${twilioClient ? 'Active' : 'Inactive'}`);
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('🚀 MEDIVA SERVER STARTED SUCCESSFULLY');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log(`📡 Server running on port: ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📧 Email service: ${transporter ? '✅ Active' : '❌ Inactive'}`);
+  console.log(`📱 SMS service: ${twilioClient ? '✅ Active' : '❌ Inactive'}`);
   console.log(`⏰ Cron jobs: Medication reminders (every minute), Daily summary (7 AM)`);
+  console.log(`🔒 Rate limiting: Enabled`);
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('');
 });
 
 export default app;
