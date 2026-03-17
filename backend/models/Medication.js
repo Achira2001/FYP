@@ -199,14 +199,14 @@ medicationSchema.index({ lastReminderSent: 1 });
 // Static method to get medications due for reminder - CORRECTED VERSION
 medicationSchema.statics.getMedicationsDueForReminder = function(currentTime) {
   const now = new Date();
-  const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+  const oneMinutesAgo = new Date(now.getTime() - 1 * 60 * 1000);
   
   return this.find({
     isActive: true,
     'reminders.time': currentTime, // Match exact time
     $or: [
       { lastReminderSent: { $exists: false } },
-      { lastReminderSent: { $lt: thirtyMinutesAgo } } // Not sent in last 30 minutes
+      { lastReminderSent: { $lt: oneMinutesAgo } } // Not sent in last 30 minutes
     ]
   }).populate('userId', 'fullName email phone notificationPreferences');
 };
