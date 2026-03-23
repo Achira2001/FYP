@@ -10,7 +10,6 @@ import OTPVerifyPage from "./pages/OTPVerifyPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
 
-import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageUsers from "./pages/admin/ManageUsers";
 
 import Layout from "./components/Layout";
@@ -119,7 +118,7 @@ export default function App() {
             </PrivateRoute>
           }
         >
-          <Route index element={<AdminDashboard />} />
+          <Route index element={<ManageUsers />} />
           <Route path="manage-users" element={<ManageUsers />} />
         </Route>
 

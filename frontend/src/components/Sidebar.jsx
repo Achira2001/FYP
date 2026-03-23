@@ -43,7 +43,6 @@ export default function Sidebar({ role }) {
     ],
     admin: [
       { to: "/admin/manage-users", label: "Manage Users", icon: <Group /> },
-      { to: "/admin/reports", label: "System Reports", icon: <Assignment /> },
     ],
   };
 
