@@ -32,7 +32,12 @@
     "Exercise_BMI",
     "Prot_ratio",
     "Carb_ratio",
-    "Fat_ratio"
+    "Fat_ratio",
+    "Weight_Height_ratio",
+    "Cal_per_exercise",
+    "Protein_BMI",
+    "Age_BMI",
+    "Sugar_Chol_ratio"
   ],
   "encoder_info": {
     "BMI_Category": {
@@ -194,27 +199,24 @@
   },
   "metrics": {
     "calories": {
-      "r2": 0.9666569828987122,
-      "mae": 104.91571044921875,
-      "rmse": 122.8166506932183
+      "r2": 0.9667494297027588,
+      "mae": 105.51138305664062,
+      "rmse": 122.64626153597182
     },
     "protein": {
-      "r2": 0.957796573638916,
-      "mae": 7.747503280639648,
-      "rmse": 9.136367614966069
+      "r2": 0.9580522179603577,
+      "mae": 7.710714817047119,
+      "rmse": 9.108651343468747
     },
     "carbs": {
-      "r2": 0.8861674070358276,
-      "mae": 26.255990982055664,
-      "rmse": 30.737204766145172
+      "r2": 0.8854348659515381,
+      "mae": 26.468341827392578,
+      "rmse": 30.83594541740461
     },
     "fats": {
-      "r2": 0.9426275491714478,
-      "mae": 7.969597816467285,
-      "rmse": 9.247412654797312
-    },
-    "meal_plan": {
-      "accuracy": 1.0
+      "r2": 0.9420585036277771,
+      "mae": 7.9363555908203125,
+      "rmse": 9.293162911091672
     }
   },
   "meal_plan_classes": [
@@ -223,7 +225,8 @@
     "Low-Carb Diet",
     "Low-Fat Diet"
   ],
-  "meal_plan_logic": "clinical_rules",
+  "meal_plan_logic": "rule_based_clinical",
+  "regression_only": true,
   "random_state": 42,
   "training_samples": 4000,
   "test_samples": 1000,

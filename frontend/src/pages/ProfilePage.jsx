@@ -568,71 +568,7 @@ const UserProfile = () => {
     </Stack>
   );
 
-  const renderMedicalHistory = () => (
-    <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
-            Medical History
-          </Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
-            disabled={!editMode}
-            size="small"
-            sx={{ borderRadius: 2 }}
-          >
-            Add Condition
-          </Button>
-        </Box>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-          <Table>
-            <TableHead sx={{ backgroundColor: 'rgba(102, 126, 234, 0.1)' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Condition</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Diagnosed Date</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Notes</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {user?.medicalHistory?.map((condition, index) => (
-                <TableRow key={index} hover sx={{ '&:hover': { bgcolor: 'rgba(102, 126, 234, 0.05)' } }}>
-                  <TableCell sx={{ fontWeight: 500 }}>{condition.condition}</TableCell>
-                  <TableCell>
-                    {condition.diagnosedDate ? format(new Date(condition.diagnosedDate), 'MMM dd, yyyy') : 'N/A'}
-                  </TableCell>
-                  <TableCell>{condition.notes || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={condition.isActive ? 'Active' : 'Inactive'} 
-                      color={condition.isActive ? 'success' : 'default'} 
-                      size="small"
-                      sx={{ fontWeight: 500, fontSize: '0.75rem' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" disabled={!editMode} color="primary">
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(!user?.medicalHistory || user.medicalHistory.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    No medical history recorded
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
-  );
-
+  
   const renderMedications = () => (
     <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
       <CardContent sx={{ p: 3 }}>
@@ -1084,7 +1020,7 @@ const UserProfile = () => {
                 >
                   <Tab label="Basic Information" />
                   {user.role === 'patient' && <Tab label="Health Information" />}
-                  {user.role === 'patient' && <Tab label="Medical History" />}
+
                   {user.role === 'patient' && <Tab label="Medications" />}
                   {user.role === 'doctor' && <Tab label="Professional Information" />}
                 </Tabs>
@@ -1094,8 +1030,7 @@ const UserProfile = () => {
                     <Box>
                       {activeTab === 0 && renderBasicInfo()}
                       {activeTab === 1 && user.role === 'patient' && renderHealthInfo()}
-                      {activeTab === 2 && user.role === 'patient' && renderMedicalHistory()}
-                      {activeTab === 3 && user.role === 'patient' && renderMedications()}
+                      {activeTab === 2 && user.role === 'patient' && renderMedications()}
                       {activeTab === 1 && user.role === 'doctor' && renderDoctorInfo()}
                     </Box>
                   </Fade>

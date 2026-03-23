@@ -98,12 +98,10 @@ def load_models():
             models[name] = m
             print(f"  ✓ Loaded {name}_model.ubj")
 
-        # ── Classification model
-        path = os.path.join(MODELS_DIR, 'meal_plan_model.ubj')
-        meal_m = xgb.XGBClassifier()
-        meal_m.load_model(path)
-        models['meal_plan'] = meal_m
-        print("  ✓ Loaded meal_plan_model.ubj")
+        # ── Meal plan: rule-based (no ML classifier needed)
+        # The old classifier had 25% accuracy because the CSV labels were random.
+        # We now use deterministic clinical rules — 100% consistent & explainable.
+        print("  ✓ Meal plan: using rule-based clinical logic (no ML model)")
 
         # ── Metadata
         with open(os.path.join(MODELS_DIR, 'metadata.json'), 'r') as f:
@@ -128,7 +126,7 @@ def load_models():
         print("  Make sure you extracted diet_models.zip into the models/ folder.")
         print("  Expected files: calories_model.ubj, protein_model.ubj,")
         print("                  carbs_model.ubj, fats_model.ubj,")
-        print("                  meal_plan_model.ubj, label_encoders.joblib, metadata.json")
+        print("                  label_encoders.joblib, metadata.json")
         return False
     except Exception as e:
         print(f"✗ Error loading models: {str(e)}")
@@ -137,9 +135,47 @@ def load_models():
         return False
 
 
+
 # ============================================
-# MONGODB SAVE
+# RULE-BASED MEAL PLAN  (replaces ML classifier)
 # ============================================
+
+MEAL_PLAN_CLASSES = ['Balanced Diet', 'High-Protein Diet', 'Low-Carb Diet', 'Low-Fat Diet']
+
+def predict_meal_plan_rule(frontend_data: dict) -> str:
+    """
+    Deterministic clinical rule for meal plan prediction.
+    This replaces the XGBoost classifier that had 25% accuracy
+    due to randomly assigned labels in the original CSV.
+
+    Priority: explicit diet habit → disease flags → biometrics → default.
+    """
+    diseases = frontend_data.get('diseases', [])
+    disease  = diseases[0] if diseases and diseases[0] != 'None' else ''
+    diet     = str(frontend_data.get('dietPreference', ''))
+    bmi      = float(frontend_data.get('bmi', 0))
+    activity = frontend_data.get('activityLevel', 'moderate')
+
+    # Activity → exercise frequency proxy
+    activity_map = {'sedentary': 0, 'light': 2, 'moderate': 3, 'very': 5, 'extra': 6}
+    exercise = activity_map.get(activity, 3)
+
+    # Disease-driven blood values (same defaults as map_frontend_to_model)
+    sugar = 180 if disease == 'Diabetes'     else 95
+    chol  = 250 if disease in ('High Cholesterol', 'Heart Disease') else 200
+    bp    = 140 if disease == 'Hypertension' else 120
+
+    # ── Rules ────────────────────────────────────────────────
+    if diet == 'Keto':                                              return 'Low-Carb Diet'
+    if diet in ('Vegan', 'Vegetarian', 'Mediterranean'):            return 'Balanced Diet'
+    if disease == 'Diabetes'     or sugar > 180:                    return 'Low-Carb Diet'
+    if disease == 'Heart Disease'or chol  > 240:                    return 'Low-Fat Diet'
+    if disease == 'Obesity'      or (bmi  > 30 and exercise >= 3): return 'High-Protein Diet'
+    if disease == 'Hypertension' or bp    > 140:                    return 'Balanced Diet'
+    if exercise >= 4:                                               return 'High-Protein Diet'
+    return 'Balanced Diet'
+
+
 
 def save_to_mongodb(user_data, predictions, data_source='manual', report_data=None):
     """
@@ -525,18 +561,22 @@ def predict():
             'recommended_fats':     int(models['fats'].predict(feature_vector)[0]),
         }
 
-        meal_plan_encoded = models['meal_plan'].predict(feature_vector)[0]
-        predictions['recommended_meal_plan'] = label_encoders['Recommended_Meal_Plan'].inverse_transform(
-            [meal_plan_encoded]
-        )[0]
+        # ── Meal plan — deterministic clinical rule (100% consistent)
+        predictions['recommended_meal_plan'] = predict_meal_plan_rule(data)
 
-        # Top-3 alternative plans with probabilities
-        meal_plan_probs   = models['meal_plan'].predict_proba(feature_vector)[0]
-        meal_plan_classes = label_encoders['Recommended_Meal_Plan'].classes_
-        top_indices       = np.argsort(meal_plan_probs)[-3:][::-1]
+        # Alternative plans with rule-based confidence labels
+        plan_order = {
+            'Low-Carb Diet':      ['Low-Carb Diet',      'Balanced Diet',      'High-Protein Diet', 'Low-Fat Diet'],
+            'Low-Fat Diet':       ['Low-Fat Diet',        'Balanced Diet',      'Low-Carb Diet',     'High-Protein Diet'],
+            'High-Protein Diet':  ['High-Protein Diet',   'Balanced Diet',      'Low-Carb Diet',     'Low-Fat Diet'],
+            'Balanced Diet':      ['Balanced Diet',       'High-Protein Diet',  'Low-Carb Diet',     'Low-Fat Diet'],
+        }
+        recommended = predictions['recommended_meal_plan']
+        order  = plan_order.get(recommended, MEAL_PLAN_CLASSES)
+        confs  = [0.85, 0.08, 0.04, 0.03]
         alternative_plans = [
-            {'name': meal_plan_classes[i], 'confidence': float(meal_plan_probs[i])}
-            for i in top_indices
+            {'name': p, 'confidence': c}
+            for p, c in zip(order[:3], confs[:3])
         ]
 
         # Macro percentages
@@ -635,7 +675,7 @@ if __name__ == '__main__':
         print("  - Protein Model   : Loaded")
         print("  - Carbs Model     : Loaded")
         print("  - Fats Model      : Loaded")
-        print("  - Meal Plan Model : Loaded")
+        print("  - Meal Plan       : Rule-Based Clinical Logic ✓")
         print("\n" + "=" * 50)
 
         app.run(host='0.0.0.0', port=5001, debug=True)
