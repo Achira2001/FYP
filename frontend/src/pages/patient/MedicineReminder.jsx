@@ -397,19 +397,33 @@ const MedicalReminderSystem = () => {
     }));
   };
 
-  const handleMealTimeChange = (meal, time) => {
-    setMealTimes(prev => ({ ...prev, [meal]: time }));
-    if (userProfile) {
-      const updatedProfile = {
-        ...userProfile,
-        mealTimes: { ...userProfile.mealTimes, [meal]: time }
-      };
-      apiRequest('/profile', {
-        method: 'PUT',
-        body: JSON.stringify(updatedProfile)
-      }).catch(error => console.error('Failed to update meal times:', error));
-    }
+  const handleMealTimeChange = async (meal, time) => {
+  const updatedMealTimes = {
+    ...mealTimes,
+    [meal]: time
   };
+
+  setMealTimes(updatedMealTimes);
+
+  try {
+    const response = await apiRequest('/profile', {
+      method: 'PUT',
+      body: JSON.stringify({
+        mealTimes: updatedMealTimes
+      })
+    });
+
+    if (response?.user) {
+      setUserProfile(response.user);
+      setMealTimes(response.user.mealTimes || updatedMealTimes);
+    }
+
+    showSnackbar('Meal times updated successfully!');
+  } catch (error) {
+    console.error('Failed to update meal times:', error);
+    showSnackbar('Failed to update meal times', 'error');
+  }
+};
 
   const calculateReminderTime = (timePeriod, mealRelation) => {
     const mealTimeMap = {
@@ -1219,7 +1233,8 @@ const MedicalReminderSystem = () => {
             sx={{ 
               width: '100%',
               borderRadius: 2,
-              border: '1px solid rgba(102, 126, 234, 0.2)'
+              border: '1px solid rgb(255, 255, 255)',
+              color: '#fff',
             }}
             variant="filled"
           >

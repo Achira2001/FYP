@@ -22,10 +22,9 @@ import warnings
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import requests
-import xgboost as xgb          # needed for native model loading
+import xgboost as xgb          
 
-# Suppress residual sklearn version warnings for label encoders that were
-# pickled on a slightly different sklearn build. They are safe to load.
+
 warnings.filterwarnings(
     'ignore',
     message='.*InconsistentVersionWarning.*',
@@ -74,17 +73,7 @@ def allowed_file(filename):
 
 
 def load_models():
-    """
-    Load all trained models and metadata.
-
-    XGBoost models are loaded using the native .ubj format via
-    xgb.XGBRegressor().load_model() — this completely avoids the
-    pickle-based XGBoost serialisation warning.
-
-    Label encoders are plain joblib pickles.  They are safe to load
-    across minor sklearn versions; the InconsistentVersionWarning
-    filter above silences the cosmetic warning.
-    """
+  
     global models, metadata, label_encoders
 
     MODELS_DIR = '../models'
@@ -96,21 +85,21 @@ def load_models():
             m = xgb.XGBRegressor()
             m.load_model(path)
             models[name] = m
-            print(f"  ✓ Loaded {name}_model.ubj")
+            print(f"   Loaded {name}_model.ubj")
 
         # ── Meal plan: rule-based (no ML classifier needed)
         # The old classifier had 25% accuracy because the CSV labels were random.
         # We now use deterministic clinical rules — 100% consistent & explainable.
-        print("  ✓ Meal plan: using rule-based clinical logic (no ML model)")
+        print("   Meal plan: using rule-based clinical logic (no ML model)")
 
         # ── Metadata
         with open(os.path.join(MODELS_DIR, 'metadata.json'), 'r') as f:
             metadata = json.load(f)
-        print("  ✓ Loaded metadata.json")
+        print("   Loaded metadata.json")
 
         # ── Label encoders
         label_encoders = joblib.load(os.path.join(MODELS_DIR, 'label_encoders.joblib'))
-        print("  ✓ Loaded label_encoders.joblib")
+        print("   Loaded label_encoders.joblib")
 
         # Log the versions the models were trained with
         saved_sklearn = metadata.get('sklearn_version', 'unknown')
@@ -122,14 +111,14 @@ def load_models():
         return True
 
     except FileNotFoundError as e:
-        print(f"\n✗ Model file not found: {e}")
+        print(f"\n Model file not found: {e}")
         print("  Make sure you extracted diet_models.zip into the models/ folder.")
         print("  Expected files: calories_model.ubj, protein_model.ubj,")
         print("                  carbs_model.ubj, fats_model.ubj,")
         print("                  label_encoders.joblib, metadata.json")
         return False
     except Exception as e:
-        print(f"✗ Error loading models: {str(e)}")
+        print(f" Error loading models: {str(e)}")
         import traceback
         traceback.print_exc()
         return False
@@ -475,20 +464,7 @@ def process_report():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    """
-    Main prediction endpoint.
 
-    Accepts either:
-    1. JSON body  (Content-Type: application/json)
-    2. Multipart form with optional file  (Content-Type: multipart/form-data)
-       - 'data' field = JSON string of user inputs
-       - 'file' field = optional medical report (pdf/jpg/png)
-
-    Expected JSON fields:
-        name, age, gender, height, weight, bmi,
-        diseases (array), dietPreference, activityLevel,
-        goal, allergies, mealsPerDay
-    """
     ocr_result  = None
     data_source = 'manual'
     file        = None
