@@ -362,6 +362,40 @@ const UserManagement = () => {
 
   const paginatedUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  const handleExportUsers = async () => {
+  try {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(
+      'http://localhost:5000/api/admin/users/export?format=csv',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to export users');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'users-export.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+    setSuccess('Users exported successfully');
+    setTimeout(() => setSuccess(''), 3000);
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
   if (loading) {
     return (
       <ThemeProvider theme={darkTheme}>
@@ -444,15 +478,16 @@ const UserManagement = () => {
                           Refresh
                         </Button>
                         <Button
-                          variant="contained"
-                          startIcon={<DownloadIcon />}
-                          sx={{ 
-                            bgcolor: 'rgba(255,255,255,0.15)',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' }
-                          }}
-                        >
-                          Export
-                        </Button>
+  variant="contained"
+  startIcon={<DownloadIcon />}
+  onClick={handleExportUsers}
+  sx={{ 
+    bgcolor: 'rgba(255,255,255,0.15)',
+    '&:hover': { bgcolor: 'rgba(255,255,255,0.25)' }
+  }}
+>
+  Export
+</Button>
                       </Box>
                     </Box>
                   </CardContent>

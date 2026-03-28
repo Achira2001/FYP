@@ -69,7 +69,7 @@ const MedivaHomepage = () => {
             <Grid item xs={12} md={6} textAlign={{ xs: "center" }}>
               <Chip
                 icon={<AutoAwesomeIcon />}
-                label="AI-Powered Health Management"
+                label="AI-Powered Smart Health Management"
                 sx={{
                   mb: 3,
                   bgcolor: "rgba(124,58,237,0.2)",
