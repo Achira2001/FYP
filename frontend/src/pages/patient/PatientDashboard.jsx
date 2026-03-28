@@ -369,6 +369,16 @@ export default function PatientDashboard() {
     fetchDashboardData();
     fetchPatientQueries();
     fetchUnreadCount();
+
+    const handleFocus = () => {
+      fetchDashboardData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -706,9 +716,13 @@ export default function PatientDashboard() {
                     <TextField
                       fullWidth label={label} type="time"
                       InputLabelProps={{ shrink: true, style: { color: '#94A3B8' } }}
-                      value={editData.mealTimes?.[key] || def}
-                      disabled={!editMode}
-                      onChange={(e) => handleInputChange('mealTimes', { ...editData.mealTimes, [key]: e.target.value })}
+                      value={editData?.mealTimes?.[key] || def}
+                      onChange={(e) =>
+                        handleInputChange('mealTimes', {
+                          ...(editData?.mealTimes || {}),
+                          [key]: e.target.value
+                        })
+                      }
                       size={isMobile ? 'small' : 'medium'}
                     />
                   </Grid>

@@ -18,7 +18,7 @@ import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import Medication from './models/Medication.js';
 import User from './models/User.js';
-import doctorRoutes from './routes/doctorRoutes.js';       // ✅ UNCOMMENTED
+import doctorRoutes from './routes/doctorRoutes.js';      
 import adminRoutes from './routes/adminRoutes.js';
 import dietPlanRoutes from './routes/dietPlanRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
@@ -72,7 +72,7 @@ app.use('/api/users',          userRoutes);
 app.use('/api/profile',        profileRoutes);
 app.use('/api/admin',          adminRoutes);
 app.use('/api/notifications',  notificationRoutes);
-app.use('/api',                doctorRoutes);   // ✅ UNCOMMENTED — handles /doctor-info, /doctor-query, /queries, /patients
+app.use('/api',                doctorRoutes);   
 
 // ═══════════════════════════════════════════════════════════════
 // CRON: Medication reminders — runs every minute
