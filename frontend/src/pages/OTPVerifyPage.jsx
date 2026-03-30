@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import { Shield, Email, ArrowBack, CheckCircle } from "@mui/icons-material";
 
-// ─── Keyframes ────────────────────────────────────────────────────────────────
+//  Keyframes 
 const gradientShift = keyframes`
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
@@ -34,7 +34,7 @@ const successPop = keyframes`
   100% { transform: scale(1); opacity: 1; }
 `;
 
-// ─── Styled ───────────────────────────────────────────────────────────────────
+//  Styled 
 const Root = styled(Box)({
   minHeight: "100vh",
   width: "100vw",
@@ -160,7 +160,7 @@ const EmailInput = styled(TextField)({
   "& .MuiFormHelperText-root": { color: "#EF4444", fontSize: "11px", ml: "2px" },
 });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+//  Helpers 
 const validateEmail = (v) => {
   if (!v.trim()) return "Email is required";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Enter a valid email address";
@@ -171,7 +171,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api"
 const OTP_LENGTH = 6;
 const TIMER_SECONDS = 300;
 
-// ─── Component ────────────────────────────────────────────────────────────────
+//  Component 
 export default function OtpVerifyPage() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");

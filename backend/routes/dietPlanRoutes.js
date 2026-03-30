@@ -2,18 +2,16 @@ import express from 'express';
 const router = express.Router();
 import DietPlan from '../models/DietPlan.js';
 
-// ============================================
-// PUBLIC ROUTES - NO AUTHENTICATION REQUIRED
-// ============================================
-// These routes are accessible without login
-// Perfect for guest users creating diet plans
+
+// PUBLIC ROUTES 
+
 
 // @route   POST /api/diet-plans
 // @desc    Save a new diet plan to MongoDB
 // @access  Public (No authentication required)
 router.post('/', async (req, res) => {
   try {
-    console.log('📥 Received diet plan data:', {
+    console.log(' Received diet plan data:', {
       name: req.body.userInfo?.name,
       calories: req.body.recommendations?.daily_calories,
       generatedFrom: req.body.generatedFrom
@@ -25,7 +23,7 @@ router.post('/', async (req, res) => {
     const dietPlan = new DietPlan(dietPlanData);
     await dietPlan.save();
 
-    console.log('✅ Diet plan saved successfully! ID:', dietPlan._id);
+    console.log(' Diet plan saved successfully! ID:', dietPlan._id);
 
     res.status(201).json({
       success: true,
@@ -33,7 +31,7 @@ router.post('/', async (req, res) => {
       data: dietPlan,
     });
   } catch (error) {
-    console.error('❌ Error saving diet plan:', error);
+    console.error(' Error saving diet plan:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to save diet plan',
@@ -49,7 +47,7 @@ router.get('/', async (req, res) => {
   try {
     const { userId, limit = 10, page = 1 } = req.query;
 
-    console.log('📋 Fetching diet plans...');
+    console.log(' Fetching diet plans...');
 
     // Build query
     const query = { status: 'active' };
@@ -65,7 +63,7 @@ router.get('/', async (req, res) => {
 
     const total = await DietPlan.countDocuments(query);
 
-    console.log(`✅ Found ${dietPlans.length} diet plans (total: ${total})`);
+    console.log(` Found ${dietPlans.length} diet plans (total: ${total})`);
 
     res.json({
       success: true,
@@ -76,7 +74,7 @@ router.get('/', async (req, res) => {
       data: dietPlans,
     });
   } catch (error) {
-    console.error('❌ Error fetching diet plans:', error);
+    console.error(' Error fetching diet plans:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch diet plans',
@@ -92,7 +90,7 @@ router.get('/recent', async (req, res) => {
   try {
     const { userId } = req.query;
 
-    console.log('📋 Fetching recent diet plans...');
+    console.log(' Fetching recent diet plans...');
 
     const query = { status: 'active' };
     if (userId) {
@@ -103,7 +101,7 @@ router.get('/recent', async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
-    console.log(`✅ Found ${recentPlans.length} recent diet plans`);
+    console.log(` Found ${recentPlans.length} recent diet plans`);
 
     res.json({
       success: true,
@@ -111,7 +109,7 @@ router.get('/recent', async (req, res) => {
       data: recentPlans,
     });
   } catch (error) {
-    console.error('❌ Error fetching recent diet plans:', error);
+    console.error(' Error fetching recent diet plans:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch recent diet plans',
@@ -125,26 +123,26 @@ router.get('/recent', async (req, res) => {
 // @access  Public (No authentication required)
 router.get('/:id', async (req, res) => {
   try {
-    console.log('📋 Fetching diet plan ID:', req.params.id);
+    console.log(' Fetching diet plan ID:', req.params.id);
 
     const dietPlan = await DietPlan.findById(req.params.id);
 
     if (!dietPlan) {
-      console.log('⚠️ Diet plan not found');
+      console.log(' Diet plan not found');
       return res.status(404).json({
         success: false,
         message: 'Diet plan not found',
       });
     }
 
-    console.log('✅ Diet plan found');
+    console.log(' Diet plan found');
 
     res.json({
       success: true,
       data: dietPlan,
     });
   } catch (error) {
-    console.error('❌ Error fetching diet plan:', error);
+    console.error(' Error fetching diet plan:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch diet plan',
@@ -163,7 +161,7 @@ router.delete('/:id', async (req, res) => {
     const dietPlan = await DietPlan.findById(req.params.id);
 
     if (!dietPlan) {
-      console.log('⚠️ Diet plan not found');
+      console.log(' Diet plan not found');
       return res.status(404).json({
         success: false,
         message: 'Diet plan not found',
@@ -174,14 +172,14 @@ router.delete('/:id', async (req, res) => {
     dietPlan.status = 'archived';
     await dietPlan.save();
 
-    console.log('✅ Diet plan archived successfully');
+    console.log(' Diet plan archived successfully');
 
     res.json({
       success: true,
       message: 'Diet plan archived successfully',
     });
   } catch (error) {
-    console.error('❌ Error deleting diet plan:', error);
+    console.error(' Error deleting diet plan:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete diet plan',
@@ -195,7 +193,7 @@ router.delete('/:id', async (req, res) => {
 // @access  Public (No authentication required)
 router.get('/stats/summary', async (req, res) => {
   try {
-    console.log('📊 Fetching diet plan statistics...');
+    console.log(' Fetching diet plan statistics...');
 
     const { userId } = req.query;
 
@@ -233,7 +231,7 @@ router.get('/stats/summary', async (req, res) => {
       },
     ]);
 
-    console.log(`✅ Statistics: ${totalPlans} total plans`);
+    console.log(` Statistics: ${totalPlans} total plans`);
 
     res.json({
       success: true,
@@ -244,7 +242,7 @@ router.get('/stats/summary', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('❌ Error fetching statistics:', error);
+    console.error(' Error fetching statistics:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch statistics',

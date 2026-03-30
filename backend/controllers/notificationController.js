@@ -2,16 +2,13 @@ import Notification from '../models/Notification.js';
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 
-// ─── helper: build safe populate options ────────────────────────────────────
-// Mongoose's refPath populate fails if relatedModel is null/undefined.
-// We filter those out at the query level so populate never receives a bad ref.
+
 const safePopulateOptions = {
     path: 'relatedId',
     options: { strictPopulate: false }
 };
 
-// ─── GET ALL NOTIFICATIONS (paginated, filterable) ───────────────────────────
-// Works for ALL roles: patient, doctor, admin — filtered by req.user.id
+// GET ALL NOTIFICATIONS 
 export const getNotifications = catchAsync(async (req, res, next) => {
     const page  = parseInt(req.query.page)  || 1;
     const limit = parseInt(req.query.limit) || 20;
@@ -44,7 +41,7 @@ export const getNotifications = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── GET SINGLE NOTIFICATION (full detail) ───────────────────────────────────
+//  GET SINGLE NOTIFICATION 
 export const getNotification = catchAsync(async (req, res, next) => {
     const notification = await Notification.findOne({
         _id:    req.params.id,
@@ -63,7 +60,7 @@ export const getNotification = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── GET UNREAD COUNT ────────────────────────────────────────────────────────
+//  GET UNREAD COUNT 
 export const getUnreadCount = catchAsync(async (req, res, next) => {
     const count = await Notification.getUnreadCount(req.user.id);
 
@@ -73,7 +70,7 @@ export const getUnreadCount = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── MARK SINGLE NOTIFICATION AS READ ───────────────────────────────────────
+//  MARK SINGLE NOTIFICATION AS READ 
 export const markAsRead = catchAsync(async (req, res, next) => {
     const notification = await Notification.markAsRead(req.params.id, req.user.id);
 
@@ -88,7 +85,7 @@ export const markAsRead = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── MARK ALL AS READ ────────────────────────────────────────────────────────
+//  MARK ALL AS READ
 export const markAllAsRead = catchAsync(async (req, res, next) => {
     await Notification.markAllAsRead(req.user.id);
 
@@ -98,7 +95,7 @@ export const markAllAsRead = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── DELETE SINGLE NOTIFICATION ─────────────────────────────────────────────
+// DELETE SINGLE NOTIFICATION
 export const deleteNotification = catchAsync(async (req, res, next) => {
     const notification = await Notification.findOneAndDelete({
         _id:    req.params.id,
@@ -115,7 +112,7 @@ export const deleteNotification = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── DELETE ALL READ NOTIFICATIONS ──────────────────────────────────────────
+//  DELETE ALL READ NOTIFICATIONS 
 export const deleteAllRead = catchAsync(async (req, res, next) => {
     await Notification.deleteMany({
         userId: req.user.id,
@@ -128,7 +125,7 @@ export const deleteAllRead = catchAsync(async (req, res, next) => {
     });
 });
 
-// ─── INTERNAL HELPER (used by other controllers) ─────────────────────────────
+//  INTERNAL HELPER (used by other controllers) 
 export const createNotification = async (data) => {
     try {
         return await Notification.createNotification(data);

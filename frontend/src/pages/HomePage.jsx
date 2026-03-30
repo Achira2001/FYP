@@ -50,7 +50,7 @@ const MedivaHomepage = () => {
           "linear-gradient(135deg, #020617, #0f172a, #020617)",
       }}
     >
-      {/* ================= HERO ================= */}
+      {/*  HERO */}
       <Box
         sx={{
           minHeight: "100vh",
@@ -127,7 +127,7 @@ const MedivaHomepage = () => {
                   endIcon={<ArrowForwardIcon />}
                   sx={{ color: "#22d3ee", borderColor: "#22d3ee" }}
                   onClick={() =>
-                    navigate("/login")
+                    window.open("https://youtu.be/s0AIsu9-umA", "_blank")
                   }
                 >
                   Watch Demo
@@ -194,7 +194,7 @@ const MedivaHomepage = () => {
         </Container>
       </Box>
 
-      {/* ================= FEATURES ================= */}
+      {/*  FEATURES */}
       <Container sx={{ py: 10 }} maxWidth="lg">
         <Typography
           variant="h3"
@@ -238,7 +238,7 @@ const MedivaHomepage = () => {
         </Grid>
       </Container>
 
-      {/* ================= CTA ================= */}
+      {/*  CTA  */}
       <Container sx={{ py: 20 }} maxWidth="md">
         <Box
           sx={{

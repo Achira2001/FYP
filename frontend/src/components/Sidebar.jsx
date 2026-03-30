@@ -38,7 +38,7 @@ export default function Sidebar({ role, onItemClick }) {
     ],
     admin: [
       { to: "/admin", label: "Dashboard", icon: <Dashboard /> },
-      { to: "/admin/manage-users", label: "Manage Users", icon: <ManageAccounts /> },
+
     ],
   };
 
@@ -107,6 +107,7 @@ export default function Sidebar({ role, onItemClick }) {
             key={to}
             component={NavLink}
             to={to}
+            end={to === `/${role}`}
             onClick={onItemClick}
             sx={{
               borderRadius: 3,

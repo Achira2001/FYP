@@ -10,9 +10,9 @@ import {
   LocalHospital, Security, FavoriteRounded, Healing, AdminPanelSettings
 } from "@mui/icons-material";
 
-// ═══════════════════════════════════════════════════════════════
-// KEYFRAMES — original, untouched
-// ═══════════════════════════════════════════════════════════════
+
+// KEYFRAMES 
+
 const float = keyframes`
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   33% { transform: translateY(-20px) rotate(120deg); }
@@ -52,9 +52,9 @@ const particleFloat = keyframes`
   75%  { transform: translateY(20px) translateX(10px) rotate(270deg); opacity: 0.8; }
 `;
 
-// ═══════════════════════════════════════════════════════════════
+
 // STYLED COMPONENTS — left side identical to original
-// ═══════════════════════════════════════════════════════════════
+
 const FullScreenBackground = styled(Box)({
   position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -3,
   background: `
@@ -88,7 +88,7 @@ const SplitScreenContainer = styled(Box)({
   display: 'flex', minHeight: '100vh', width: '100vw', position: 'relative',
 });
 
-// Left panel — EXACTLY original
+// Left panel 
 const LeftBrandingPanel = styled(Box)({
   flex: '1',
   background: 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%)',
@@ -105,7 +105,7 @@ const LeftBrandingPanel = styled(Box)({
   }
 });
 
-// Right panel — DARK (patient dashboard colors)
+// Right panel — DARK 
 const RightLoginPanel = styled(Box)({
   flex: '1',
   background: '#111827',
@@ -126,7 +126,7 @@ const LoginFormContainer = styled(Box)({
   width: '100%', maxWidth: '500px', position: 'relative', zIndex: 2,
 });
 
-// Left panel branding — EXACTLY original
+// Left panel branding
 const BrandingAvatar = styled(Avatar)(({ theme }) => ({
   width: 180, height: 180,
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
@@ -223,9 +223,9 @@ const GradientButton = styled(Button)({
   },
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // VALIDATORS
-// ═══════════════════════════════════════════════════════════════
+
 const validateEmail = (v) => {
   if (!v.trim()) return 'Email is required';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'Enter a valid email address';
@@ -237,9 +237,9 @@ const validatePassword = (v) => {
   return '';
 };
 
-// ═══════════════════════════════════════════════════════════════
+
 // COMPONENT
-// ═══════════════════════════════════════════════════════════════
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function LoginPage() {
@@ -360,9 +360,7 @@ export default function LoginPage() {
 
       <SplitScreenContainer>
 
-        {/* ════════════════════════════════════
-            LEFT PANEL — 100% original content
-        ════════════════════════════════════ */}
+        {/*  LEFT PANEL */}
         <LeftBrandingPanel>
           <FloatingMedicalIcon delay={0} size="120px" left="10%" top="20%" color="rgba(255,255,255,0.08)">
             <Healing />
@@ -411,9 +409,7 @@ export default function LoginPage() {
           </Fade>
         </LeftBrandingPanel>
 
-        {/* ════════════════════════════════════
-            RIGHT PANEL — dark theme
-        ════════════════════════════════════ */}
+        {/* RIGHT PANEL — dark theme */}
         <RightLoginPanel>
           <Fade in timeout={1500}>
             <LoginFormContainer sx={{ animation: `${slideInRight} 1.2s ease-out` }}>

@@ -21,9 +21,8 @@ const router = express.Router();
 // All routes require authentication
 router.use(protect);
 
-// ─────────────────────────────────────────────────────────────
+
 // PATIENT ROUTES  (any authenticated user — patient or doctor)
-// ─────────────────────────────────────────────────────────────
 
 // Doctor info management (patient stores their doctor's contact)
 router.route('/doctor-info')
@@ -39,10 +38,8 @@ router.get('/patient/queries/unread/count',  getUnreadResponseCount);
 router.get('/patient/queries/:id',           getPatientQueryDetails);
 router.patch('/patient/queries/:id/read',    markQueryAsRead);
 
-// ─────────────────────────────────────────────────────────────
-// DOCTOR-ONLY ROUTES  (role: 'doctor' required)
-// ─────────────────────────────────────────────────────────────
 
+// DOCTOR-ONLY ROUTES  (role: 'doctor' required)
 router.use(restrictTo('doctor'));
 
 // Doctor views and responds to patient queries
