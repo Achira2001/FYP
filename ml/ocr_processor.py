@@ -1,16 +1,3 @@
-"""
-Medical Report OCR and Disease Extraction Module
-================================================
-This module handles:
-- OCR text extraction from PDF and image files
-- Disease/medical condition identification
-- Medical term extraction using NLP
-
-Dependencies:
-- Tesseract OCR (must be installed on system)
-- pytesseract, pdf2image, PyPDF2, Pillow
-"""
-
 import os
 import re
 import io
@@ -22,9 +9,9 @@ import cv2
 import numpy as np
 from fuzzywuzzy import fuzz, process
 
-# ============================================
+
 # CONFIGURATION
-# ============================================
+
 
 # Common medical conditions and their variations
 DISEASE_KEYWORDS = {
@@ -100,9 +87,9 @@ ALLERGY_KEYWORDS = [
     'penicillin', 'aspirin', 'sulfa'
 ]
 
-# ============================================
+
 # TESSERACT PATH CONFIGURATION
-# ============================================
+
 
 def setup_tesseract():
     """
@@ -129,17 +116,12 @@ def setup_tesseract():
 # Initialize Tesseract
 setup_tesseract()
 
-# ============================================
+
 # IMAGE PREPROCESSING
-# ============================================
+
 
 def preprocess_image(image):
-    """
-    Preprocess image for better OCR accuracy
-    - Convert to grayscale
-    - Apply thresholding
-    - Denoise
-    """
+
     # Convert PIL Image to numpy array
     img_array = np.array(image)
     
@@ -158,9 +140,9 @@ def preprocess_image(image):
     # Convert back to PIL Image
     return Image.fromarray(denoised)
 
-# ============================================
+
 # TEXT EXTRACTION
-# ============================================
+
 
 def extract_text_from_image(image_file):
     """
@@ -178,7 +160,7 @@ def extract_text_from_image(image_file):
             version = pytesseract.get_tesseract_version()
             print(f"  Tesseract version: {version}")
         except Exception as e:
-            print(f"  ⚠️  WARNING: Tesseract not found!")
+            print(f"  [WARN]  WARNING: Tesseract not found!")
             print(f"     Error: {str(e)}")
             print(f"     Please install Tesseract OCR:")
             print(f"       Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki")
@@ -198,7 +180,7 @@ def extract_text_from_image(image_file):
         if len(text) > 0:
             print(f"  First 200 chars: {text[:200]}")
         else:
-            print("  ⚠️  No text extracted! Image may be:")
+            print("  [WARN]  No text extracted! Image may be:")
             print("     - Too blurry or low quality")
             print("     - Handwritten text (not supported)")
             print("     - Wrong format/encoding")
@@ -206,17 +188,13 @@ def extract_text_from_image(image_file):
         return text.strip()
     
     except Exception as e:
-        print(f"\n✗ Error extracting text from image: {str(e)}")
+        print(f"\n[ERROR] Error extracting text from image: {str(e)}")
         import traceback
         traceback.print_exc()
         return ""
 
 def extract_text_from_pdf(pdf_file):
-    """
-    Extract text from PDF file
-    - First try PyPDF2 for text-based PDFs
-    - If that fails, use OCR on images
-    """
+
     try:
         # Try reading as text-based PDF first
         pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -252,10 +230,7 @@ def extract_text_from_pdf(pdf_file):
         return ""
 
 def extract_text_from_file(file):
-    """
-    Main function to extract text from uploaded file
-    Supports: PDF, JPG, JPEG, PNG
-    """
+
     filename = file.filename.lower()
     
     print(f"\n{'='*50}")
@@ -276,14 +251,12 @@ def extract_text_from_file(file):
     print(f"\nExtracted {len(text)} characters of text")
     return text
 
-# ============================================
+
 # DISEASE EXTRACTION
-# ============================================
+
 
 def find_diseases_in_text(text):
-    """
-    Find disease mentions in extracted text using fuzzy matching
-    """
+    
     text_lower = text.lower()
     found_diseases = set()
     
@@ -345,10 +318,7 @@ def find_allergies_in_text(text):
     return list(set(found_allergies))  # Remove duplicates
 
 def extract_patient_details(text):
-    """
-    Extract basic patient information from medical report text
-    Returns: dict with name, age, gender, and other details
-    """
+
     info = {}
     text_lower = text.lower()
     
@@ -406,7 +376,7 @@ def extract_patient_details(text):
                 info['gender'] = 'Other'
             break
     
-    # Extract Height (if present)
+    # Extract Height 
     height_patterns = [
         r'height\s*:?\s*(\d{2,3})\s*cm',
         r'height\s*:?\s*(\d)\s*[\']\s*(\d{1,2})',  # feet'inches
@@ -424,7 +394,7 @@ def extract_patient_details(text):
                 info['height'] = height_cm
             break
     
-    # Extract Weight (if present)
+    # Extract Weight 
     weight_patterns = [
         r'weight\s*:?\s*(\d{2,3})\s*kg',
         r'weight\s*:?\s*(\d{2,3})\s*lbs?',
@@ -441,24 +411,21 @@ def extract_patient_details(text):
     
     return info
 def extract_medical_info(text):
-    """
-    Extract key medical information from text
-    Returns: dict with patient details, diseases, allergies, and other info
-    """
+    
     print(f"\n{'='*50}")
     print("Analyzing medical text...")
     print(f"{'='*50}")
     
     # Extract patient details (name, age, gender, height, weight)
     patient_details = extract_patient_details(text)
-    print(f"\n✓ Patient Details:")
+    print(f"\n[OK] Patient Details:")
     for key, value in patient_details.items():
         print(f"  - {key.title()}: {value}")
     
     # Extract numerical values first
     numerical_info = extract_numerical_values(text)
     if numerical_info:
-        print(f"\n✓ Extracted Lab Values:")
+        print(f"\n[OK] Extracted Lab Values:")
         for key, value in numerical_info.items():
             print(f"  - {key.replace('_', ' ').title()}: {value}")
     
@@ -471,14 +438,14 @@ def extract_medical_info(text):
     # Combine both sources, remove duplicates
     all_diseases = list(set(diseases_from_text + diseases_from_labs))
     
-    print(f"\n✓ Found {len(all_diseases)} disease(s):")
+    print(f"\n[OK] Found {len(all_diseases)} disease(s):")
     for disease in all_diseases:
         source = "from lab values" if disease in diseases_from_labs else "from text"
         print(f"  - {disease} ({source})")
     
     # Extract allergies
     allergies = find_allergies_in_text(text)
-    print(f"\n✓ Found {len(allergies)} allergy/ies:")
+    print(f"\n[OK] Found {len(allergies)} allergy/ies:")
     for allergy in allergies:
         print(f"  - {allergy}")
     
@@ -583,10 +550,7 @@ def extract_numerical_values(text):
 
 
 def detect_diseases_from_lab_values(lab_values):
-    """
-    Analyze lab values and detect diseases
-    Returns list of detected diseases
-    """
+    
     detected = []
     
     # High Cholesterol
@@ -629,10 +593,7 @@ def detect_diseases_from_lab_values(lab_values):
 
 
 def extract_numerical_values_old(text):
-    """
-    Extract numerical health values from text
-    (Blood pressure, cholesterol, blood sugar, etc.)
-    """
+    
     info = {}
     
     # Blood pressure pattern (e.g., 120/80, BP: 140/90)
@@ -662,20 +623,12 @@ def extract_numerical_values_old(text):
     
     return info
 
-# ============================================
+
 # MAIN PROCESSING FUNCTION
-# ============================================
+
 
 def process_medical_report(file):
-    """
-    Main function to process uploaded medical report
-    
-    Args:
-        file: FileStorage object from Flask request
-    
-    Returns:
-        dict: Extracted medical information
-    """
+
     try:
         # Extract text from file
         text = extract_text_from_file(file)
@@ -706,9 +659,9 @@ def process_medical_report(file):
             'allergies': ''
         }
 
-# ============================================
+
 # UTILITY FUNCTIONS
-# ============================================
+
 
 def get_supported_diseases():
     """Get list of diseases that can be detected"""
@@ -731,7 +684,7 @@ if __name__ == "__main__":
     # Test OCR setup
     success, message = test_ocr()
     print(f"\n{'='*50}")
-    print(f"OCR Test: {'✓ PASSED' if success else '✗ FAILED'}")
+    print(f"OCR Test: {'[OK] PASSED' if success else '[ERROR] FAILED'}")
     print(f"Message: {message}")
     print(f"{'='*50}")
     

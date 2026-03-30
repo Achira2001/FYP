@@ -8,16 +8,13 @@ import { sendSMS, sendEmail, smsReady } from '../services/notificationService.js
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
-// ─────────────────────────────────────────────
-// HELPER: Generate random 8-char password
-// ─────────────────────────────────────────────
+
+// Generate random 8-char password
 const generatePassword = () => {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
 };
 
-// ─────────────────────────────────────────────
-// HELPER: Create doctor account or return existing one
-// ─────────────────────────────────────────────
+// Create doctor account or return existing one
 const createOrGetDoctorAccount = async (doctorEmail, doctorName, doctorPhone) => {
   let doctor = await User.findOne({ email: doctorEmail, role: 'doctor' });
 
@@ -41,20 +38,19 @@ const createOrGetDoctorAccount = async (doctorEmail, doctorName, doctorPhone) =>
   return { doctor, isNew: true, tempPassword };
 };
 
-// ─────────────────────────────────────────────
-// HELPER: Send login credentials to a newly created doctor
-// ─────────────────────────────────────────────
+
+// Send login credentials to a newly created doctor
 const sendDoctorCredentials = async (doctorEmail, doctorPhone, tempPassword, patientName) => {
   const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
 
   // Send EMAIL with credentials
   await sendEmail({
     to:      doctorEmail,
-    subject: '🏥 Your Mediva Doctor Account Credentials',
+    subject: '\u{1F3E5} Your Mediva Doctor Account Credentials',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="margin: 0;">🏥 Mediva Health System</h1>
+          <h1 style="margin: 0;">\u{1F3E5} Mediva Health System</h1>
           <p style="margin: 10px 0 0 0; font-size: 16px;">Doctor Portal Access</p>
         </div>
         <div style="padding: 30px; background: #f9f9f9; border-radius: 0 0 10px 10px;">
@@ -104,13 +100,12 @@ const sendDoctorCredentials = async (doctorEmail, doctorPhone, tempPassword, pat
       to:      doctorPhone,
       message: `MEDIVA DOCTOR PORTAL\n\nPatient ${patientName} has added you as their doctor.\n\nLogin: ${loginUrl}\nEmail: ${doctorEmail}\nPassword: ${tempPassword}\n\nPlease login and change your password.`
     });
-    console.log(`✅ Doctor credentials SMS sent to ${doctorPhone}`);
+    console.log(` Doctor credentials SMS sent to ${doctorPhone}`);
   }
 };
 
-// ═══════════════════════════════════════════════════════════════
+
 // UPDATE DOCTOR INFO  PUT /api/doctor-info
-// ═══════════════════════════════════════════════════════════════
 export const updateDoctorInfo = catchAsync(async (req, res, next) => {
   const { name, hospital, email, phone } = req.body;
 
@@ -129,9 +124,8 @@ export const updateDoctorInfo = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET DOCTOR INFO  GET /api/doctor-info
-// ═══════════════════════════════════════════════════════════════
 export const getDoctorInfo = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user) return next(new AppError('User not found', 404));
@@ -142,9 +136,8 @@ export const getDoctorInfo = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // SEND QUERY TO DOCTOR  POST /api/doctor-query
-// ═══════════════════════════════════════════════════════════════
 export const sendDoctorQuery = catchAsync(async (req, res, next) => {
   const { problem } = req.body;
 
@@ -197,9 +190,9 @@ export const sendDoctorQuery = catchAsync(async (req, res, next) => {
     await Notification.create({
       userId:       doctor._id,
       type:         'patient_query',
-      title:        '💬 New Patient Query',
+      title:        '\u{1F4AC} New Patient Query',
       message:      `${user.fullName} sent you a message`,
-      icon:         '💬',
+      icon:         '\u{1F4AC}',
       relatedId:    query._id,
       relatedModel: 'Query',
       priority:     'high',
@@ -218,10 +211,10 @@ export const sendDoctorQuery = catchAsync(async (req, res, next) => {
   const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
   const results  = { email: false, sms: false };
 
-  // ── Email notification to doctor ──────────────────────────────
+  //  Email notification to doctor
   const emailResult = await sendEmail({
     to:      doctor.email,
-    subject: `🔔 New Patient Query from ${user.fullName}`,
+    subject: `U+1F514 New Patient Query from ${user.fullName}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
@@ -253,7 +246,7 @@ export const sendDoctorQuery = catchAsync(async (req, res, next) => {
   });
   results.email = emailResult.success;
 
-  // ── SMS notification to doctor (via Text.lk) ──────────────────
+  //  SMS notification to doctor (via Text.lk) 
   if (user.doctorInfo.phone && smsReady()) {
     const smsResult = await sendSMS({
       to:      user.doctorInfo.phone,
@@ -279,9 +272,8 @@ export const sendDoctorQuery = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET ALL QUERIES FOR DOCTOR  GET /api/queries
-// ═══════════════════════════════════════════════════════════════
 export const getDoctorQueries = catchAsync(async (req, res, next) => {
   const { status, priority, page = 1, limit = 20 } = req.query;
 
@@ -307,9 +299,8 @@ export const getDoctorQueries = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET SINGLE QUERY  GET /api/queries/:id
-// ═══════════════════════════════════════════════════════════════
 export const getQueryDetails = catchAsync(async (req, res, next) => {
   const query = await Query.findOne({ _id: req.params.id, doctorId: req.user.id })
     .populate('patientId', 'fullName email phone age medicalHistory medications height weight bloodType');
@@ -324,9 +315,8 @@ export const getQueryDetails = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, data: query });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // REPLY TO QUERY  POST /api/queries/:id/reply
-// ═══════════════════════════════════════════════════════════════
 export const replyToQuery = catchAsync(async (req, res, next) => {
   const { response } = req.body;
 
@@ -353,9 +343,9 @@ export const replyToQuery = catchAsync(async (req, res, next) => {
     await Notification.create({
       userId:       patient._id,
       type:         'doctor_response',
-      title:        '💬 Doctor Responded',
+      title:        '\u{1F4AC} Doctor Responded',
       message:      `Dr. ${doctor.fullName} has responded to your query`,
-      icon:         '💬',
+      icon:         '\u{1F4AC}',
       relatedId:    query._id,
       relatedModel: 'Query',
       priority:     'high',
@@ -370,10 +360,10 @@ export const replyToQuery = catchAsync(async (req, res, next) => {
     console.error('Failed to create notification:', notifError);
   }
 
-  // ── Email to patient ─────────────────────────────────────────
+  //  Email to patient 
   await sendEmail({
     to:      patient.email,
-    subject: `✅ Dr. ${doctor.fullName} Responded to Your Query`,
+    subject: `\u2705 Dr. ${doctor.fullName} Responded to Your Query`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #03dac6 0%, #667eea 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
@@ -403,7 +393,7 @@ export const replyToQuery = catchAsync(async (req, res, next) => {
     `
   });
 
-  // ── SMS to patient (via Text.lk) ─────────────────────────────
+  //  SMS to patient (via Text.lk) 
   if (patient.phone && smsReady()) {
     await sendSMS({
       to:      patient.phone,
@@ -418,9 +408,8 @@ export const replyToQuery = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET DOCTOR'S PATIENTS  GET /api/patients
-// ═══════════════════════════════════════════════════════════════
 export const getDoctorPatients = catchAsync(async (req, res, next) => {
   const queries = await Query.find({ doctorId: req.user.id })
     .populate('patientId', 'fullName email phone age medicalHistory medications')
@@ -453,9 +442,8 @@ export const getDoctorPatients = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET SINGLE PATIENT DETAILS  GET /api/patients/:patientId
-// ═══════════════════════════════════════════════════════════════
 export const getPatientDetails = catchAsync(async (req, res, next) => {
   const patient = await User.findById(req.params.patientId)
     .select('fullName email phone age dateOfBirth address height weight bloodType medicalHistory');
@@ -471,9 +459,8 @@ export const getPatientDetails = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // DOCTOR DASHBOARD STATS  GET /api/dashboard/stats
-// ═══════════════════════════════════════════════════════════════
 export const getDoctorDashboardStats = catchAsync(async (req, res, next) => {
   const doctorId = req.user.id;
 
@@ -515,9 +502,8 @@ export const getDoctorDashboardStats = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // PATIENT — GET OWN QUERIES  GET /api/patient/queries
-// ═══════════════════════════════════════════════════════════════
 export const getPatientQueries = catchAsync(async (req, res, next) => {
   const { status, page = 1, limit = 20 } = req.query;
 
@@ -542,9 +528,8 @@ export const getPatientQueries = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // PATIENT — GET SINGLE QUERY  GET /api/patient/queries/:id
-// ═══════════════════════════════════════════════════════════════
 export const getPatientQueryDetails = catchAsync(async (req, res, next) => {
   const query = await Query.findOne({ _id: req.params.id, patientId: req.user.id })
     .populate('doctorId', 'fullName email phone');
@@ -559,9 +544,8 @@ export const getPatientQueryDetails = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, data: query });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // PATIENT — MARK QUERY AS READ  PATCH /api/patient/queries/:id/read
-// ═══════════════════════════════════════════════════════════════
 export const markQueryAsRead = catchAsync(async (req, res, next) => {
   const query = await Query.findOne({ _id: req.params.id, patientId: req.user.id });
 
@@ -573,9 +557,8 @@ export const markQueryAsRead = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Query marked as read' });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // PATIENT — UNREAD COUNT  GET /api/patient/queries/unread/count
-// ═══════════════════════════════════════════════════════════════
 export const getUnreadResponseCount = catchAsync(async (req, res, next) => {
   const count = await Query.countDocuments({
     patientId:     req.user.id,

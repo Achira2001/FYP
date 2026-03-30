@@ -8,7 +8,7 @@ import {
   Email, Lock, Shield, ArrowBack, Visibility, VisibilityOff, CheckCircle,
 } from "@mui/icons-material";
 
-// ─── Keyframes ────────────────────────────────────────────────────────────────
+//  Keyframes 
 const gradientShift = keyframes`
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
@@ -31,7 +31,7 @@ const stepIn = keyframes`
   to   { opacity:1; transform:translateX(0); }
 `;
 
-// ─── Styled ───────────────────────────────────────────────────────────────────
+//  Styled 
 const Root = styled(Box)({
   minHeight: "100vh",
   width: "100vw",
@@ -153,7 +153,7 @@ const StepDot = styled(Box)(({ active, done }) => ({
   boxShadow: active === "true" ? "0 0 0 4px rgba(99,102,241,0.2)" : "none",
 }));
 
-// ─── Validators ───────────────────────────────────────────────────────────────
+// Validators 
 const validators = {
   email(v) {
     if (!v.trim()) return "Email is required";

@@ -3,9 +3,8 @@ import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import bcrypt from 'bcryptjs';
 
-// ========================================
+
 // GET PROFILE
-// ========================================
 export const getProfile = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
@@ -19,9 +18,8 @@ export const getProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // UPDATE PROFILE
-// ========================================
 export const updateProfile = catchAsync(async (req, res, next) => {
   const {
     fullName,
@@ -91,9 +89,8 @@ export const updateProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // UPDATE PASSWORD
-// ========================================
 export const updatePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
 
@@ -127,9 +124,8 @@ export const updatePassword = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // MEDICAL HISTORY - ADD
-// ========================================
 export const addMedicalHistory = catchAsync(async (req, res, next) => {
   const { condition, diagnosedDate, notes, isActive } = req.body;
 
@@ -163,9 +159,8 @@ export const addMedicalHistory = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // MEDICAL HISTORY - UPDATE
-// ========================================
 export const updateMedicalHistory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { condition, diagnosedDate, notes, isActive } = req.body;
@@ -196,9 +191,8 @@ export const updateMedicalHistory = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // MEDICAL HISTORY - DELETE
-// ========================================
 export const deleteMedicalHistory = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
@@ -224,9 +218,8 @@ export const deleteMedicalHistory = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // MEDICATION (User Model) - ADD
-// ========================================
 export const addMedication = catchAsync(async (req, res, next) => {
   const { name, dosage, frequency, startDate, endDate, beforeFood, notes, isActive } = req.body;
 
@@ -260,9 +253,7 @@ export const addMedication = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
 // MEDICATION (User Model) - UPDATE
-// ========================================
 export const updateMedication = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { name, dosage, frequency, startDate, endDate, beforeFood, notes, isActive } = req.body;
@@ -297,9 +288,8 @@ export const updateMedication = catchAsync(async (req, res, next) => {
   });
 });
 
-// ========================================
+
 // MEDICATION (User Model) - DELETE
-// ========================================
 export const deleteMedication = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 

@@ -33,7 +33,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+//  Constants 
 const TYPE_META = {
   medication_reminder:  { icon: "💊", label: "Medication Reminder",  color: "#4fc3f7" },
   medication_scheduled: { icon: "📅", label: "Medication Scheduled", color: "#81c784" },
@@ -53,7 +53,7 @@ const PRIORITY_COLOR = {
 
 const ALL_TYPES = ["all", ...Object.keys(TYPE_META)];
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+//  Helpers 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -73,7 +73,7 @@ function fullDate(dateStr) {
   });
 }
 
-// ─── NotificationCard ─────────────────────────────────────────────────────────
+//  NotificationCard 
 function NotificationCard({ notif, onRead, onDelete, onClick }) {
   const meta = TYPE_META[notif.type] || { icon: "🔔", label: notif.type, color: "#667eea" };
   const priorityColor = PRIORITY_COLOR[notif.priority] || PRIORITY_COLOR.medium;
@@ -223,7 +223,7 @@ function NotificationCard({ notif, onRead, onDelete, onClick }) {
   );
 }
 
-// ─── Detail Dialog ────────────────────────────────────────────────────────────
+//  Detail Dialog 
 function NotificationDetail({ notif, onClose, onRead, onDelete, navigate }) {
   if (!notif) return null;
   const meta = TYPE_META[notif.type] || { icon: "🔔", label: notif.type, color: "#667eea" };
@@ -301,7 +301,7 @@ function NotificationDetail({ notif, onClose, onRead, onDelete, navigate }) {
             </Box>
           ))}
 
-        {/* Metadata extras (e.g. patientName, queryPreview) */}
+        {/* Metadata extras  */}
         {notif.metadata && Object.keys(notif.metadata).length > 0 && (
           <>
             <Divider sx={{ borderColor: "rgba(102,126,234,0.15)", my: 2 }} />
@@ -362,7 +362,7 @@ function NotificationDetail({ notif, onClose, onRead, onDelete, navigate }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+//  Main Page 
 export default function NotificationsPage() {
   const navigate = useNavigate();
 
@@ -379,7 +379,7 @@ export default function NotificationsPage() {
 
   const LIMIT = 15;
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  //  Fetch 
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
@@ -412,7 +412,7 @@ export default function NotificationsPage() {
   // Reset to page 1 when filters change
   useEffect(() => { setPage(1); }, [typeFilter, readFilter]);
 
-  // ── Actions ────────────────────────────────────────────────────────────────
+  //  Actions 
   const handleRead = async (id) => {
     try {
       await axios.patch(`/api/notifications/${id}/read`);
@@ -454,7 +454,7 @@ export default function NotificationsPage() {
     if (!notif.isRead) await handleRead(notif._id);
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  //  Render 
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
@@ -465,7 +465,7 @@ export default function NotificationsPage() {
         p: { xs: 2, md: 4 },
       }}
     >
-      {/* ── Header ── */}
+      {/*  Header  */}
       <Box sx={{ maxWidth: 820, mx: "auto", mb: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -513,7 +513,7 @@ export default function NotificationsPage() {
         </Typography>
       </Box>
 
-      {/* ── Filters ── */}
+      {/*  Filters  */}
       <Box
         sx={{
           maxWidth: 820, mx: "auto", mb: 3,
@@ -563,7 +563,7 @@ export default function NotificationsPage() {
         </FormControl>
       </Box>
 
-      {/* ── List ── */}
+      {/*  List  */}
       <Box
         sx={{
           maxWidth: 820,
@@ -604,7 +604,7 @@ export default function NotificationsPage() {
         )}
       </Box>
 
-      {/* ── Pagination ── */}
+      {/*  Pagination  */}
       {totalPages > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
           <Pagination
@@ -622,7 +622,7 @@ export default function NotificationsPage() {
         </Box>
       )}
 
-      {/* ── Detail Dialog ── */}
+      {/*  Detail Dialog */}
       <NotificationDetail
         notif={selected}
         onClose={() => setSelected(null)}

@@ -4,9 +4,9 @@ import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import { sendSMS, sendEmail, smsReady, transporter } from '../services/notificationService.js';
 
-// ─────────────────────────────────────────────
+
 // HELPER: Calculate exact reminder time
-// ─────────────────────────────────────────────
+
 const calculateReminderTime = (timePeriod, mealRelation, mealTimes) => {
   const mealTimeMap = {
     morning:   mealTimes.breakfast || '08:00',
@@ -33,9 +33,8 @@ const calculateReminderTime = (timePeriod, mealRelation, mealTimes) => {
   return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 };
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET ALL MEDICATIONS  GET /api/medications
-// ═══════════════════════════════════════════════════════════════
 export const getMedications = catchAsync(async (req, res, next) => {
   const medications = await Medication.find({ userId: req.user.id })
     .sort({ createdAt: -1 })
@@ -44,9 +43,8 @@ export const getMedications = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, count: medications.length, data: medications });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET SINGLE MEDICATION  GET /api/medications/:id
-// ═══════════════════════════════════════════════════════════════
 export const getMedication = catchAsync(async (req, res, next) => {
   const medication = await Medication.findOne({ _id: req.params.id, userId: req.user.id })
     .populate('userId', 'fullName email phone mealTimes notificationPreferences');
@@ -56,9 +54,8 @@ export const getMedication = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, data: medication });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // CREATE MEDICATION  POST /api/medications
-// ═══════════════════════════════════════════════════════════════
 export const createMedication = catchAsync(async (req, res, next) => {
   const {
     drugType, drugSubcategory, name, dosage, quantity,
@@ -85,8 +82,8 @@ export const createMedication = catchAsync(async (req, res, next) => {
     drugType, drugSubcategory, name, dosage, quantity,
     timePeriods, mealRelation, notes,
     reminderSettings: reminderSettings || {
-      calendarEnabled: true, smsEnabled: true,
-      emailEnabled:    true, phoneCallEnabled: false
+      smsEnabled: true,
+      emailEnabled:    true, 
     },
     frequency: frequency || { type: 'daily', interval: 1, duration: 30 },
     reminderDays: reminderDays || 7,
@@ -105,9 +102,8 @@ export const createMedication = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // UPDATE MEDICATION  PUT /api/medications/:id
-// ═══════════════════════════════════════════════════════════════
 export const updateMedication = catchAsync(async (req, res, next) => {
   if (req.body.timePeriods || req.body.mealRelation) {
     const user      = await User.findById(req.user.id);
@@ -134,9 +130,8 @@ export const updateMedication = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Medication updated successfully', data: medication });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // DELETE MEDICATION  DELETE /api/medications/:id
-// ═══════════════════════════════════════════════════════════════
 export const deleteMedication = catchAsync(async (req, res, next) => {
   const medication = await Medication.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
   if (!medication) return next(new AppError('Medication not found', 404));
@@ -144,9 +139,8 @@ export const deleteMedication = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Medication deleted successfully' });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GOOGLE CALENDAR SYNC  POST /api/medications/sync/google-calendar
-// ═══════════════════════════════════════════════════════════════
 export const syncGoogleCalendar = catchAsync(async (req, res, next) => {
   const { medications } = req.body;
   const user = await User.findById(req.user.id);
@@ -171,7 +165,7 @@ export const syncGoogleCalendar = catchAsync(async (req, res, next) => {
       endTime.setMinutes(endTime.getMinutes() + 30);
 
       events.push({
-        summary:     `💊 Take ${medication.name}`,
+        summary:     `\u25CF  Take ${medication.name}`,
         description: `Medication: ${medication.name}\nDosage: ${medication.quantity} ${medication.dosage}\nMeal Relation: ${medication.mealRelation?.replace(/_/g, ' ') || 'N/A'}${medication.notes ? '\nNotes: ' + medication.notes : ''}`,
         start:       { dateTime: startTime.toISOString(), timeZone: 'Asia/Colombo' },
         end:         { dateTime: endTime.toISOString(), timeZone: 'Asia/Colombo' },
@@ -188,9 +182,8 @@ export const syncGoogleCalendar = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // SCHEDULE SMS  POST /api/medications/schedule/sms
-// ═══════════════════════════════════════════════════════════════
 export const scheduleSMS = catchAsync(async (req, res, next) => {
   const { medications } = req.body;
   const user = await User.findById(req.user.id);
@@ -217,7 +210,18 @@ export const scheduleSMS = catchAsync(async (req, res, next) => {
   }
 
   // Send a confirmation SMS immediately
-  const testMsg = `💊 MedReminder Setup Complete!\n\nYour SMS reminders are active for:\n${medications.map(m => `• ${m.name} (${m.dosage})`).join('\n')}\n\nStay healthy!`;
+ const smsEnabledMeds = medications.filter(m => m.reminderSettings?.smsEnabled);
+
+if (smsEnabledMeds.length === 0) {
+  return res.status(200).json({
+    success: true,
+    message: 'No medications selected for SMS reminders',
+    scheduledReminders: [],
+    smsSent: false
+  });
+}
+
+const testMsg = `[MedReminder Setup Complete!]\n\n + Your SMS reminders are active for:\n${smsEnabledMeds.map(m => `• ${m.name} (${m.dosage})`).join('\n')}\n\nStay healthy!`;
   const smsResult = await sendSMS({ to: user.phone, message: testMsg });
 
   res.status(200).json({
@@ -229,9 +233,8 @@ export const scheduleSMS = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // SCHEDULE EMAIL REMINDERS  POST /api/medications/schedule/email
-// ═══════════════════════════════════════════════════════════════
 export const scheduleEmailReminders = catchAsync(async (req, res, next) => {
   const { medications } = req.body;
   const user = await User.findById(req.user.id);
@@ -256,7 +259,18 @@ export const scheduleEmailReminders = catchAsync(async (req, res, next) => {
     });
   }
 
-  const medList = medications
+const emailEnabledMeds = medications.filter(m => m.reminderSettings?.emailEnabled);
+
+if (emailEnabledMeds.length === 0) {
+  return res.status(200).json({
+    success: true,
+    message: 'No medications selected for email reminders',
+    scheduledReminders: [],
+    emailSent: false
+  });
+}
+
+  const medList = emailEnabledMeds
     .filter(m => m.reminderSettings?.emailEnabled)
     .map(m => `
       <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
@@ -270,7 +284,7 @@ export const scheduleEmailReminders = catchAsync(async (req, res, next) => {
 
   const emailResult = await sendEmail({
     to:      user.email,
-    subject: '💊 Your Medication Schedule is Ready!',
+    subject: ' [MEDICATION SCHEDULE] Your Medication Schedule is Ready!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(45deg, #2196F3 30%, #21CBF3 90%); color: white; padding: 20px; text-align: center;">
@@ -284,9 +298,8 @@ export const scheduleEmailReminders = catchAsync(async (req, res, next) => {
           <div style="background: #f0f8ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <h3 style="color: #2196F3;">Reminder Settings</h3>
             <ul>
-              <li>📧 Email reminders: Enabled</li>
-              <li>📱 SMS reminders: ${user.phone ? 'Enabled via Text.lk' : 'Disabled (no phone number)'}</li>
-              <li>📅 Calendar sync: Available</li>
+              <li> [EMAIL] Email reminders: Enabled</li>
+              <li> [SMS] SMS reminders: ${user.phone ? 'Enabled via Text.lk' : 'Disabled (no phone number)'}</li>
             </ul>
           </div>
         </div>
@@ -310,9 +323,8 @@ export const scheduleEmailReminders = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET DUE MEDICATIONS  GET /api/medications/due/reminders
-// ═══════════════════════════════════════════════════════════════
 export const getDueMedications = catchAsync(async (req, res, next) => {
   const now         = new Date();
   const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -327,9 +339,8 @@ export const getDueMedications = catchAsync(async (req, res, next) => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // UPDATE ADHERENCE  POST /api/medications/adherence
-// ═══════════════════════════════════════════════════════════════
 export const updateAdherence = catchAsync(async (req, res, next) => {
   const { medicationId, timePeriod, taken, notes } = req.body;
 
@@ -358,9 +369,8 @@ export const updateAdherence = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Adherence updated successfully', data: medication.adherenceLog });
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // GET ADHERENCE STATS  GET /api/medications/adherence/stats
-// ═══════════════════════════════════════════════════════════════
 export const getAdherenceStats = catchAsync(async (req, res, next) => {
   const { days = 30 } = req.query;
 

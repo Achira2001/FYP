@@ -154,7 +154,7 @@ export const register = catchAsync(async (req, res, next) => {
   const newUser = await User.create(userData);
 
   try {
-    // ✅Send OTP email
+    // Send OTP email
     await new Email(newUser, '', otp).sendWelcomeOTP();
     console.log(`OTP email sent successfully to ${email}: ${otp}`);
 

@@ -1,4 +1,3 @@
-// src/App.js
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -20,9 +19,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import PatientDashboard from "./pages/patient/PatientDashboard";
 
-/* ================================
-   PRIVATE ROUTE
-================================ */
+/* PRIVATE ROUTE */
 function PrivateRoute({ role, children }) {
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
@@ -38,11 +35,7 @@ function PrivateRoute({ role, children }) {
   return children;
 }
 
-/* ================================
-   DASHBOARD REDIRECT
-   Shows HomePage for non-authenticated users
-   Redirects authenticated users to their dashboard
-================================ */
+
 function DashboardRedirect() {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
@@ -73,16 +66,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ================= ROOT / HOMEPAGE ================= */}
+        {/*  ROOT / HOMEPAGE  */}
         <Route path="/" element={<DashboardRedirect />} />
 
-        {/* ================= AUTH ROUTES ================= */}
+        {/*  AUTH ROUTES */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-otp" element={<OTPVerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
-        {/* ================= PATIENT ROUTES ================= */}
+        {/* PATIENT ROUTES  */}
         <Route
           path="/patient"
           element={
@@ -97,7 +90,7 @@ export default function App() {
           <Route path="diet-plan" element={<DietPlan />} />
         </Route>
 
-        {/* ================= DOCTOR ROUTES ================= */}
+        {/*  DOCTOR ROUTES  */}
         <Route
           path="/doctor"
           element={
@@ -109,7 +102,7 @@ export default function App() {
           <Route index element={<DoctorDashboard />} />
         </Route>
 
-        {/* ================= ADMIN ROUTES ================= */}
+        {/*  ADMIN ROUTES  */}
         <Route
           path="/admin"
           element={
@@ -122,7 +115,7 @@ export default function App() {
           <Route path="manage-users" element={<ManageUsers />} />
         </Route>
 
-        {/* ================= PROFILE ROUTE ================= */}
+        {/*  PROFILE ROUTE  */}
         <Route
           path="/profile"
           element={
@@ -134,7 +127,7 @@ export default function App() {
           <Route index element={<ProfilePage />} />
         </Route>
 
-        {/* ================= CATCH ALL ================= */}
+        {/*  CATCH ALL  */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

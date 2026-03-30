@@ -1,14 +1,4 @@
-#!/usr/bin/env node
-
-/**
- * Diet Plan MongoDB Diagnostic Tool
- * ==================================
- * This script will test every part of your system and tell you EXACTLY what's wrong
- * 
- * Run: node diagnose-diet-plans.js
- * 
- * UPDATED: Now works with MONGO_URI (your existing variable)
- */
+// Diet Plan MongoDB Diagnostic Tool
 
 import mongoose from 'mongoose';
 import axios from 'axios';
@@ -17,7 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 console.log('\n' + '='.repeat(70));
-console.log('🔍 DIET PLAN SYSTEM DIAGNOSTIC');
+console.log(' DIET PLAN SYSTEM DIAGNOSTIC');
 console.log('='.repeat(70));
 
 const MERN_API = 'http://localhost:5000';
@@ -34,7 +24,7 @@ let testResults = {
 
 // Test 1: MongoDB Connection
 async function testMongoDB() {
-  console.log('\n📊 TEST 1: MongoDB Connection');
+  console.log('\n TEST 1: MongoDB Connection');
   console.log('-'.repeat(70));
   
   try {
@@ -42,7 +32,7 @@ async function testMongoDB() {
     const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
     
     if (!mongoUri) {
-      console.log('  ❌ MONGO_URI not found in .env file');
+      console.log('   MONGO_URI not found in .env file');
       console.log('     Solution: Make sure your .env has MONGO_URI');
       return false;
     }
@@ -52,22 +42,22 @@ async function testMongoDB() {
     
     await mongoose.connect(mongoUri);
     
-    console.log('  ✅ MongoDB Connected Successfully!');
+    console.log('   MongoDB Connected Successfully!');
     console.log(`     Database: ${mongoose.connection.name}`);
     
     testResults.mongodb = true;
     return true;
     
   } catch (error) {
-    console.log('  ❌ MongoDB Connection Failed');
+    console.log('   MongoDB Connection Failed');
     console.log(`     Error: ${error.message}`);
     
     if (error.message.includes('authentication failed')) {
-      console.log('\n  💡 Solution: Check username/password in MONGO_URI');
+      console.log('\n   Solution: Check username/password in MONGO_URI');
     } else if (error.message.includes('ENOTFOUND')) {
-      console.log('\n  💡 Solution: Check MongoDB Atlas cluster URL');
+      console.log('\n   Solution: Check MongoDB Atlas cluster URL');
     } else if (error.message.includes('IP')) {
-      console.log('\n  💡 Solution: Add 0.0.0.0/0 to MongoDB Atlas IP Whitelist');
+      console.log('\n   Solution: Add 0.0.0.0/0 to MongoDB Atlas IP Whitelist');
     }
     
     return false;
@@ -76,24 +66,24 @@ async function testMongoDB() {
 
 // Test 2: MERN Backend Running
 async function testMERNBackend() {
-  console.log('\n🚀 TEST 2: MERN Backend Status');
+  console.log('\n TEST 2: MERN Backend Status');
   console.log('-'.repeat(70));
   
   try {
     const response = await axios.get(`${MERN_API}/api/health`, { timeout: 5000 });
     
-    console.log('  ✅ MERN Backend is Running!');
+    console.log('   MERN Backend is Running!');
     console.log(`     Status: ${response.data.success ? 'Healthy' : 'Unhealthy'}`);
     
     testResults.mernBackend = true;
     return true;
     
   } catch (error) {
-    console.log('  ❌ MERN Backend Not Responding');
+    console.log('   MERN Backend Not Responding');
     
     if (error.code === 'ECONNREFUSED') {
       console.log('     Error: Connection refused on port 5000');
-      console.log('\n  💡 Solution: Start your backend server');
+      console.log('\n   Solution: Start your backend server');
       console.log('     Command: npm start (in backend folder)');
     } else {
       console.log(`     Error: ${error.message}`);
@@ -105,24 +95,24 @@ async function testMERNBackend() {
 
 // Test 3: ML Backend Running
 async function testMLBackend() {
-  console.log('\n🤖 TEST 3: ML Backend Status');
+  console.log('\n TEST 3: ML Backend Status');
   console.log('-'.repeat(70));
   
   try {
     const response = await axios.get(`${ML_API}/api/health`, { timeout: 5000 });
     
-    console.log('  ✅ ML Backend is Running!');
+    console.log('   ML Backend is Running!');
     console.log(`     Models Loaded: ${response.data.models_loaded ? 'Yes' : 'No'}`);
     
     testResults.mlBackend = true;
     return true;
     
   } catch (error) {
-    console.log('  ❌ ML Backend Not Responding');
+    console.log('   ML Backend Not Responding');
     
     if (error.code === 'ECONNREFUSED') {
       console.log('     Error: Connection refused on port 5001');
-      console.log('\n  💡 Solution: Start your Flask backend');
+      console.log('\n   Solution: Start your Flask backend');
       console.log('     Command: cd ml-backend && python app.py');
     } else {
       console.log(`     Error: ${error.message}`);
@@ -134,24 +124,24 @@ async function testMLBackend() {
 
 // Test 4: Diet Plans Route
 async function testDietPlansRoute() {
-  console.log('\n📍 TEST 4: Diet Plans Route');
+  console.log('\n TEST 4: Diet Plans Route');
   console.log('-'.repeat(70));
   
   try {
     const response = await axios.get(`${MERN_API}/api/diet-plans/recent`, { timeout: 5000 });
     
-    console.log('  ✅ Diet Plans Route is Working!');
+    console.log('   Diet Plans Route is Working!');
     console.log(`     Current Plans: ${response.data.count || 0}`);
     
     testResults.dietPlansRoute = true;
     return true;
     
   } catch (error) {
-    console.log('  ❌ Diet Plans Route Failed');
+    console.log('   Diet Plans Route Failed');
     
     if (error.response?.status === 404) {
       console.log('     Error: Route not found (404)');
-      console.log('\n  💡 Solution: Add to server.js:');
+      console.log('\n   Solution: Add to server.js:');
       console.log('     import dietPlanRoutes from \'./routes/dietPlanRoutes.js\';');
       console.log('     app.use(\'/api/diet-plans\', dietPlanRoutes);');
     } else if (error.code === 'ECONNREFUSED') {
@@ -166,7 +156,7 @@ async function testDietPlansRoute() {
 
 // Test 5: Can Save Diet Plan
 async function testSaveDietPlan() {
-  console.log('\n💾 TEST 5: Saving Diet Plan');
+  console.log('\n TEST 5: Saving Diet Plan');
   console.log('-'.repeat(70));
   
   const testData = {
@@ -210,29 +200,29 @@ async function testSaveDietPlan() {
     });
     
     if (response.data.success) {
-      console.log('  ✅ Diet Plan Saved Successfully!');
+      console.log('   Diet Plan Saved Successfully!');
       console.log(`     Plan ID: ${response.data.data._id}`);
       console.log(`     Name: ${response.data.data.userInfo.name}`);
       
       testResults.canSave = true;
       return response.data.data._id;
     } else {
-      console.log('  ❌ Save Failed');
+      console.log('   Save Failed');
       console.log(`     Message: ${response.data.message}`);
       return null;
     }
     
   } catch (error) {
-    console.log('  ❌ Save Diet Plan Failed');
+    console.log('   Save Diet Plan Failed');
     
     if (error.response?.status === 500) {
       console.log('     Error: Server error (500)');
       console.log(`     Message: ${error.response.data?.message}`);
       
       if (error.response.data?.error?.includes('validation')) {
-        console.log('\n  💡 Solution: Data structure mismatch with schema');
+        console.log('\n   Solution: Data structure mismatch with schema');
       } else if (error.response.data?.error?.includes('MongoError')) {
-        console.log('\n  💡 Solution: MongoDB connection or write permission issue');
+        console.log('\n   Solution: MongoDB connection or write permission issue');
       }
     } else {
       console.log(`     Error: ${error.response?.data?.message || error.message}`);
@@ -244,13 +234,13 @@ async function testSaveDietPlan() {
 
 // Test 6: Can Fetch Diet Plans
 async function testFetchDietPlans(savedId) {
-  console.log('\n📥 TEST 6: Fetching Diet Plans');
+  console.log('\n TEST 6: Fetching Diet Plans');
   console.log('-'.repeat(70));
   
   try {
     const response = await axios.get(`${MERN_API}/api/diet-plans/recent`, { timeout: 5000 });
     
-    console.log('  ✅ Fetch Successful!');
+    console.log('   Fetch Successful!');
     console.log(`     Total Plans: ${response.data.count}`);
     
     if (response.data.data && response.data.data.length > 0) {
@@ -264,7 +254,7 @@ async function testFetchDietPlans(savedId) {
     return true;
     
   } catch (error) {
-    console.log('  ❌ Fetch Failed');
+    console.log('   Fetch Failed');
     console.log(`     Error: ${error.response?.data?.message || error.message}`);
     return false;
   }
@@ -272,7 +262,7 @@ async function testFetchDietPlans(savedId) {
 
 // Test 7: Frontend Connection
 async function testFrontendConnection() {
-  console.log('\n🌐 TEST 7: Frontend Connection Check');
+  console.log('\n TEST 7: Frontend Connection Check');
   console.log('-'.repeat(70));
   
   // Check CORS configuration
@@ -285,7 +275,7 @@ async function testFrontendConnection() {
       }
     });
     
-    console.log('  ✅ CORS Configured for port 5173');
+    console.log('   CORS Configured for port 5173');
     
     // Also check 3000
     const response2 = await axios.get(`${MERN_API}/api/health`, {
@@ -294,12 +284,12 @@ async function testFrontendConnection() {
       }
     });
     
-    console.log('  ✅ CORS Configured for port 3000');
+    console.log('   CORS Configured for port 3000');
     
   } catch (error) {
     if (error.response?.status === 403 || error.message.includes('CORS')) {
-      console.log('  ⚠️  CORS May Not Be Configured Properly');
-      console.log('\n  💡 Solution: In server.js, update CORS to:');
+      console.log('    CORS May Not Be Configured Properly');
+      console.log('\n   Solution: In server.js, update CORS to:');
       console.log('     app.use(cors({');
       console.log('       origin: [\'http://localhost:5173\', \'http://localhost:3000\'],');
       console.log('       credentials: true');
@@ -322,29 +312,29 @@ async function runDiagnostics() {
     
     // Summary
     console.log('\n' + '='.repeat(70));
-    console.log('📋 DIAGNOSTIC SUMMARY');
+    console.log(' DIAGNOSTIC SUMMARY');
     console.log('='.repeat(70));
     
     const allPassed = Object.values(testResults).every(v => v);
     
     if (allPassed) {
-      console.log('\n🎉 ALL TESTS PASSED!');
+      console.log('\n ALL TESTS PASSED!');
       console.log('   Your system is working correctly.');
       console.log('\n   If diet plans still aren\'t saving in your app:');
       console.log('   1. Check browser console (F12) for errors');
       console.log('   2. Make sure React is calling the right API URL');
       console.log('   3. Clear browser cache and try again');
     } else {
-      console.log('\n⚠️  SOME TESTS FAILED');
+      console.log('\n  SOME TESTS FAILED');
       console.log('\n   Failed Tests:');
       
       Object.entries(testResults).forEach(([test, passed]) => {
         if (!passed) {
-          console.log(`   ❌ ${test}`);
+          console.log(`    ${test}`);
         }
       });
       
-      console.log('\n   📝 Next Steps:');
+      console.log('\n    Next Steps:');
       
       if (!testResults.mongodb) {
         console.log('   1. Fix MongoDB connection first (see error above)');
@@ -372,7 +362,7 @@ async function runDiagnostics() {
     console.log('\n' + '='.repeat(70));
     
   } catch (error) {
-    console.error('\n❌ Fatal Error:', error.message);
+    console.error('\n Fatal Error:', error.message);
   } finally {
     // Cleanup
     if (mongoose.connection.readyState === 1) {
