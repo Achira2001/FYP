@@ -163,7 +163,7 @@ const UserProfile = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         throw new Error('No authentication token found. Please login again.');
       }
@@ -172,7 +172,7 @@ const UserProfile = () => {
       const profileResponse = await axios.get(`${API_BASE_URL}/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       setUser(profileResponse.data.user);
       setEditData(profileResponse.data.user);
 
@@ -193,7 +193,7 @@ const UserProfile = () => {
       } catch (medError) {
         console.error('Failed to load medications:', medError);
       }
-      
+
       setLoading(false);
     } catch (err) {
       console.error('Profile fetch error:', err);
@@ -214,7 +214,7 @@ const UserProfile = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setEditData(prev => ({
+    setEditData((prev) => ({
       ...prev,
       [field]: value
     }));
@@ -224,10 +224,11 @@ const UserProfile = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(`${API_BASE_URL}/profile`, editData, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       setUser(response.data.user);
+      setEditData(response.data.user);
       setEditMode(false);
       setSuccess('Profile updated successfully');
       setTimeout(() => setSuccess(''), 3000);
@@ -243,13 +244,13 @@ const UserProfile = () => {
       setTimeout(() => setError(''), 3000);
       return;
     }
-    
+
     try {
       const token = localStorage.getItem('token');
       await axios.patch(`${API_BASE_URL}/profile/update-password`, passwordData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       setChangePasswordDialog(false);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setSuccess('Password changed successfully');
@@ -367,45 +368,51 @@ const UserProfile = () => {
             </>
           )}
           {user?.role === 'doctor' && (
-            <>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Medical License"
-                  value={editData.medicalLicense || ''}
-                  onChange={(e) => handleInputChange('medicalLicense', e.target.value)}
-                  disabled={!editMode}
-                  variant="outlined"
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Specialization"
-                  value={editData.specialization || ''}
-                  onChange={(e) => handleInputChange('specialization', e.target.value)}
-                  disabled={!editMode}
-                  variant="outlined"
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Workplace"
-                  value={editData.workplace || ''}
-                  onChange={(e) => handleInputChange('workplace', e.target.value)}
-                  disabled={!editMode}
-                  variant="outlined"
-                  size="small"
-                  InputProps={{
-                    startAdornment: <HospitalIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
-                  }}
-                />
-              </Grid>
-            </>
-          )}
+  <>
+    <Grid item xs={12} sm={6}>
+      <TextField
+        fullWidth
+        label="Medical License"
+        value={editData.medicalLicense || ''}
+        onChange={(e) => handleInputChange('medicalLicense', e.target.value)}
+        disabled={!editMode}
+        variant="outlined"
+        size="small"
+      />
+    </Grid>
+
+    <Grid item xs={12} sm={6}>
+      <TextField
+        fullWidth
+        label="Specialization"
+        value={editData.specialization || ''}
+        onChange={(e) => handleInputChange('specialization', e.target.value)}
+        disabled={!editMode}
+        variant="outlined"
+        size="small"
+      />
+    </Grid>
+
+    <Grid item xs={12}>
+      <TextField
+        fullWidth
+        label="Hospital / Workplace"
+        value={editData.workplace || ''}
+        onChange={(e) => handleInputChange('workplace', e.target.value)}
+        disabled={!editMode}
+        variant="outlined"
+        size="small"
+        InputProps={{
+          startAdornment: (
+            <HospitalIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+          )
+        }}
+      />
+    </Grid>
+
+  
+  </>
+)}
         </Grid>
       </CardContent>
     </Card>
@@ -413,12 +420,20 @@ const UserProfile = () => {
 
   const renderHealthInfo = () => (
     <Stack spacing={2.5}>
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+      <Card
+        elevation={0}
+        sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}
+      >
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}
+          >
             <FitnessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
             Health Metrics
           </Typography>
+
           <Grid container spacing={2.5}>
             <Grid item xs={12} sm={6} md={4}>
               <TextField
@@ -431,14 +446,19 @@ const UserProfile = () => {
                 variant="outlined"
                 size="small"
                 InputProps={{
-                  startAdornment: <BloodTypeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  startAdornment: (
+                    <BloodTypeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  )
                 }}
               >
                 {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
-                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
+
             <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
@@ -450,10 +470,13 @@ const UserProfile = () => {
                 variant="outlined"
                 size="small"
                 InputProps={{
-                  startAdornment: <HeightIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  startAdornment: (
+                    <HeightIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  )
                 }}
               />
             </Grid>
+
             <Grid item xs={12} sm={6} md={4}>
               <TextField
                 fullWidth
@@ -465,18 +488,24 @@ const UserProfile = () => {
                 variant="outlined"
                 size="small"
                 InputProps={{
-                  startAdornment: <WeightIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  startAdornment: (
+                    <WeightIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  )
                 }}
               />
             </Grid>
-            {user?.height && user?.weight && (
+
+            {editData?.height && editData?.weight ? (
               <Grid item xs={12}>
                 <Box display="flex" justifyContent="center" mt={1}>
-                  <Chip 
-                    label={`BMI: ${(user.weight / ((user.height / 100) ** 2)).toFixed(1)}`} 
-                    sx={{ 
-                      bgcolor: 'rgba(3, 218, 198, 0.2)', 
-                      color: 'success.main', 
+                  <Chip
+                    label={`BMI: ${(
+                      Number(editData.weight) /
+                      ((Number(editData.height) / 100) ** 2)
+                    ).toFixed(1)}`}
+                    sx={{
+                      bgcolor: 'rgba(3, 218, 198, 0.2)',
+                      color: 'success.main',
                       fontWeight: 600,
                       fontSize: '0.95rem',
                       px: 2,
@@ -486,152 +515,57 @@ const UserProfile = () => {
                   />
                 </Box>
               </Grid>
-            )}
+            ) : null}
           </Grid>
         </CardContent>
       </Card>
 
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+      <Card
+        elevation={0}
+        sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}
+      >
         <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
-            <Restaurant sx={{ mr: 1, verticalAlign: 'middle' }} />
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}
+          >
+            <RestaurantIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
             Meal Times
           </Typography>
+
           <Grid container spacing={2.5}>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="Breakfast"
-                type="time"
-                value={editData.mealTimes?.breakfast || '08:00'}
-                onChange={(e) => handleInputChange('mealTimes', {
-                  ...editData.mealTimes,
-                  breakfast: e.target.value
-                })}
-                disabled={!editMode}
-                variant="outlined"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="Lunch"
-                type="time"
-                value={editData.mealTimes?.lunch || '13:00'}
-                onChange={(e) => handleInputChange('mealTimes', {
-                  ...editData.mealTimes,
-                  lunch: e.target.value
-                })}
-                disabled={!editMode}
-                variant="outlined"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="Dinner"
-                type="time"
-                value={editData.mealTimes?.dinner || '19:00'}
-                onChange={(e) => handleInputChange('mealTimes', {
-                  ...editData.mealTimes,
-                  dinner: e.target.value
-                })}
-                disabled={!editMode}
-                variant="outlined"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                label="Night"
-                type="time"
-                value={editData.mealTimes?.night || '22:00'}
-                onChange={(e) => handleInputChange('mealTimes', {
-                  ...editData.mealTimes,
-                  night: e.target.value
-                })}
-                disabled={!editMode}
-                variant="outlined"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
+            {[
+              { label: 'Breakfast', key: 'breakfast', defaultValue: '08:00' },
+              { label: 'Lunch', key: 'lunch', defaultValue: '13:00' },
+              { label: 'Dinner', key: 'dinner', defaultValue: '19:00' },
+              { label: 'Night', key: 'night', defaultValue: '22:00' }
+            ].map(({ label, key, defaultValue }) => (
+              <Grid item xs={12} sm={6} md={3} key={key}>
+                <TextField
+                  fullWidth
+                  label={label}
+                  type="time"
+                  value={editData?.mealTimes?.[key] || defaultValue}
+                  onChange={(e) =>
+                    handleInputChange('mealTimes', {
+                      ...(editData?.mealTimes || {}),
+                      [key]: e.target.value
+                    })
+                  }
+                  disabled={!editMode}
+                  variant="outlined"
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            ))}
           </Grid>
         </CardContent>
       </Card>
     </Stack>
   );
 
-  const renderMedicalHistory = () => (
-    <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
-            Medical History
-          </Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
-            disabled={!editMode}
-            size="small"
-            sx={{ borderRadius: 2 }}
-          >
-            Add Condition
-          </Button>
-        </Box>
-        <TableContainer component={Paper} sx={{ borderRadius: 2, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-          <Table>
-            <TableHead sx={{ backgroundColor: 'rgba(102, 126, 234, 0.1)' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Condition</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Diagnosed Date</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Notes</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.85rem' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {user?.medicalHistory?.map((condition, index) => (
-                <TableRow key={index} hover sx={{ '&:hover': { bgcolor: 'rgba(102, 126, 234, 0.05)' } }}>
-                  <TableCell sx={{ fontWeight: 500 }}>{condition.condition}</TableCell>
-                  <TableCell>
-                    {condition.diagnosedDate ? format(new Date(condition.diagnosedDate), 'MMM dd, yyyy') : 'N/A'}
-                  </TableCell>
-                  <TableCell>{condition.notes || 'N/A'}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={condition.isActive ? 'Active' : 'Inactive'} 
-                      color={condition.isActive ? 'success' : 'default'} 
-                      size="small"
-                      sx={{ fontWeight: 500, fontSize: '0.75rem' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton size="small" disabled={!editMode} color="primary">
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(!user?.medicalHistory || user.medicalHistory.length === 0) && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    No medical history recorded
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </CardContent>
-    </Card>
-  );
 
   const renderMedications = () => (
     <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
@@ -659,8 +593,8 @@ const UserProfile = () => {
                 <TableRow key={medication._id || index} hover sx={{ '&:hover': { bgcolor: 'rgba(102, 126, 234, 0.05)' } }}>
                   <TableCell sx={{ fontWeight: 500 }}>{medication.name}</TableCell>
                   <TableCell>
-                    <Chip 
-                      label={medication.drugType?.toUpperCase() || 'N/A'} 
+                    <Chip
+                      label={medication.drugType?.toUpperCase() || 'N/A'}
                       size="small"
                       sx={{ fontWeight: 500, fontSize: '0.7rem' }}
                     />
@@ -669,9 +603,9 @@ const UserProfile = () => {
                   <TableCell>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {medication.timePeriods?.map((period, idx) => (
-                        <Chip 
+                        <Chip
                           key={idx}
-                          label={period} 
+                          label={period}
                           size="small"
                           sx={{ fontWeight: 500, fontSize: '0.7rem' }}
                         />
@@ -685,9 +619,9 @@ const UserProfile = () => {
                   </TableCell>
                   <TableCell>{medication.reminderDays || medication.frequency?.duration || 30} days</TableCell>
                   <TableCell>
-                    <Chip 
-                      label={medication.isActive ? 'Active' : 'Inactive'} 
-                      color={medication.isActive ? 'success' : 'default'} 
+                    <Chip
+                      label={medication.isActive ? 'Active' : 'Inactive'}
+                      color={medication.isActive ? 'success' : 'default'}
                       size="small"
                       sx={{ fontWeight: 500, fontSize: '0.75rem' }}
                     />
@@ -716,142 +650,13 @@ const UserProfile = () => {
     </Card>
   );
 
-  const renderDoctorInfo = () => (
-    <Stack spacing={2.5}>
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
-            <MoneyIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Professional Details
-          </Typography>
-          <Grid container spacing={2.5}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Consultation Fee"
-                type="number"
-                value={editData.consultationFee || ''}
-                onChange={(e) => handleInputChange('consultationFee', e.target.value)}
-                disabled={!editMode}
-                variant="outlined"
-                size="small"
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                }}
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main', mb: 3 }}>
-            <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Availability Schedule
-          </Typography>
-          <Grid container spacing={2.5}>
-            {user?.availability?.map((slot, index) => (
-              <React.Fragment key={index}>
-                <Grid item xs={12} sm={3}>
-                  <TextField
-                    fullWidth
-                    label="Day"
-                    select
-                    value={slot.day || ''}
-                    onChange={(e) => {
-                      const newAvailability = [...(editData.availability || [])];
-                      newAvailability[index].day = e.target.value;
-                      handleInputChange('availability', newAvailability);
-                    }}
-                    disabled={!editMode}
-                    variant="outlined"
-                    size="small"
-                  >
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                      <MenuItem key={day} value={day}>{day}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="Start Time"
-                    type="time"
-                    value={slot.startTime || ''}
-                    onChange={(e) => {
-                      const newAvailability = [...(editData.availability || [])];
-                      newAvailability[index].startTime = e.target.value;
-                      handleInputChange('availability', newAvailability);
-                    }}
-                    disabled={!editMode}
-                    variant="outlined"
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="End Time"
-                    type="time"
-                    value={slot.endTime || ''}
-                    onChange={(e) => {
-                      const newAvailability = [...(editData.availability || [])];
-                      newAvailability[index].endTime = e.target.value;
-                      handleInputChange('availability', newAvailability);
-                    }}
-                    disabled={!editMode}
-                    variant="outlined"
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={1}>
-                  <IconButton 
-                    disabled={!editMode}
-                    onClick={() => {
-                      const newAvailability = [...(editData.availability || [])];
-                      newAvailability.splice(index, 1);
-                      handleInputChange('availability', newAvailability);
-                    }}
-                    color="error"
-                    size="small"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Grid>
-              </React.Fragment>
-            ))}
-            <Grid item xs={12}>
-              <Button 
-                variant="outlined" 
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  handleInputChange('availability', [
-                    ...(editData.availability || []),
-                    { day: 'Monday', startTime: '09:00', endTime: '17:00' }
-                  ]);
-                }}
-                disabled={!editMode}
-                size="small"
-                sx={{ borderRadius: 2 }}
-              >
-                Add Time Slot
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-    </Stack>
-  );
 
   if (loading) {
     return (
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             minHeight: '100vh',
             bgcolor: 'background.default',
             display: 'flex',
@@ -893,28 +698,28 @@ const UserProfile = () => {
           <Fade in timeout={800}>
             <Box>
               {error && (
-                <Alert 
-                  severity="error" 
-                  sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(245, 87, 108, 0.3)' }} 
+                <Alert
+                  severity="error"
+                  sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(245, 87, 108, 0.3)' }}
                   onClose={() => setError('')}
                 >
                   {error}
                 </Alert>
               )}
               {success && (
-                <Alert 
-                  severity="success" 
-                  sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(3, 218, 198, 0.3)' }} 
+                <Alert
+                  severity="success"
+                  sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(3, 218, 198, 0.3)' }}
                   onClose={() => setSuccess('')}
                 >
                   {success}
                 </Alert>
               )}
-              
+
               {/* Profile Header */}
               <Zoom in timeout={600}>
-                <Card elevation={0} sx={{ 
-                  borderRadius: 3, 
+                <Card elevation={0} sx={{
+                  borderRadius: 3,
                   mb: 4,
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   border: '1px solid rgba(102, 126, 234, 0.3)',
@@ -923,8 +728,8 @@ const UserProfile = () => {
                     <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
                       <Box display="flex" alignItems="center" flexWrap="wrap" gap={3}>
                         <Box position="relative">
-                          <Avatar sx={{ 
-                            width: 120, 
+                          <Avatar sx={{
+                            width: 120,
                             height: 120,
                             border: '4px solid rgba(255,255,255,0.2)',
                             boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
@@ -936,11 +741,11 @@ const UserProfile = () => {
                             )}
                           </Avatar>
                           {user.isEmailVerified && (
-                            <Avatar sx={{ 
-                              position: 'absolute', 
-                              bottom: 0, 
-                              right: 0, 
-                              width: 32, 
+                            <Avatar sx={{
+                              position: 'absolute',
+                              bottom: 0,
+                              right: 0,
+                              width: 32,
                               height: 32,
                               backgroundColor: 'success.main',
                               border: '2px solid #1a1f2e'
@@ -950,8 +755,8 @@ const UserProfile = () => {
                           )}
                         </Box>
                         <Box>
-                          <Typography variant="h3" component="h1" sx={{ 
-                            fontWeight: 700, 
+                          <Typography variant="h3" component="h1" sx={{
+                            fontWeight: 700,
                             mb: 1,
                             color: 'white',
                             textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
@@ -959,9 +764,9 @@ const UserProfile = () => {
                             {user.fullName}
                           </Typography>
                           <Stack direction="row" spacing={1} flexWrap="wrap" mb={1}>
-                            <Chip 
-                              label={user.role.charAt(0).toUpperCase() + user.role.slice(1)} 
-                              sx={{ 
+                            <Chip
+                              label={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                              sx={{
                                 fontWeight: 600,
                                 fontSize: '0.9rem',
                                 backgroundColor: 'rgba(255,255,255,0.2)',
@@ -970,10 +775,10 @@ const UserProfile = () => {
                               }}
                             />
                             {user.isEmailVerified && (
-                              <Chip 
-                                label="Verified Account" 
+                              <Chip
+                                label="Verified Account"
                                 icon={<VerifiedIcon />}
-                                sx={{ 
+                                sx={{
                                   backgroundColor: 'rgba(3, 218, 198, 0.2)',
                                   color: 'success.main',
                                   fontWeight: 600,
@@ -984,22 +789,22 @@ const UserProfile = () => {
                             )}
                           </Stack>
                           <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', maxWidth: 400 }}>
-                            {user.role === 'doctor' ? 
+                            {user.role === 'doctor' ?
                               `${user.specialization || 'Medical Professional'} at ${user.workplace || 'Healthcare Facility'}` :
                               user.role === 'admin' ? 'System Administrator' :
-                              'Patient Profile'
+                                'Patient Profile'
                             }
                           </Typography>
                         </Box>
                       </Box>
-                      
+
                       <Box display="flex" gap={1} flexWrap="wrap">
                         <Button
                           variant={editMode ? "contained" : "outlined"}
                           startIcon={editMode ? <CancelIcon /> : <EditIcon />}
                           onClick={handleEditToggle}
                           size="small"
-                          sx={{ 
+                          sx={{
                             borderRadius: 2,
                             fontWeight: 600,
                             px: 2,
@@ -1020,7 +825,7 @@ const UserProfile = () => {
                             startIcon={<SaveIcon />}
                             onClick={handleSave}
                             size="small"
-                            sx={{ 
+                            sx={{
                               borderRadius: 2,
                               fontWeight: 600,
                               px: 2,
@@ -1031,11 +836,11 @@ const UserProfile = () => {
                             Save Changes
                           </Button>
                         )}
-                        <Button 
+                        <Button
                           variant="outlined"
                           onClick={() => setChangePasswordDialog(true)}
                           size="small"
-                          sx={{ 
+                          sx={{
                             borderRadius: 2,
                             fontWeight: 600,
                             px: 2,
@@ -1058,10 +863,10 @@ const UserProfile = () => {
 
               {/* Content Tabs */}
               <Card elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-                <Tabs 
-                  value={activeTab} 
-                  onChange={handleTabChange} 
-                  sx={{ 
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  sx={{
                     borderBottom: '1px solid rgba(102, 126, 234, 0.2)',
                     '& .MuiTab-root': {
                       color: 'text.secondary',
@@ -1084,29 +889,27 @@ const UserProfile = () => {
                 >
                   <Tab label="Basic Information" />
                   {user.role === 'patient' && <Tab label="Health Information" />}
-                  {user.role === 'patient' && <Tab label="Medical History" />}
+
                   {user.role === 'patient' && <Tab label="Medications" />}
-                  {user.role === 'doctor' && <Tab label="Professional Information" />}
+
                 </Tabs>
 
                 <Box sx={{ p: 3, minHeight: 400 }}>
-                  <Fade in key={activeTab} timeout={500}>
-                    <Box>
-                      {activeTab === 0 && renderBasicInfo()}
-                      {activeTab === 1 && user.role === 'patient' && renderHealthInfo()}
-                      {activeTab === 2 && user.role === 'patient' && renderMedicalHistory()}
-                      {activeTab === 3 && user.role === 'patient' && renderMedications()}
-                      {activeTab === 1 && user.role === 'doctor' && renderDoctorInfo()}
-                    </Box>
-                  </Fade>
-                </Box>
+  <Fade in key={activeTab} timeout={500}>
+    <Box>
+      {activeTab === 0 && renderBasicInfo()}
+      {activeTab === 1 && user.role === 'patient' && renderHealthInfo()}
+      {activeTab === 2 && user.role === 'patient' && renderMedications()}
+    </Box>
+  </Fade>
+</Box>
               </Card>
             </Box>
           </Fade>
 
           {/* Change Password Dialog */}
-          <Dialog 
-            open={changePasswordDialog} 
+          <Dialog
+            open={changePasswordDialog}
             onClose={() => setChangePasswordDialog(false)}
             maxWidth="sm"
             fullWidth
@@ -1114,9 +917,9 @@ const UserProfile = () => {
               sx: { borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)', p: 1 }
             }}
           >
-            <DialogTitle sx={{ 
-              textAlign: 'center', 
-              fontWeight: 600, 
+            <DialogTitle sx={{
+              textAlign: 'center',
+              fontWeight: 600,
               fontSize: '1.5rem',
               color: 'primary.main',
               pb: 1
@@ -1132,7 +935,7 @@ const UserProfile = () => {
                     label="Current Password"
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                     variant="outlined"
                     size="small"
                   />
@@ -1143,7 +946,7 @@ const UserProfile = () => {
                     label="New Password"
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                     variant="outlined"
                     size="small"
                   />
@@ -1154,7 +957,7 @@ const UserProfile = () => {
                     label="Confirm New Password"
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                     variant="outlined"
                     size="small"
                   />
@@ -1162,7 +965,7 @@ const UserProfile = () => {
               </Grid>
             </DialogContent>
             <DialogActions sx={{ px: 4, pb: 3, gap: 1 }}>
-              <Button 
+              <Button
                 onClick={() => setChangePasswordDialog(false)}
                 variant="outlined"
                 size="small"
@@ -1170,8 +973,8 @@ const UserProfile = () => {
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={handlePasswordChange} 
+              <Button
+                onClick={handlePasswordChange}
                 variant="contained"
                 size="small"
                 sx={{ borderRadius: 2, fontWeight: 600, px: 3 }}

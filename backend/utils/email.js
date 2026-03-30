@@ -30,10 +30,10 @@ class Email {
       secure: false, // Use TLS
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // This should be the app password
+        pass: process.env.EMAIL_PASS, 
       },
       tls: {
-        rejectUnauthorized: false // Allow self-signed certificates
+        rejectUnauthorized: false
       }
     });
   }
@@ -45,7 +45,7 @@ class Email {
         throw new Error('Email configuration missing in environment variables');
       }
 
-      console.log(`📧 Email Configuration Check:`);
+      console.log(` Email Configuration Check:`);
       console.log(`EMAIL_USER: ${process.env.EMAIL_USER}`);
       console.log(`EMAIL_PASS: ${process.env.EMAIL_PASS ? '***configured***' : 'NOT SET'}`);
 
@@ -62,25 +62,25 @@ class Email {
       };
 
       // 3) Create a transport and send email
-      console.log(`📤 Attempting to send email to: ${this.to}`);
-      console.log(`📧 Subject: ${subject}`);
+      console.log(` Attempting to send email to: ${this.to}`);
+      console.log(` Subject: ${subject}`);
       
       const transporter = this.newTransport();
       
       // Verify transporter configuration
       await transporter.verify();
-      console.log('✅ SMTP connection verified successfully');
+      console.log(' SMTP connection verified successfully');
       
       const result = await transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully:', result.messageId);
+      console.log(' Email sent successfully:', result.messageId);
       return result;
       
     } catch (error) {
-      console.error('❌ Email sending failed:', error.message);
+      console.error(' Email sending failed:', error.message);
       
       // Provide more specific error information
       if (error.code === 'EAUTH') {
-        console.error('🔐 Authentication failed. Please check:');
+        console.error(' Authentication failed. Please check:');
         console.error('   1. Gmail 2FA is enabled');
         console.error('   2. App password is correctly set in EMAIL_PASS');
         console.error('   3. App password has no spaces and is 16 characters');

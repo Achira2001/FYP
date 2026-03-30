@@ -23,9 +23,51 @@
     "Carbohydrate_Intake",
     "Fat_Intake",
     "Preferred_Cuisine",
-    "Food_Aversions"
+    "Food_Aversions",
+    "BMI_Category",
+    "Age_Group",
+    "Calorie_Density",
+    "Macro_Balance",
+    "BP_Pulse_Pressure",
+    "Exercise_BMI",
+    "Prot_ratio",
+    "Carb_ratio",
+    "Fat_ratio",
+    "Weight_Height_ratio",
+    "Cal_per_exercise",
+    "Protein_BMI",
+    "Age_BMI",
+    "Sugar_Chol_ratio"
   ],
   "encoder_info": {
+    "BMI_Category": {
+      "classes": [
+        "Normal",
+        "Obese",
+        "Overweight",
+        "Underweight"
+      ],
+      "mapping": {
+        "Normal": 0,
+        "Obese": 1,
+        "Overweight": 2,
+        "Underweight": 3
+      }
+    },
+    "Age_Group": {
+      "classes": [
+        "Adult",
+        "MiddleAge",
+        "Senior",
+        "Young"
+      ],
+      "mapping": {
+        "Adult": 0,
+        "MiddleAge": 1,
+        "Senior": 2,
+        "Young": 3
+      }
+    },
     "Gender": {
       "classes": [
         "Female",
@@ -157,28 +199,37 @@
   },
   "metrics": {
     "calories": {
-      "mae": 105.6952133178711,
-      "rmse": 124.86992450896653,
-      "r2": 0.9655327796936035
+      "r2": 0.9667494297027588,
+      "mae": 105.51138305664062,
+      "rmse": 122.64626153597182
     },
     "protein": {
-      "mae": 7.801029205322266,
-      "rmse": 9.184456872721162,
-      "r2": 0.9573510885238647
+      "r2": 0.9580522179603577,
+      "mae": 7.710714817047119,
+      "rmse": 9.108651343468747
     },
     "carbs": {
-      "mae": 26.43448829650879,
-      "rmse": 31.027720209301854,
-      "r2": 0.8840054273605347
+      "r2": 0.8854348659515381,
+      "mae": 26.468341827392578,
+      "rmse": 30.83594541740461
     },
     "fats": {
-      "mae": 8.096266746520996,
-      "rmse": 9.485409021964463,
-      "r2": 0.9396364688873291
-    },
-    "meal_plan": {
-      "accuracy": 0.251
+      "r2": 0.9420585036277771,
+      "mae": 7.9363555908203125,
+      "rmse": 9.293162911091672
     }
   },
-  "random_state": 42
+  "meal_plan_classes": [
+    "Balanced Diet",
+    "High-Protein Diet",
+    "Low-Carb Diet",
+    "Low-Fat Diet"
+  ],
+  "meal_plan_logic": "rule_based_clinical",
+  "regression_only": true,
+  "random_state": 42,
+  "training_samples": 4000,
+  "test_samples": 1000,
+  "sklearn_version": "1.6.1",
+  "xgboost_version": "2.1.1"
 }

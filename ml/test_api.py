@@ -1,12 +1,3 @@
-"""
-API Testing Script
-==================
-Test the diet recommendation API to ensure it's working correctly.
-
-Usage:
-    python test_api.py
-"""
-
 import requests
 import json
 from datetime import datetime
@@ -56,18 +47,18 @@ def test_meal_plans():
             data = response.json()
             if data.get('success'):
                 meal_plans = data.get('meal_plans', [])
-                print(f"✓ Found {len(meal_plans)} meal plan types:")
+                print(f" Found {len(meal_plans)} meal plan types:")
                 for plan in meal_plans:
                     print(f"  - {plan}")
                 return True
             else:
-                print("✗ API returned success=False")
+                print("[ERROR] API returned success=False")
                 return False
         else:
-            print(f"✗ Request failed with status code: {response.status_code}")
+            print(f"[ERROR] Request failed with status code: {response.status_code}")
             return False
     except Exception as e:
-        print(f"✗ Error: {str(e)}")
+        print(f"[ERROR] Error: {str(e)}")
         return False
 
 def test_prediction():
@@ -105,10 +96,10 @@ def test_prediction():
             data = response.json()
             
             if data.get('success'):
-                print("\n✓ Prediction successful!")
+                print("\n[OK] Prediction successful!")
                 
                 # User info
-                print("\n📋 User Profile:")
+                print("\n User Profile:")
                 user_info = data.get('user_info', {})
                 print(f"  Name: {user_info.get('name')}")
                 print(f"  Age: {user_info.get('age')} years")
@@ -117,7 +108,7 @@ def test_prediction():
                 print(f"  Goal: {user_info.get('goal')}")
                 
                 # Recommendations
-                print("\n🎯 Recommendations:")
+                print("\n Recommendations:")
                 recs = data.get('recommendations', {})
                 print(f"  Daily Calories: {recs.get('daily_calories')} kcal")
                 print(f"  Protein: {recs.get('protein_grams')} g")
@@ -126,14 +117,14 @@ def test_prediction():
                 print(f"  Meal Plan Type: {recs.get('meal_plan_type')}")
                 
                 # Macros
-                print("\n📊 Macronutrient Distribution:")
+                print("\n Macronutrient Distribution:")
                 macros = data.get('macro_percentages', {})
                 print(f"  Protein: {macros.get('protein')}%")
                 print(f"  Carbs: {macros.get('carbs')}%")
                 print(f"  Fats: {macros.get('fats')}%")
                 
                 # Meal breakdown
-                print("\n🍽️ Meal Breakdown:")
+                print("\n Meal Breakdown:")
                 meals = data.get('meal_breakdown', [])
                 for meal in meals:
                     print(f"  {meal.get('name')}: {meal.get('calories')} kcal")
@@ -142,17 +133,17 @@ def test_prediction():
                 # Health insights
                 insights = data.get('health_insights', [])
                 if insights:
-                    print("\n💡 Health Insights:")
+                    print("\n Health Insights:")
                     for i, insight in enumerate(insights, 1):
                         print(f"  {i}. {insight}")
                 
                 return True
             else:
-                print("✗ API returned success=False")
+                print(" API returned success=False")
                 print(f"  Error: {data.get('error')}")
                 return False
         else:
-            print(f"✗ Request failed with status code: {response.status_code}")
+            print(f" Request failed with status code: {response.status_code}")
             try:
                 error_data = response.json()
                 print(f"  Error: {error_data.get('error')}")
@@ -160,7 +151,7 @@ def test_prediction():
                 print(f"  Response: {response.text}")
             return False
     except Exception as e:
-        print(f"✗ Error: {str(e)}")
+        print(f" Error: {str(e)}")
         return False
 
 def test_different_scenarios():
@@ -224,7 +215,7 @@ def test_different_scenarios():
     results = []
     
     for scenario in scenarios:
-        print(f"\n🔹 Testing: {scenario['name']}")
+        print(f"\n Testing: {scenario['name']}")
         
         try:
             response = requests.post(
@@ -237,22 +228,22 @@ def test_different_scenarios():
                 data = response.json()
                 if data.get('success'):
                     recs = data.get('recommendations', {})
-                    print(f"  ✓ Calories: {recs.get('daily_calories')} kcal")
-                    print(f"  ✓ Meal Plan: {recs.get('meal_plan_type')}")
+                    print(f"   Calories: {recs.get('daily_calories')} kcal")
+                    print(f"   Meal Plan: {recs.get('meal_plan_type')}")
                     results.append(True)
                 else:
-                    print(f"  ✗ Failed: {data.get('error')}")
+                    print(f"   Failed: {data.get('error')}")
                     results.append(False)
             else:
-                print(f"  ✗ HTTP Error: {response.status_code}")
+                print(f"   HTTP Error: {response.status_code}")
                 results.append(False)
         except Exception as e:
-            print(f"  ✗ Error: {str(e)}")
+            print(f"   Error: {str(e)}")
             results.append(False)
     
     passed = sum(results)
     total = len(results)
-    print(f"\n{'✓' if passed == total else '✗'} Passed {passed}/{total} scenarios")
+    print(f"\n{'[OK]' if passed == total else '[ERROR]'} Passed {passed}/{total} scenarios")
     
     return passed == total
 
@@ -278,15 +269,15 @@ def main():
     total = len(results)
     
     for test_name, result in results.items():
-        status = "✓ PASSED" if result else "✗ FAILED"
+        status = "[OK] PASSED" if result else "✗ FAILED"
         print(f"{status}: {test_name}")
     
     print("\n" + "=" * 60)
     if passed == total:
-        print(f"  ✅ ALL TESTS PASSED ({passed}/{total})")
+        print(f"   ALL TESTS PASSED ({passed}/{total})")
         print("  Your API is working perfectly!")
     else:
-        print(f"  ⚠️  SOME TESTS FAILED ({passed}/{total})")
+        print(f"    SOME TESTS FAILED ({passed}/{total})")
         print("  Please check the errors above.")
     print("=" * 60)
     

@@ -16,7 +16,6 @@ import {
   LinearProgress,
   ListItemText,
   MenuItem,
-  OutlinedInput,
   Paper,
   Popover,
   Radio,
@@ -29,6 +28,7 @@ import {
   TextField,
   Typography,
   useTheme,
+  useMediaQuery,
   Alert,
   Card,
   CardContent,
@@ -55,13 +55,17 @@ import {
   Assignment as ReportIcon,
   History as HistoryIcon,
   Refresh as RefreshIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 
-// ========================================
+import MealSummaryCard from './MealSummaryCard';
+import DietPlanPage from './DietPlanPage';
+
+
 // THEME CONFIGURATION
-// ========================================
+
 const medivaTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -92,6 +96,7 @@ const medivaTheme = createTheme({
         root: {
           borderRadius: 9999,
           textTransform: 'none',
+          fontWeight: 600,
         },
       },
     },
@@ -121,15 +126,16 @@ const medivaTheme = createTheme({
   },
 });
 
-// ========================================
-// API CONFIGURATION
-// ========================================
-const ML_API_BASE_URL = 'http://localhost:5001/api'; // Flask ML backend
-const MERN_API_BASE_URL = 'http://localhost:5000/api'; // MERN backend
 
-// ========================================
+// API CONFIGURATION
+
+const ML_API_BASE_URL = 'http://localhost:5001/api';
+const MERN_API_BASE_URL = 'http://localhost:5000/api';
+const PROFILE_API_URL = 'http://localhost:5000/api/profile';
+
+
 // CONSTANTS
-// ========================================
+
 const diseases = [
   'None', 'Diabetes', 'Hypertension', 'Heart Disease', 'Obesity',
   'Gluten Intolerance', 'Lactose Intolerance', 'Nut Allergy',
@@ -155,25 +161,33 @@ const goals = [
   'Maintenance', 'Health Improvement',
 ];
 
-// ========================================
+
 // MAIN COMPONENT
-// ========================================
+
 export default function DietPlanForm() {
   const theme = useTheme();
-  
-  // Tab selection (0 = Manual Form, 1 = Report Upload)
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+
   const [selectedTab, setSelectedTab] = useState(0);
-  
-  // Manual form states
+
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
-    name: '', age: '', gender: '', height: '', weight: '', bmi: '',
-    diseases: [], dietPreference: '', activityLevel: '', goal: '',
-    allergies: '', mealsPerDay: '3',
+    name: '',
+    age: '',
+    gender: '',
+    height: '',
+    weight: '',
+    bmi: '',
+    diseases: [],
+    dietPreference: '',
+    activityLevel: '',
+    goal: '',
+    allergies: '',
+    mealsPerDay: '3',
   });
   const [anchorEl, setAnchorEl] = useState(null);
-  
-  // Report upload states
+
   const [uploadedFile, setUploadedFile] = useState(null);
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrData, setOcrData] = useState(null);
@@ -186,41 +200,138 @@ export default function DietPlanForm() {
     goal: 'Maintenance',
     mealsPerDay: '3',
   });
-  
-  // Common states
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [recommendations, setRecommendations] = useState(null);
-  
-  // History states
+
   const [savedPlans, setSavedPlans] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  const [showDietPlanPage, setShowDietPlanPage] = useState(false);
+
   const steps = ['Basic Info', 'Health Details', 'Diet Preferences'];
 
-  // ========================================
-  // FETCH SAVED PLANS ON MOUNT
-  // ========================================
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return '';
+    const dob = new Date(dateOfBirth);
+    if (Number.isNaN(dob.getTime())) return '';
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < dob.getDate())
+    ) {
+      age--;
+    }
+
+    return age > 0 ? String(age) : '';
+  };
+
+  const calculateBMI = (height, weight) => {
+    const h = Number(height);
+    const w = Number(weight);
+
+    if (!h || !w) return '';
+    const bmi = w / ((h / 100) * (h / 100));
+    return bmi.toFixed(2);
+  };
+
+  const mapMedicalHistoryToDiseases = (medicalHistory = []) => {
+    if (!Array.isArray(medicalHistory) || medicalHistory.length === 0) {
+      return [];
+    }
+
+    const supportedDiseases = [
+      'Diabetes',
+      'Hypertension',
+      'Heart Disease',
+      'Obesity',
+      'Gluten Intolerance',
+      'Lactose Intolerance',
+      'Nut Allergy',
+      'Kidney Disease',
+      'Liver Disease',
+      'Thyroid Disorder',
+      'PCOS',
+      'Anemia',
+      'High Cholesterol',
+      'Osteoporosis',
+    ];
+
+    const found = medicalHistory
+      .filter((item) => item?.isActive !== false)
+      .map((item) => item?.condition?.trim())
+      .filter(Boolean)
+      .filter((condition) => supportedDiseases.includes(condition));
+
+    return found.length ? found : [];
+  };
+
+  const fetchAndPrefillUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await axios.get(PROFILE_API_URL, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const user = response.data?.user;
+      if (!user) return;
+
+      const age = calculateAge(user.dateOfBirth);
+      const bmi = calculateBMI(user.height, user.weight);
+      const mappedDiseases = mapMedicalHistoryToDiseases(user.medicalHistory);
+
+      setFormData((prev) => ({
+        ...prev,
+        name: user.fullName || '',
+        age,
+        gender: user.gender || prev.gender || '',
+        height: user.height ? String(user.height) : '',
+        weight: user.weight ? String(user.weight) : '',
+        bmi,
+        diseases: mappedDiseases.length ? mappedDiseases : prev.diseases,
+        allergies: user.allergies || prev.allergies || '',
+      }));
+
+      setReportFormData((prev) => ({
+        ...prev,
+        height: user.height ? String(user.height) : '',
+        weight: user.weight ? String(user.weight) : '',
+        bmi,
+      }));
+    } catch (error) {
+      console.error('Failed to auto-fill diet plan profile:', error);
+    }
+  };
+
   useEffect(() => {
     fetchSavedPlans();
+    fetchAndPrefillUserProfile();
   }, []);
 
-  // ========================================
-  // MONGODB FUNCTIONS
-  // ========================================
+  useEffect(() => {
+    if (ocrData) {
+      fetchAndPrefillUserProfile();
+    }
+  }, [ocrData]);
+
   const fetchSavedPlans = async () => {
     try {
       setLoadingHistory(true);
       const response = await axios.get(`${MERN_API_BASE_URL}/diet-plans/recent`);
-      
       if (response.data.success) {
         setSavedPlans(response.data.data);
       }
     } catch (error) {
       console.error('Error fetching saved plans:', error);
-      // Don't show error to user, just log it
     } finally {
       setLoadingHistory(false);
     }
@@ -229,7 +340,6 @@ export default function DietPlanForm() {
   const saveDietPlanToMongoDB = async (mlResponse, sourceData, dataSource) => {
     try {
       console.log('Saving diet plan to MongoDB...');
-
       const dietPlanData = {
         userInfo: {
           name: mlResponse.user_info.name,
@@ -260,19 +370,14 @@ export default function DietPlanForm() {
         },
       };
 
-      const response = await axios.post(
-        `${MERN_API_BASE_URL}/diet-plans`,
-        dietPlanData
-      );
-
+      const response = await axios.post(`${MERN_API_BASE_URL}/diet-plans`, dietPlanData);
       if (response.data.success) {
         console.log('✓ Diet plan saved to MongoDB:', response.data.data._id);
-        fetchSavedPlans(); // Refresh the list
+        fetchSavedPlans();
         return response.data.data._id;
       }
     } catch (error) {
       console.error('Error saving to MongoDB:', error);
-      // Don't fail the whole process
       return null;
     }
   };
@@ -280,11 +385,8 @@ export default function DietPlanForm() {
   const loadSavedPlan = async (planId) => {
     try {
       const response = await axios.get(`${MERN_API_BASE_URL}/diet-plans/${planId}`);
-      
       if (response.data.success) {
         const plan = response.data.data;
-        
-        // Convert to recommendations format
         const recommendationsData = {
           success: true,
           user_info: plan.userInfo,
@@ -292,8 +394,9 @@ export default function DietPlanForm() {
           macro_percentages: plan.macro_percentages,
           meal_breakdown: plan.meal_breakdown,
           health_insights: plan.health_insights,
+          userDiseases: plan.inputData?.diseases || [],
+          userAllergies: plan.inputData?.allergies || '',
         };
-        
         setRecommendations(recommendationsData);
         setSuccess(true);
         setShowHistory(false);
@@ -305,13 +408,9 @@ export default function DietPlanForm() {
   };
 
   const deleteSavedPlan = async (planId) => {
-    if (!window.confirm('Are you sure you want to delete this diet plan?')) {
-      return;
-    }
-
+    if (!window.confirm('Are you sure you want to delete this diet plan?')) return;
     try {
       const response = await axios.delete(`${MERN_API_BASE_URL}/diet-plans/${planId}`);
-      
       if (response.data.success) {
         fetchSavedPlans();
         alert('Diet plan deleted successfully');
@@ -322,13 +421,9 @@ export default function DietPlanForm() {
     }
   };
 
-  // ========================================
-  // MANUAL FORM HANDLERS
-  // ========================================
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
     if (name === 'height' || name === 'weight') {
       const height = name === 'height' ? value : formData.height;
       const weight = name === 'weight' ? value : formData.weight;
@@ -345,7 +440,7 @@ export default function DietPlanForm() {
       ...prev,
       diseases: prev.diseases.includes(disease)
         ? prev.diseases.filter(d => d !== disease)
-        : [...prev.diseases, disease]
+        : [...prev.diseases, disease],
     }));
   };
 
@@ -353,17 +448,17 @@ export default function DietPlanForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      // Get recommendations from ML backend
       const mlResponse = await axios.post(`${ML_API_BASE_URL}/predict`, formData);
-
       if (mlResponse.data.success) {
-        // Save to MongoDB
         await saveDietPlanToMongoDB(mlResponse.data, formData, 'manual_form');
-        
-        // Show results
-        setRecommendations(mlResponse.data);
+
+        setRecommendations({
+          ...mlResponse.data,
+          userDiseases: formData.diseases,
+          userAllergies: formData.allergies,
+        });
+
         setSuccess(true);
       } else {
         setError(mlResponse.data.error || 'Failed to get recommendations');
@@ -379,9 +474,6 @@ export default function DietPlanForm() {
     }
   };
 
-  // ========================================
-  // REPORT UPLOAD HANDLERS
-  // ========================================
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -396,24 +488,14 @@ export default function DietPlanForm() {
       setError('Please select a file first');
       return;
     }
-
     setOcrProcessing(true);
     setError('');
-
     try {
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
-
-      const response = await axios.post(
-        `${ML_API_BASE_URL}/process-report`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
+      const fd = new FormData();
+      fd.append('file', uploadedFile);
+      const response = await axios.post(`${ML_API_BASE_URL}/process-report`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       if (response.data.success) {
         setOcrData(response.data);
         console.log('OCR Result:', response.data);
@@ -434,7 +516,6 @@ export default function DietPlanForm() {
   const handleReportInputChange = (e) => {
     const { name, value } = e.target;
     setReportFormData(prev => ({ ...prev, [name]: value }));
-    
     if (name === 'height' || name === 'weight') {
       const height = name === 'height' ? value : reportFormData.height;
       const weight = name === 'weight' ? value : reportFormData.weight;
@@ -450,13 +531,11 @@ export default function DietPlanForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      // Merge OCR data with report form data
       const submitData = {
-        name: ocrData.patient_details?.name || 'Patient',
-        age: ocrData.patient_details?.age?.toString() || '30',
-        gender: ocrData.patient_details?.gender || 'Other',
+        name: ocrData?.patient_details?.name || formData.name || 'Patient',
+        age: ocrData?.patient_details?.age?.toString() || formData.age || '30',
+        gender: ocrData?.patient_details?.gender || formData.gender || 'Other',
         height: reportFormData.height,
         weight: reportFormData.weight,
         bmi: reportFormData.bmi,
@@ -468,33 +547,28 @@ export default function DietPlanForm() {
         mealsPerDay: reportFormData.mealsPerDay,
       };
 
-      // Get recommendations from ML backend
       const mlResponse = await axios.post(`${ML_API_BASE_URL}/predict`, submitData);
-
       if (mlResponse.data.success) {
-        // Save to MongoDB
         await saveDietPlanToMongoDB(mlResponse.data, submitData, 'medical_report');
-        
-        // Show results
-        setRecommendations(mlResponse.data);
+
+        setRecommendations({
+          ...mlResponse.data,
+          userDiseases: ocrData?.diseases || [],
+          userAllergies: ocrData?.allergies || '',
+        });
+
         setSuccess(true);
       } else {
         setError(mlResponse.data.error || 'Failed to get recommendations');
       }
     } catch (err) {
       console.error('Error:', err);
-      setError(
-        err.response?.data?.error ||
-        'Failed to connect to the AI server.'
-      );
+      setError(err.response?.data?.error || 'Failed to connect to the AI server.');
     } finally {
       setLoading(false);
     }
   };
 
-  // ========================================
-  // UTILITY FUNCTIONS
-  // ========================================
   const getBMIStatus = (bmi) => {
     if (!bmi) return '';
     const val = parseFloat(bmi);
@@ -513,52 +587,83 @@ export default function DietPlanForm() {
     return '#F87171';
   };
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
+  const handleClick = (event) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
   const open = Boolean(anchorEl);
 
-  const resetForm = () => {
+  const resetForm = async () => {
     setSuccess(false);
+    setShowDietPlanPage(false);
     setSelectedTab(0);
     setActiveStep(0);
+
     setFormData({
-      name: '', age: '', gender: '', height: '', weight: '', bmi: '',
-      diseases: [], dietPreference: '', activityLevel: '', goal: '',
-      allergies: '', mealsPerDay: '3',
+      name: '',
+      age: '',
+      gender: '',
+      height: '',
+      weight: '',
+      bmi: '',
+      diseases: [],
+      dietPreference: '',
+      activityLevel: '',
+      goal: '',
+      allergies: '',
+      mealsPerDay: '3',
     });
+
     setUploadedFile(null);
     setOcrData(null);
+
     setReportFormData({
-      height: '', weight: '', bmi: '',
-      dietPreference: 'Regular', activityLevel: 'moderate',
-      goal: 'Maintenance', mealsPerDay: '3',
+      height: '',
+      weight: '',
+      bmi: '',
+      dietPreference: 'Regular',
+      activityLevel: 'moderate',
+      goal: 'Maintenance',
+      mealsPerDay: '3',
     });
+
     setRecommendations(null);
     setError('');
+
+    await fetchAndPrefillUserProfile();
   };
 
-  // ========================================
-  // RENDER: HISTORY SECTION
-  // ========================================
   const renderHistorySection = () => (
-    <Paper elevation={3} sx={{ p: 3, mb: 3, borderRadius: 4 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-        <Stack direction="row" alignItems="center" spacing={1}>
+    <Paper
+      elevation={3}
+      sx={{
+        p: { xs: 2, sm: 3 },
+        mb: 3,
+        borderRadius: { xs: 3, sm: 4 },
+      }}
+    >
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        spacing={2}
+        mb={2}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+        >
           <HistoryIcon sx={{ color: 'primary.main' }} />
-          <Typography variant="h6">
+          <Typography variant={isMobile ? 'subtitle1' : 'h6'}>
             Your Diet Plan History
           </Typography>
           {savedPlans.length > 0 && (
             <Badge badgeContent={savedPlans.length} color="primary" />
           )}
         </Stack>
-        <Stack direction="row" spacing={1}>
+
+        <Stack direction="row" spacing={1} justifyContent={{ xs: 'flex-end', sm: 'flex-start' }}>
           <IconButton
             onClick={fetchSavedPlans}
             disabled={loadingHistory}
@@ -567,10 +672,7 @@ export default function DietPlanForm() {
           >
             <RefreshIcon />
           </IconButton>
-          <Button
-            variant="outlined"
-            onClick={() => setShowHistory(!showHistory)}
-          >
+          <Button variant="outlined" onClick={() => setShowHistory(!showHistory)}>
             {showHistory ? 'Hide History' : 'Show History'}
           </Button>
         </Stack>
@@ -582,17 +684,24 @@ export default function DietPlanForm() {
             <CircularProgress />
           </Box>
         ) : savedPlans.length === 0 ? (
-          <Alert severity="info">
-            No saved diet plans yet. Create your first one!
-          </Alert>
+          <Alert severity="info">No saved diet plans yet. Create your first one!</Alert>
         ) : (
           <Grid container spacing={2} mt={1}>
             {savedPlans.map((plan) => (
               <Grid item xs={12} md={6} key={plan._id}>
-                <Card sx={{ bgcolor: 'background.default' }}>
+                <Card sx={{ bgcolor: 'background.default', height: '100%' }}>
                   <CardContent>
-                    <Stack direction="row" justifyContent="space-between" alignItems="start" mb={1}>
-                      <Typography variant="h6">
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      justifyContent="space-between"
+                      alignItems={{ xs: 'flex-start', sm: 'start' }}
+                      spacing={1}
+                      mb={1}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{ wordBreak: 'break-word' }}
+                      >
                         {plan.userInfo.name}
                       </Typography>
                       <Chip
@@ -601,19 +710,16 @@ export default function DietPlanForm() {
                         color={plan.generatedFrom === 'medical_report' ? 'secondary' : 'primary'}
                       />
                     </Stack>
-                    
+
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Created: {new Date(plan.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
                       })}
                     </Typography>
-                    
+
                     <Divider sx={{ my: 1 }} />
-                    
+
                     <Stack spacing={0.5}>
                       <Typography variant="body2">
                         <strong>Age:</strong> {plan.userInfo.age} years | <strong>Gender:</strong> {plan.userInfo.gender}
@@ -624,14 +730,17 @@ export default function DietPlanForm() {
                       <Typography variant="body2">
                         <strong>Goal:</strong> {plan.userInfo.goal}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: 'primary.main', fontWeight: 600, wordBreak: 'break-word' }}
+                      >
                         {plan.recommendations.meal_plan_type}
                       </Typography>
                       <Typography variant="body2">
                         <strong>Calories:</strong> {plan.recommendations.daily_calories} kcal/day
                       </Typography>
                     </Stack>
-                    
+
                     <Stack direction="row" spacing={1} mt={2}>
                       <Button
                         size="small"
@@ -660,11 +769,34 @@ export default function DietPlanForm() {
     </Paper>
   );
 
-  // ========================================
-  // RENDER: SUCCESS SCREEN
-  // ========================================
   if (success && recommendations) {
-    const { user_info, recommendations: recs, macro_percentages, meal_breakdown, health_insights } = recommendations;
+    const {
+      user_info,
+      recommendations: recs,
+      macro_percentages,
+      meal_breakdown,
+      health_insights,
+      userDiseases,
+      userAllergies,
+    } = recommendations;
+
+    if (showDietPlanPage) {
+      return (
+        <ThemeProvider theme={medivaTheme}>
+          <DietPlanPage
+            mealPlanType={recs.meal_plan_type}
+            diseases={userDiseases || []}
+            allergies={userAllergies || ''}
+            dailyCalories={recs.daily_calories}
+            proteinGrams={recs.protein_grams}
+            carbsGrams={recs.carbs_grams}
+            fatsGrams={recs.fats_grams}
+            patientName={user_info.name}
+            onBack={() => setShowDietPlanPage(false)}
+          />
+        </ThemeProvider>
+      );
+    }
 
     return (
       <ThemeProvider theme={medivaTheme}>
@@ -672,42 +804,53 @@ export default function DietPlanForm() {
           sx={{
             minHeight: '100vh',
             background: 'linear-gradient(to bottom right, #0F172A, #312E81, #0F172A)',
-            py: 4,
-            px: 2,
+            py: { xs: 2, sm: 3, md: 4 },
+            px: { xs: 1, sm: 2 },
           }}
         >
-          <Container maxWidth="lg">
-            <Paper elevation={3} sx={{ p: 4, borderRadius: 4 }}>
-              {/* Header */}
+          <Container maxWidth="lg" disableGutters={isMobile}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: { xs: 2, sm: 3, md: 4 },
+                borderRadius: { xs: 3, sm: 4 },
+                overflow: 'hidden',
+              }}
+            >
               <Box textAlign="center" mb={4}>
-                <CheckCircleIcon sx={{ fontSize: 80, color: '#6366F1', mb: 2 }} />
-                <Typography variant="h4" sx={{ color: 'text.primary', mb: 1 }}>
+                <CheckCircleIcon sx={{ fontSize: { xs: 64, sm: 80 }, color: '#6366F1', mb: 2 }} />
+                <Typography
+                  variant={isMobile ? 'h5' : 'h4'}
+                  sx={{ color: 'text.primary', mb: 1, px: 1, wordBreak: 'break-word' }}
+                >
                   Your Personalized Diet Plan is Ready! 🎉
                 </Typography>
-                <Typography sx={{ color: 'text.secondary' }}>
+                <Typography sx={{ color: 'text.secondary', px: 1 }}>
                   Based on your health profile and goals
                 </Typography>
               </Box>
 
-              {/* User Summary */}
-              <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: 'background.default' }}>
+              <Paper
+                variant="outlined"
+                sx={{ p: { xs: 2, sm: 3 }, mb: 3, bgcolor: 'background.default' }}
+              >
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   📋 Your Profile
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <Typography variant="body2" color="text.secondary">Name</Typography>
-                    <Typography variant="body1">{user_info.name}</Typography>
+                    <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>{user_info.name}</Typography>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <Typography variant="body2" color="text.secondary">Age</Typography>
                     <Typography variant="body1">{user_info.age} years</Typography>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <Typography variant="body2" color="text.secondary">Gender</Typography>
                     <Typography variant="body1">{user_info.gender}</Typography>
                   </Grid>
-                  <Grid item xs={6} md={3}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <Typography variant="body2" color="text.secondary">BMI</Typography>
                     <Typography variant="body1" sx={{ color: getBMIColor(user_info.bmi) }}>
                       {user_info.bmi} - {getBMIStatus(user_info.bmi)}
@@ -716,14 +859,15 @@ export default function DietPlanForm() {
                 </Grid>
               </Paper>
 
-              {/* Main Recommendations */}
-              <Typography variant="h5" sx={{ mb: 3, color: 'primary.main' }}>
+              <Typography
+                variant={isMobile ? 'h6' : 'h5'}
+                sx={{ mb: 3, color: 'primary.main', wordBreak: 'break-word' }}
+              >
                 🎯 Recommended: {recs.meal_plan_type}
               </Typography>
 
-              {/* Daily Targets */}
               <Grid container spacing={2} mb={3}>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
                       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
@@ -735,8 +879,7 @@ export default function DietPlanForm() {
                     </CardContent>
                   </Card>
                 </Grid>
-
-                <Grid item xs={6} md={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
                       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
@@ -750,8 +893,7 @@ export default function DietPlanForm() {
                     </CardContent>
                   </Card>
                 </Grid>
-
-                <Grid item xs={6} md={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
                       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
@@ -765,8 +907,7 @@ export default function DietPlanForm() {
                     </CardContent>
                   </Card>
                 </Grid>
-
-                <Grid item xs={6} md={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ bgcolor: '#312E81', height: '100%' }}>
                     <CardContent>
                       <Stack direction="row" alignItems="center" spacing={1} mb={1}>
@@ -782,8 +923,7 @@ export default function DietPlanForm() {
                 </Grid>
               </Grid>
 
-              {/* Macronutrient Distribution */}
-              <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+              <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   📊 Macronutrient Distribution
                 </Typography>
@@ -824,23 +964,23 @@ export default function DietPlanForm() {
                 </Stack>
               </Paper>
 
-              {/* Meal Breakdown */}
-              <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+              <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   🍽️ Meal Breakdown
                 </Typography>
                 <Grid container spacing={2}>
                   {meal_breakdown.map((meal, index) => (
                     <Grid item xs={12} md={6} key={index}>
-                      <Card sx={{ bgcolor: 'background.default' }}>
+                      <Card sx={{ bgcolor: 'background.default', height: '100%' }}>
                         <CardContent>
-                          <Typography variant="subtitle1" sx={{ mb: 1, color: 'primary.main' }}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ mb: 1, color: 'primary.main', wordBreak: 'break-word' }}
+                          >
                             {meal.name}
                           </Typography>
                           <Stack spacing={0.5}>
-                            <Typography variant="body2">
-                              Calories: {meal.calories} kcal
-                            </Typography>
+                            <Typography variant="body2">Calories: {meal.calories} kcal</Typography>
                             <Typography variant="body2">
                               Protein: {meal.protein}g | Carbs: {meal.carbs}g | Fats: {meal.fats}g
                             </Typography>
@@ -852,9 +992,8 @@ export default function DietPlanForm() {
                 </Grid>
               </Paper>
 
-              {/* Health Insights */}
               {health_insights && health_insights.length > 0 && (
-                <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+                <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     💡 Personalized Health Insights
                   </Typography>
@@ -863,7 +1002,12 @@ export default function DietPlanForm() {
                       <Alert
                         key={index}
                         severity="info"
-                        sx={{ bgcolor: 'background.default' }}
+                        sx={{
+                          bgcolor: 'background.default',
+                          '& .MuiAlert-message': {
+                            wordBreak: 'break-word',
+                          },
+                        }}
                       >
                         {insight}
                       </Alert>
@@ -872,23 +1016,36 @@ export default function DietPlanForm() {
                 </Paper>
               )}
 
-              {/* Action Buttons */}
-              <Stack direction="row" spacing={2} justifyContent="center">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={resetForm}
-                  size="large"
-                >
+              <MealSummaryCard
+                mealPlanType={recs.meal_plan_type}
+                diseases={userDiseases || []}
+                allergies={userAllergies || ''}
+                dailyCalories={recs.daily_calories}
+                onViewFullPlan={() => setShowDietPlanPage(true)}
+              />
+
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                justifyContent="center"
+                mt={4}
+              >
+                <Button variant="contained" color="primary" onClick={resetForm} size="large" fullWidth={isMobile}>
                   Create Another Plan
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={() => window.print()}
-                  size="large"
-                >
+                <Button variant="outlined" color="secondary" onClick={() => window.print()} size="large" fullWidth={isMobile}>
                   Print Plan
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                  endIcon={<ArrowForwardIcon />}
+                  onClick={() => setShowDietPlanPage(true)}
+                  fullWidth={isMobile}
+                  sx={{ background: 'linear-gradient(135deg, #6366F1, #A855F7)' }}
+                >
+                  View Full Food Plan
                 </Button>
               </Stack>
             </Paper>
@@ -898,40 +1055,56 @@ export default function DietPlanForm() {
     );
   }
 
-  // ========================================
-  // RENDER: MAIN FORM
-  // ========================================
   return (
     <ThemeProvider theme={medivaTheme}>
       <Box
         sx={{
           minHeight: '100vh',
           background: 'linear-gradient(to bottom right, #0F172A, #312E81, #0F172A)',
-          py: 4,
-          px: 2,
+          py: { xs: 2, sm: 3, md: 4 },
+          px: { xs: 1, sm: 2 },
         }}
       >
-        <Container maxWidth="lg">
-          {/* History Section */}
+        <Container maxWidth="xl" disableGutters={isMobile}>
           {renderHistorySection()}
 
-          <Paper elevation={3} sx={{ p: { xs: 3, md: 4 }, borderRadius: 4 }}>
-            {/* Header */}
+          <Paper
+            elevation={3}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: { xs: 3, sm: 4 },
+              overflow: 'hidden',
+            }}
+          >
             <Box textAlign="center" mb={4}>
-              <Stack direction="row" justifyContent="center" spacing={2} mb={2}>
-                <UtensilsIcon sx={{ fontSize: 40, color: '#6366F1' }} />
-                <ActivityIcon sx={{ fontSize: 40, color: '#A855F7' }} />
-                <HeartIcon sx={{ fontSize: 40, color: '#A855F7' }} />
+              <Stack
+                direction="row"
+                justifyContent="center"
+                spacing={{ xs: 1, sm: 2 }}
+                mb={2}
+                flexWrap="wrap"
+              >
+                <UtensilsIcon sx={{ fontSize: { xs: 30, sm: 40 }, color: '#6366F1' }} />
+                <ActivityIcon sx={{ fontSize: { xs: 30, sm: 40 }, color: '#A855F7' }} />
+                <HeartIcon sx={{ fontSize: { xs: 30, sm: 40 }, color: '#A855F7' }} />
               </Stack>
-              <Typography variant="h4" sx={{ color: 'text.primary', mb: 1 }}>
+              <Typography
+                variant={isMobile ? 'h5' : 'h4'}
+                sx={{
+                  color: 'text.primary',
+                  mb: 1,
+                  px: 1,
+                  textAlign: 'center',
+                  wordBreak: 'break-word',
+                }}
+              >
                 AI-Powered Diet Plan Generator
               </Typography>
-              <Typography sx={{ color: 'text.secondary' }}>
+              <Typography sx={{ color: 'text.secondary', px: 1 }}>
                 Get personalized meal recommendations using advanced machine learning
               </Typography>
             </Box>
 
-            {/* Tabs */}
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
               <Tabs
                 value={selectedTab}
@@ -939,34 +1112,48 @@ export default function DietPlanForm() {
                   setSelectedTab(newValue);
                   setError('');
                 }}
-                centered
+                variant={isMobile ? 'scrollable' : 'fullWidth'}
+                scrollButtons="auto"
+                allowScrollButtonsMobile
                 textColor="primary"
                 indicatorColor="primary"
+                sx={{
+                  '& .MuiTab-root': {
+                    minHeight: { xs: 56, sm: 64 },
+                    fontSize: { xs: '0.8rem', sm: '0.95rem' },
+                    px: { xs: 1, sm: 2 },
+                    whiteSpace: 'normal',
+                    textAlign: 'center',
+                  },
+                }}
               >
                 <Tab
                   icon={<FormIcon />}
                   label="Fill Form Manually"
-                  iconPosition="start"
+                  iconPosition={isMobile ? 'top' : 'start'}
                 />
                 <Tab
                   icon={<ReportIcon />}
                   label="Upload Medical Report"
-                  iconPosition="start"
+                  iconPosition={isMobile ? 'top' : 'start'}
                 />
               </Tabs>
             </Box>
 
-            {/* Error Alert */}
             {error && (
               <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
                 {error}
               </Alert>
             )}
 
-            {/* Manual Form Tab */}
             {selectedTab === 0 && (
               <>
-                <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+                <Stepper
+                  activeStep={activeStep}
+                  alternativeLabel={!isMobile}
+                  orientation={isMobile ? 'vertical' : 'horizontal'}
+                  sx={{ mb: 4 }}
+                >
                   {steps.map((label) => (
                     <Step key={label}>
                       <StepLabel>{label}</StepLabel>
@@ -975,7 +1162,6 @@ export default function DietPlanForm() {
                 </Stepper>
 
                 <Box component="form" onSubmit={handleManualSubmit} mb={4}>
-                  {/* Step 0: Basic Info */}
                   {activeStep === 0 && (
                     <Stack spacing={2}>
                       <TextField
@@ -986,6 +1172,7 @@ export default function DietPlanForm() {
                         fullWidth
                         required
                       />
+
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                           <TextField
@@ -999,11 +1186,12 @@ export default function DietPlanForm() {
                             inputProps={{ min: 1, max: 120 }}
                           />
                         </Grid>
+
                         <Grid item xs={12} md={6}>
-                          <FormControl component="fieldset">
+                          <FormControl component="fieldset" fullWidth>
                             <FormLabel component="legend">Gender *</FormLabel>
                             <RadioGroup
-                              row
+                              row={!isMobile}
                               name="gender"
                               value={formData.gender}
                               onChange={handleInputChange}
@@ -1015,6 +1203,7 @@ export default function DietPlanForm() {
                           </FormControl>
                         </Grid>
                       </Grid>
+
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={4}>
                           <TextField
@@ -1041,22 +1230,15 @@ export default function DietPlanForm() {
                           />
                         </Grid>
                         <Grid item xs={12} md={4}>
-                          <TextField
-                            label="BMI"
-                            value={formData.bmi}
-                            disabled
-                            fullWidth
-                          />
+                          <TextField label="BMI" value={formData.bmi} disabled fullWidth />
                           {formData.bmi && (
-                            <Typography
-                              variant="body2"
-                              sx={{ mt: 1, color: getBMIColor(formData.bmi) }}
-                            >
+                            <Typography variant="body2" sx={{ mt: 1, color: getBMIColor(formData.bmi) }}>
                               {getBMIStatus(formData.bmi)}
                             </Typography>
                           )}
                         </Grid>
                       </Grid>
+
                       <FormControl fullWidth required>
                         <InputLabel>Activity Level *</InputLabel>
                         <Select
@@ -1066,7 +1248,15 @@ export default function DietPlanForm() {
                           label="Activity Level *"
                         >
                           {activityLevels.map(level => (
-                            <MenuItem key={level.value} value={level.value}>
+                            <MenuItem
+                              key={level.value}
+                              value={level.value}
+                              sx={{
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                alignItems: 'flex-start',
+                              }}
+                            >
                               {level.label}
                             </MenuItem>
                           ))}
@@ -1075,7 +1265,6 @@ export default function DietPlanForm() {
                     </Stack>
                   )}
 
-                  {/* Step 1: Health Details */}
                   {activeStep === 1 && (
                     <Stack spacing={2}>
                       <Box>
@@ -1086,40 +1275,77 @@ export default function DietPlanForm() {
                           variant="outlined"
                           onClick={handleClick}
                           fullWidth
-                          sx={{ justifyContent: 'space-between', textTransform: 'none' }}
+                          sx={{
+                            justifyContent: 'space-between',
+                            textTransform: 'none',
+                            textAlign: 'left',
+                            py: 1.25,
+                          }}
                         >
                           {formData.diseases.length === 0
                             ? 'Select conditions...'
-                            : `${formData.diseases.length} selected`
-                          }
+                            : `${formData.diseases.length} selected`}
                         </Button>
+
                         <Popover
                           open={open}
                           anchorEl={anchorEl}
                           onClose={handleClose}
-                          anchorOrigin={{
-                            vertical: 'bottom',
-                            horizontal: 'left',
+                          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                          PaperProps={{
+                            sx: {
+                              maxWidth: isMobile ? '95vw' : 420,
+                              width: isMobile ? '95vw' : 360,
+                            },
                           }}
                         >
-                          <Box sx={{ maxHeight: 240, overflowY: 'auto', p: 1 }}>
+                          <Box sx={{ maxHeight: 260, overflowY: 'auto', p: 1 }}>
                             {diseases.map(disease => (
-                              <MenuItem key={disease} onClick={() => toggleDisease(disease)}>
+                              <MenuItem
+                                key={disease}
+                                onClick={() => toggleDisease(disease)}
+                                sx={{ alignItems: 'flex-start' }}
+                              >
                                 <Checkbox checked={formData.diseases.includes(disease)} />
-                                <ListItemText primary={disease} />
+                                <ListItemText
+                                  primary={disease}
+                                  primaryTypographyProps={{
+                                    sx: {
+                                      whiteSpace: 'normal',
+                                      wordBreak: 'break-word',
+                                    },
+                                  }}
+                                />
                               </MenuItem>
                             ))}
                           </Box>
                         </Popover>
+
                         {formData.diseases.length > 0 && (
-                          <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            flexWrap="wrap"
+                            useFlexGap
+                            mt={2}
+                          >
                             {formData.diseases.map(disease => (
                               <Chip
                                 key={disease}
                                 label={disease}
                                 onDelete={() => toggleDisease(disease)}
                                 color="primary"
-                                sx={{ mb: 1 }}
+                                sx={{
+                                  mb: 1,
+                                  maxWidth: '100%',
+                                  height: 'auto',
+                                  '& .MuiChip-label': {
+                                    display: 'block',
+                                    whiteSpace: 'normal',
+                                    wordBreak: 'break-word',
+                                    py: 0.75,
+                                  },
+                                }}
                               />
                             ))}
                           </Stack>
@@ -1140,45 +1366,75 @@ export default function DietPlanForm() {
                     </Stack>
                   )}
 
-                  {/* Step 2: Diet Preferences */}
                   {activeStep === 2 && (
                     <Stack spacing={2}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} md={6}>
-                          <FormControl fullWidth required>
-                            <InputLabel>Diet Preference *</InputLabel>
-                            <Select
-                              name="dietPreference"
-                              value={formData.dietPreference}
-                              onChange={handleInputChange}
-                              label="Diet Preference *"
-                            >
-                              {dietPreferences.map(pref => (
-                                <MenuItem key={pref} value={pref}>
-                                  {pref}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <FormControl fullWidth required>
-                            <InputLabel>Goal *</InputLabel>
-                            <Select
-                              name="goal"
-                              value={formData.goal}
-                              onChange={handleInputChange}
-                              label="Goal *"
-                            >
-                              {goals.map(goal => (
-                                <MenuItem key={goal} value={goal}>
-                                  {goal}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      </Grid>
+  <Grid container spacing={3}>
+  <Grid item xs={12} md={6}>
+    <TextField
+      select
+      fullWidth
+      required
+      label="Diet Preference *"
+      name="dietPreference"
+      value={formData.dietPreference}
+      onChange={handleInputChange}
+      InputLabelProps={{ shrink: true }}
+      SelectProps={{
+        displayEmpty: true,
+      }}
+      sx={{
+        minWidth: 320,
+        '& .MuiOutlinedInput-root': {
+          minHeight: 56,
+        },
+        '& .MuiSelect-select': {
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        },
+      }}
+    >
+      {dietPreferences.map((pref) => (
+        <MenuItem key={pref} value={pref}>
+          {pref}
+        </MenuItem>
+      ))}
+    </TextField>
+  </Grid>
+
+  <Grid item xs={12} md={6}>
+    <TextField
+      select
+      fullWidth
+      required
+      label="Goal *"
+      name="goal"
+      value={formData.goal}
+      onChange={handleInputChange}
+      InputLabelProps={{ shrink: true }}
+      SelectProps={{
+        displayEmpty: true,
+      }}
+      sx={{
+        minWidth: 320,
+        '& .MuiOutlinedInput-root': {
+          minHeight: 56,
+        },
+        '& .MuiSelect-select': {
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        },
+      }}
+    >
+      {goals.map((goal) => (
+        <MenuItem key={goal} value={goal}>
+          {goal}
+        </MenuItem>
+      ))}
+    </TextField>
+  </Grid>
+</Grid>
 
                       <FormControl fullWidth>
                         <InputLabel>Meals Per Day</InputLabel>
@@ -1196,14 +1452,12 @@ export default function DietPlanForm() {
                         </Select>
                       </FormControl>
 
-                      <Paper variant="outlined" sx={{ p: 3, mt: 3, bgcolor: 'background.default' }}>
+                      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mt: 3, bgcolor: 'background.default' }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>
                           📋 Summary
                         </Typography>
                         <Stack spacing={1}>
-                          <Typography>
-                            <strong>Name:</strong> {formData.name || 'N/A'}
-                          </Typography>
+                          <Typography><strong>Name:</strong> {formData.name || 'N/A'}</Typography>
                           <Typography>
                             <strong>Age/Gender:</strong> {formData.age || 'N/A'} years, {formData.gender || 'N/A'}
                           </Typography>
@@ -1211,45 +1465,53 @@ export default function DietPlanForm() {
                             <strong>BMI:</strong> {formData.bmi || 'N/A'} ({getBMIStatus(formData.bmi) || 'N/A'})
                           </Typography>
                           <Typography>
-                            <strong>Activity:</strong> {formData.activityLevel ?
-                              activityLevels.find(l => l.value === formData.activityLevel)?.label : 'N/A'}
+                            <strong>Activity:</strong>{' '}
+                            {formData.activityLevel
+                              ? activityLevels.find(l => l.value === formData.activityLevel)?.label
+                              : 'N/A'}
                           </Typography>
-                          <Typography>
-                            <strong>Conditions:</strong> {formData.diseases.length > 0
-                              ? formData.diseases.join(', ')
-                              : 'None'}
+                          <Typography sx={{ wordBreak: 'break-word' }}>
+                            <strong>Conditions:</strong>{' '}
+                            {formData.diseases.length > 0 ? formData.diseases.join(', ') : 'None'}
                           </Typography>
-                          <Typography>
-                            <strong>Diet:</strong> {formData.dietPreference || 'N/A'}
-                          </Typography>
-                          <Typography>
-                            <strong>Goal:</strong> {formData.goal || 'N/A'}
-                          </Typography>
+                          <Typography><strong>Diet:</strong> {formData.dietPreference || 'N/A'}</Typography>
+                          <Typography><strong>Goal:</strong> {formData.goal || 'N/A'}</Typography>
                         </Stack>
                       </Paper>
                     </Stack>
                   )}
                 </Box>
 
-                <Box display="flex" justifyContent="space-between" mt={4}>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  gap={2}
+                  mt={4}
+                  flexDirection={isMobile ? 'column' : 'row'}
+                >
                   <Button
                     variant="contained"
                     color="secondary"
                     disabled={activeStep === 0}
                     onClick={() => setActiveStep(prev => prev - 1)}
                     startIcon={<ChevronLeftIcon />}
+                    fullWidth={isMobile}
                   >
                     Back
                   </Button>
+
                   {activeStep === steps.length - 1 ? (
                     <Button
                       variant="contained"
                       color="primary"
                       onClick={handleManualSubmit}
-                      disabled={loading || !formData.name || !formData.age || !formData.gender ||
+                      disabled={
+                        loading || !formData.name || !formData.age || !formData.gender ||
                         !formData.height || !formData.weight || !formData.activityLevel ||
-                        !formData.dietPreference || !formData.goal}
+                        !formData.dietPreference || !formData.goal
+                      }
                       endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
+                      fullWidth={isMobile}
                     >
                       {loading ? 'Generating...' : 'Generate AI Diet Plan'}
                     </Button>
@@ -1259,6 +1521,7 @@ export default function DietPlanForm() {
                       color="primary"
                       onClick={() => setActiveStep(prev => prev + 1)}
                       endIcon={<ChevronRightIcon />}
+                      fullWidth={isMobile}
                     >
                       Next
                     </Button>
@@ -1267,35 +1530,52 @@ export default function DietPlanForm() {
               </>
             )}
 
-            {/* Report Upload Tab */}
             {selectedTab === 1 && (
               <Box>
-                <Typography variant="h6" sx={{ mb: 3, textAlign: 'center' }}>
+                <Typography
+                  variant={isMobile ? 'subtitle1' : 'h6'}
+                  sx={{ mb: 3, textAlign: 'center' }}
+                >
                   Upload Your Medical Report
                 </Typography>
-                <Typography variant="body2" sx={{ mb: 4, textAlign: 'center', color: 'text.secondary' }}>
+                <Typography
+                  variant="body2"
+                  sx={{ mb: 4, textAlign: 'center', color: 'text.secondary', px: 1 }}
+                >
                   Our AI will automatically extract your health information from the report
                 </Typography>
 
-                {/* File Upload Section */}
-                <Paper variant="outlined" sx={{ p: 4, mb: 4, textAlign: 'center', borderStyle: 'dashed' }}>
-                  <CloudUploadIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-                  <Typography variant="h6" sx={{ mb: 2 }}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: { xs: 2, sm: 4 },
+                    mb: 4,
+                    textAlign: 'center',
+                    borderStyle: 'dashed',
+                  }}
+                >
+                  <CloudUploadIcon sx={{ fontSize: { xs: 52, sm: 64 }, color: 'primary.main', mb: 2 }} />
+                  <Typography
+                    variant={isMobile ? 'subtitle1' : 'h6'}
+                    sx={{ mb: 2, wordBreak: 'break-word' }}
+                  >
                     {uploadedFile ? uploadedFile.name : 'Select Medical Report'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                     Supported: PDF, JPG, PNG (Max 10MB)
                   </Typography>
-                  <Stack direction="row" spacing={2} justifyContent="center">
-                    <Button variant="outlined" component="label">
+
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={2}
+                    justifyContent="center"
+                    alignItems="center"
+                  >
+                    <Button variant="outlined" component="label" fullWidth={isMobile}>
                       Choose File
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileSelect}
-                        hidden
-                      />
+                      <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} hidden />
                     </Button>
+
                     {uploadedFile && (
                       <>
                         <Button
@@ -1304,6 +1584,7 @@ export default function DietPlanForm() {
                           onClick={handleProcessReport}
                           disabled={ocrProcessing}
                           startIcon={ocrProcessing ? <CircularProgress size={20} /> : <SendIcon />}
+                          fullWidth={isMobile}
                         >
                           {ocrProcessing ? 'Processing...' : 'Process Report'}
                         </Button>
@@ -1321,42 +1602,55 @@ export default function DietPlanForm() {
                   </Stack>
                 </Paper>
 
-                {/* OCR Results */}
                 {ocrData && (
                   <>
                     <Alert severity="success" sx={{ mb: 3 }}>
                       ✓ Report processed successfully! Review the extracted information below.
                     </Alert>
 
-                    <Paper variant="outlined" sx={{ p: 3, mb: 3, bgcolor: 'background.default' }}>
+                    <Paper
+                      variant="outlined"
+                      sx={{ p: { xs: 2, sm: 3 }, mb: 3, bgcolor: 'background.default' }}
+                    >
                       <Typography variant="h6" sx={{ mb: 2 }}>
                         📄 Extracted from Report
                       </Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={4}>
                           <Typography variant="body2" color="text.secondary">Name</Typography>
-                          <Typography variant="body1">
+                          <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>
                             {ocrData.patient_details?.name || 'Not found'}
                           </Typography>
                         </Grid>
                         <Grid item xs={12} md={4}>
                           <Typography variant="body2" color="text.secondary">Age</Typography>
-                          <Typography variant="body1">
-                            {ocrData.patient_details?.age || 'Not found'}
-                          </Typography>
+                          <Typography variant="body1">{ocrData.patient_details?.age || 'Not found'}</Typography>
                         </Grid>
                         <Grid item xs={12} md={4}>
                           <Typography variant="body2" color="text.secondary">Gender</Typography>
-                          <Typography variant="body1">
-                            {ocrData.patient_details?.gender || 'Not found'}
-                          </Typography>
+                          <Typography variant="body1">{ocrData.patient_details?.gender || 'Not found'}</Typography>
                         </Grid>
                         <Grid item xs={12}>
                           <Typography variant="body2" color="text.secondary">Medical Conditions</Typography>
-                          <Stack direction="row" spacing={1} mt={1} flexWrap="wrap">
+                          <Stack direction="row" spacing={1} mt={1} flexWrap="wrap" useFlexGap>
                             {ocrData.diseases && ocrData.diseases.length > 0 ? (
                               ocrData.diseases.map((disease, idx) => (
-                                <Chip key={idx} label={disease} color="primary" size="small" sx={{ mb: 1 }} />
+                                <Chip
+                                  key={idx}
+                                  label={disease}
+                                  color="primary"
+                                  size="small"
+                                  sx={{
+                                    mb: 1,
+                                    maxWidth: '100%',
+                                    height: 'auto',
+                                    '& .MuiChip-label': {
+                                      whiteSpace: 'normal',
+                                      wordBreak: 'break-word',
+                                      py: 0.5,
+                                    },
+                                  }}
+                                />
                               ))
                             ) : (
                               <Typography variant="body1">None detected</Typography>
@@ -1366,14 +1660,15 @@ export default function DietPlanForm() {
                         {ocrData.allergies && (
                           <Grid item xs={12}>
                             <Typography variant="body2" color="text.secondary">Allergies</Typography>
-                            <Typography variant="body1">{ocrData.allergies}</Typography>
+                            <Typography variant="body1" sx={{ wordBreak: 'break-word' }}>
+                              {ocrData.allergies}
+                            </Typography>
                           </Grid>
                         )}
                       </Grid>
                     </Paper>
 
-                    {/* Additional Required Information */}
-                    <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+                    <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                       <Typography variant="h6" sx={{ mb: 3 }}>
                         📝 Complete Your Profile
                       </Typography>
@@ -1424,13 +1719,22 @@ export default function DietPlanForm() {
                                 label="Activity Level *"
                               >
                                 {activityLevels.map(level => (
-                                  <MenuItem key={level.value} value={level.value}>
+                                  <MenuItem
+                                    key={level.value}
+                                    value={level.value}
+                                    sx={{
+                                      whiteSpace: 'normal',
+                                      wordBreak: 'break-word',
+                                      alignItems: 'flex-start',
+                                    }}
+                                  >
                                     {level.label}
                                   </MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
                           </Grid>
+
                           <Grid item xs={12} md={6}>
                             <FormControl fullWidth required>
                               <InputLabel>Goal *</InputLabel>
@@ -1468,6 +1772,7 @@ export default function DietPlanForm() {
                               </Select>
                             </FormControl>
                           </Grid>
+
                           <Grid item xs={12} md={6}>
                             <FormControl fullWidth>
                               <InputLabel>Meals Per Day</InputLabel>
@@ -1497,6 +1802,8 @@ export default function DietPlanForm() {
                         onClick={handleReportSubmit}
                         disabled={loading || !reportFormData.height || !reportFormData.weight}
                         endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
+                        fullWidth={isMobile}
+                        sx={{ maxWidth: isMobile ? '100%' : 360 }}
                       >
                         {loading ? 'Generating...' : 'Generate Diet Plan from Report'}
                       </Button>
