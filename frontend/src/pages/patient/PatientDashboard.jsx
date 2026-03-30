@@ -50,9 +50,9 @@ import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 import { format } from 'date-fns';
 import axios from 'axios';
 
-// ========================================
+
 // THEME CONFIGURATION
-// ========================================
+
 const unifiedTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -200,14 +200,14 @@ const unifiedTheme = createTheme({
   },
 });
 
-// ========================================
+
 // API CONFIGURATION
-// ========================================
+
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// ========================================
+
 // MOBILE MEDICATION CARD
-// ========================================
+
 const MedicationCard = ({ medication }) => (
   <Card
     sx={{
@@ -264,9 +264,8 @@ const MedicationCard = ({ medication }) => (
   </Card>
 );
 
-// ========================================
+
 // MOBILE QUERY CARD
-// ========================================
 const QueryCard = ({ query, onView, getStatusColor, getStatusIcon }) => (
   <Card
     sx={{
@@ -341,9 +340,8 @@ const QueryCard = ({ query, onView, getStatusColor, getStatusIcon }) => (
   </Card>
 );
 
-// ========================================
+
 // MAIN COMPONENT
-// ========================================
 export default function PatientDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState(0);
@@ -362,9 +360,8 @@ export default function PatientDashboard() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
-  // ========================================
+
   // FETCH DATA
-  // ========================================
   useEffect(() => {
     fetchDashboardData();
     fetchPatientQueries();
@@ -452,9 +449,8 @@ export default function PatientDashboard() {
     }
   };
 
-  // ========================================
+
   // HELPER FUNCTIONS
-  // ========================================
   const handleInputChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }));
   };
@@ -494,9 +490,8 @@ export default function PatientDashboard() {
     }
   };
 
-  // ========================================
-  // RENDER: LOADING STATE
-  // ========================================
+ 
+  // LOADING STATE
   if (loading) {
     return (
       <ThemeProvider theme={unifiedTheme}>
@@ -507,9 +502,9 @@ export default function PatientDashboard() {
     );
   }
 
-  // ========================================
-  // RENDER: DOCTOR MESSAGES TAB
-  // ========================================
+
+  // DOCTOR MESSAGES TAB
+
   const renderDoctorMessages = () => (
     <Box sx={{ width: '100%' }}>
       <Card sx={{ width: '100%' }}>
@@ -618,9 +613,8 @@ export default function PatientDashboard() {
     </Box>
   );
 
-  // ========================================
-  // RENDER: HEALTH INFO TAB
-  // ========================================
+
+  // HEALTH INFO TAB
   const renderHealthInfo = () => (
     <Box sx={{ width: '100%' }}>
       {/* Header */}
@@ -735,9 +729,9 @@ export default function PatientDashboard() {
     </Box>
   );
 
-  // ========================================
-  // RENDER: MEDICATIONS TAB
-  // ========================================
+
+  // MEDICATIONS TAB
+
   const renderMedications = () => (
     <Box sx={{ width: '100%' }}>
       <Card sx={{ width: '100%' }}>
@@ -833,9 +827,8 @@ export default function PatientDashboard() {
     </Box>
   );
 
-  // ========================================
+
   // MAIN RENDER
-  // ========================================
   return (
     <ThemeProvider theme={unifiedTheme}>
       <Box

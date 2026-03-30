@@ -1,19 +1,3 @@
-// ============================================================
-//  DietPlanPage.jsx
-//  FULL detailed page shown when patient clicks "See Full Plan"
-//
-//  Features:
-//   • Tabbed layout: Meals | 7-Day Schedule | Exercises | Avoid
-//   • Real Spoonacular recipes with images, macros, instructions
-//   • Recipe Detail modal / expanded view
-//   • 7-day rotating meal schedule
-//   • Exercise plan cards
-//   • Foods to avoid section
-//   • Print-friendly layout
-//
-//  Place in: src/pages/DietPlanPage.jsx
-// ============================================================
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, CardMedia, Chip,
@@ -44,9 +28,9 @@ import {
   EXERCISES_BY_DIET,
 } from '../../services/spoonacularService';
 
-// ─────────────────────────────────────────────────────────
+
 //  THEME — reuse your existing medivaTheme
-// ─────────────────────────────────────────────────────────
+
 const medivaTheme = createTheme({
   palette: {
     mode: 'dark',
@@ -70,9 +54,9 @@ const DIET_COLORS = {
   'Low-Fat Diet':      '#10B981',
 };
 
-// ─────────────────────────────────────────────────────────
+
 //  RECIPE CARD — full card used on the Meals tab
-// ─────────────────────────────────────────────────────────
+
 function RecipeCard({ recipe, accentColor, onViewDetails }) {
   const proteinCal = recipe.protein * 4;
   const carbsCal   = recipe.carbs * 4;
@@ -181,9 +165,9 @@ function RecipeCard({ recipe, accentColor, onViewDetails }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  RECIPE DETAIL DIALOG
-// ─────────────────────────────────────────────────────────
+
 function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -320,9 +304,9 @@ function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  WEEKLY SCHEDULE TAB
-// ─────────────────────────────────────────────────────────
+
 function WeeklyScheduleTab({ meals, mealSplit, accentColor }) {
   const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const { breakfast = [], lunch = [], dinner = [], snacks = [] } = meals || {};
@@ -413,9 +397,9 @@ function WeeklyScheduleTab({ meals, mealSplit, accentColor }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  EXERCISES TAB
-// ─────────────────────────────────────────────────────────
+
 function ExercisesTab({ mealPlanType, accentColor }) {
   const exercises = EXERCISES_BY_DIET[mealPlanType] || [];
 
@@ -480,9 +464,9 @@ function ExercisesTab({ mealPlanType, accentColor }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  AVOID FOODS TAB
-// ─────────────────────────────────────────────────────────
+
 function AvoidFoodsTab({ mealPlanType }) {
   const avoidFoods = AVOID_FOODS_BY_DIET[mealPlanType] || [];
 
@@ -521,9 +505,9 @@ function AvoidFoodsTab({ mealPlanType }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  MAIN PAGE COMPONENT
-// ─────────────────────────────────────────────────────────
+
 export default function DietPlanPage({
   // Pass all these from the parent (DietPlanForm state / router state)
   mealPlanType = 'Balanced Diet',
@@ -576,7 +560,7 @@ export default function DietPlanPage({
         background: 'linear-gradient(160deg, #0F172A 0%, #0D0D1A 40%, #0F1F12 100%)',
         pb: 6,
       }}>
-        {/* ── TOP HEADER BAR ───────────────────────────── */}
+        {/* TOP HEADER BAR  */}
         <Box sx={{
           background: `linear-gradient(90deg, ${accentColor}18 0%, transparent 60%)`,
           borderBottom: `1px solid ${accentColor}33`,
@@ -636,7 +620,7 @@ export default function DietPlanPage({
             </Alert>
           )}
 
-          {/* ── TABS ─────────────────────────────────────── */}
+          {/*  TABS  */}
           <Box sx={{ borderBottom: 1, borderColor: '#334155', mb: 4 }}>
             <Tabs
               value={activeTab}
@@ -653,7 +637,7 @@ export default function DietPlanPage({
             </Tabs>
           </Box>
 
-          {/* ── TAB 0: MEAL RECIPES ─────────────────────── */}
+          {/*  TAB 0: MEAL RECIPES  */}
           {activeTab === 0 && (
             <Box>
               {loading ? (
@@ -715,25 +699,25 @@ export default function DietPlanPage({
             </Box>
           )}
 
-          {/* ── TAB 1: 7-DAY SCHEDULE ───────────────────── */}
+          {/*  TAB 1: 7-DAY SCHEDULE */}
           {activeTab === 1 && (
             loading
               ? <Box textAlign="center" py={6}><CircularProgress sx={{ color: accentColor }} /></Box>
               : <WeeklyScheduleTab meals={meals} mealSplit={meals?.mealSplit} accentColor={accentColor} />
           )}
 
-          {/* ── TAB 2: EXERCISES ────────────────────────── */}
+          {/*  TAB 2: EXERCISES */}
           {activeTab === 2 && (
             <ExercisesTab mealPlanType={mealPlanType} accentColor={accentColor} />
           )}
 
-          {/* ── TAB 3: AVOID FOODS ──────────────────────── */}
+          {/*  TAB 3: AVOID FOODS */}
           {activeTab === 3 && (
             <AvoidFoodsTab mealPlanType={mealPlanType} />
           )}
         </Container>
 
-        {/* ── RECIPE DETAIL DIALOG ────────────────────── */}
+        {/*  RECIPE DETAIL DIALOG  */}
         <RecipeDetailDialog
           recipeId={selectedRecipeId}
           accentColor={accentColor}

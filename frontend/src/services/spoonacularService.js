@@ -1,23 +1,9 @@
-// ============================================================
-//  spoonacularService.js
-//  Spoonacular API integration for Diet Recommendation System
-//
-//  Get your FREE API key at: https://spoonacular.com/food-api
-//  Free tier: 150 requests/day (more than enough for a FYP)
-//
-//  Place this file in: src/services/spoonacularService.js
-// ============================================================
-
-// ─────────────────────────────────────────────────────────
-//  ⚠️  PUT YOUR API KEY HERE
-//  Get free key at https://spoonacular.com/food-api/console
-// ─────────────────────────────────────────────────────────
 const SPOONACULAR_API_KEY = '3368455df45845ed9674a78c2c8c818a';
 const BASE_URL = 'https://api.spoonacular.com';
 
 // ─────────────────────────────────────────────────────────
 //  DIET TYPE MAPPING
-//  Maps your ML model's diet names → Spoonacular diet tags
+//  Maps ML model's diet names -> Spoonacular diet tags
 // ─────────────────────────────────────────────────────────
 const DIET_TYPE_MAP = {
   'Balanced Diet':      { diet: '',              tag: 'balanced' },
@@ -26,7 +12,7 @@ const DIET_TYPE_MAP = {
   'Low-Fat Diet':       { diet: '',              tag: 'low-fat' },
 };
 
-// Disease → intolerances/exclude ingredients for Spoonacular
+// Disease -> intolerances/exclude ingredients for Spoonacular
 const DISEASE_INTOLERANCES = {
   'Gluten Intolerance': 'gluten',
   'Lactose Intolerance': 'dairy',
@@ -41,19 +27,19 @@ const MEAL_TYPE_MAP = {
   snack:     'snack',
 };
 
-// ─────────────────────────────────────────────────────────
+
 //  SIMPLE IN-MEMORY CACHE
 //  Prevents hitting API twice for the same query in a session
-// ─────────────────────────────────────────────────────────
+
 const cache = new Map();
 
 function cacheKey(...args) {
   return args.join('|');
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  CORE FETCH HELPER
-// ─────────────────────────────────────────────────────────
+
 async function spoonacularFetch(endpoint, params = {}) {
   const url = new URL(`${BASE_URL}${endpoint}`);
   url.searchParams.set('apiKey', SPOONACULAR_API_KEY);
@@ -83,9 +69,9 @@ async function spoonacularFetch(endpoint, params = {}) {
   return data;
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  BUILD INTOLERANCES STRING FROM DISEASES
-// ─────────────────────────────────────────────────────────
+
 function getIntolerances(diseases = [], allergies = '') {
   const parts = [];
 
@@ -111,9 +97,9 @@ function getIntolerances(diseases = [], allergies = '') {
   return [...new Set(parts)].join(',');
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  EXCLUDED INGREDIENTS based on avoid-foods for each diet
-// ─────────────────────────────────────────────────────────
+
 const DIET_EXCLUDED_INGREDIENTS = {
   'Low-Carb Diet':     'bread,pasta,rice,sugar,potato,corn',
   'Low-Fat Diet':      'butter,cream,lard,bacon',
@@ -121,9 +107,9 @@ const DIET_EXCLUDED_INGREDIENTS = {
   'Balanced Diet':     '',
 };
 
-// ─────────────────────────────────────────────────────────
+
 //  MAX FAT / CARBS params for low-fat / low-carb
-// ─────────────────────────────────────────────────────────
+
 function getNutrientParams(dietType) {
   switch (dietType) {
     case 'Low-Carb Diet':
@@ -137,9 +123,9 @@ function getNutrientParams(dietType) {
   }
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  SEARCH RECIPES BY MEAL TYPE
-// ─────────────────────────────────────────────────────────
+
 export async function searchRecipes({
   dietType,
   mealType,       // 'breakfast' | 'lunch' | 'dinner' | 'snack'
@@ -182,9 +168,9 @@ export async function searchRecipes({
   }
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  GET FULL RECIPE DETAILS (for detailed page)
-// ─────────────────────────────────────────────────────────
+
 export async function getRecipeDetails(recipeId) {
   try {
     const data = await spoonacularFetch(
@@ -198,9 +184,9 @@ export async function getRecipeDetails(recipeId) {
   }
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  GET RECIPE NUTRITION WIDGET DATA
-// ─────────────────────────────────────────────────────────
+
 export async function getRecipeNutrition(recipeId) {
   try {
     return await spoonacularFetch(`/recipes/${recipeId}/nutritionWidget.json`);
@@ -210,9 +196,8 @@ export async function getRecipeNutrition(recipeId) {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-//  FOODS TO AVOID — uses ingredient search
-// ─────────────────────────────────────────────────────────
+
+//  FOODS TO AVOID 
 export const AVOID_FOODS_BY_DIET = {
   'Balanced Diet': [
     { name: 'Sugary Sodas',        reason: 'Empty calories, spikes blood sugar',           emoji: '🥤', avoid: true },
@@ -246,9 +231,9 @@ export const AVOID_FOODS_BY_DIET = {
   ],
 };
 
-// ─────────────────────────────────────────────────────────
+
 //  EXERCISES BY DIET TYPE
-// ─────────────────────────────────────────────────────────
+
 export const EXERCISES_BY_DIET = {
   'Balanced Diet': [
     { name: 'Brisk Walking',       duration: '30 min', frequency: 'Daily',    calories: 150, emoji: '🚶', type: 'Cardio',    intensity: 'Low' },
@@ -280,9 +265,9 @@ export const EXERCISES_BY_DIET = {
   ],
 };
 
-// ─────────────────────────────────────────────────────────
+
 //  NORMALISE RECIPE from complexSearch result
-// ─────────────────────────────────────────────────────────
+
 function normalizeRecipe(r) {
   const nutrition = r.nutrition || {};
   const nutrients = nutrition.nutrients || [];
@@ -311,9 +296,9 @@ function normalizeRecipe(r) {
   };
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  NORMALISE RECIPE DETAIL (full info page)
-// ─────────────────────────────────────────────────────────
+
 function normalizeRecipeDetail(r) {
   const base = normalizeRecipe(r);
   const nutrition = r.nutrition || {};
@@ -338,10 +323,9 @@ function normalizeRecipeDetail(r) {
   };
 }
 
-// ─────────────────────────────────────────────────────────
+
 //  FETCH ALL MEALS FOR A PATIENT IN ONE CALL
-//  Returns { breakfast, lunch, dinner, snacks } arrays
-// ─────────────────────────────────────────────────────────
+
 export async function fetchMealPlan({
   dietType,
   diseases,

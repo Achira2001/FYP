@@ -13,9 +13,8 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// ═══════════════════════════════════════════════════════════════
-// KEYFRAMES — original, untouched
-// ═══════════════════════════════════════════════════════════════
+
+// KEYFRAMES 
 const float = keyframes`
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   33% { transform: translateY(-20px) rotate(120deg); }
@@ -55,9 +54,9 @@ const particleFloat = keyframes`
   75%  { transform: translateY(20px) translateX(10px) rotate(270deg); opacity: 0.8; }
 `;
 
-// ═══════════════════════════════════════════════════════════════
+
 // LEFT PANEL STYLED — identical to original
-// ═══════════════════════════════════════════════════════════════
+
 const FullScreenBackground = styled(Box)({
   position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -3,
   background: `
@@ -91,7 +90,7 @@ const SplitScreenContainer = styled(Box)({
   display: 'flex', minHeight: '100vh', width: '100vw', position: 'relative',
 });
 
-// Left panel — EXACTLY original
+// Left panel 
 const LeftBrandingPanel = styled(Box)({
   flex: '1',
   background: 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%)',
@@ -184,9 +183,9 @@ const FloatingMedicalIcon = styled(Box)(({ delay, size, left, top, color }) => (
   animationDelay: `${delay}s`,
 }));
 
-// ═══════════════════════════════════════════════════════════════
+
 // DARK RIGHT PANEL FORM ELEMENTS
-// ═══════════════════════════════════════════════════════════════
+
 const StyledTextField = styled(TextField)({
   '& .MuiOutlinedInput-root': {
     borderRadius: '14px',
@@ -236,9 +235,9 @@ const StyledToggleButtonGroup = styled(ToggleButtonGroup)({
   '& .MuiToggleButtonGroup-grouped': { border: 'none', borderRadius: 0 },
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // ROLE CONFIGS
-// ═══════════════════════════════════════════════════════════════
+
 const roleConfig = {
   patient: {
     icon: Favorite, solidColor: '#e91e63',
@@ -279,9 +278,9 @@ const roleConfig = {
   }
 };
 
-// ═══════════════════════════════════════════════════════════════
+
 // VALIDATORS
-// ═══════════════════════════════════════════════════════════════
+
 const VALIDATORS = {
   fullName(v) {
     if (!v.trim()) return 'Full name is required';
@@ -343,9 +342,9 @@ const VALIDATORS = {
 
 const validate = (name, value) => VALIDATORS[name] ? VALIDATORS[name](value) : '';
 
-// ═══════════════════════════════════════════════════════════════
+
 // COMPONENT
-// ═══════════════════════════════════════════════════════════════
+
 export default function HealthRegisterPage() {
   const [role, setRole] = useState('patient');
   const [formData, setFormData] = useState({});
@@ -425,9 +424,7 @@ export default function HealthRegisterPage() {
 
       <SplitScreenContainer>
 
-        {/* ════════════════════════════════════
-            LEFT PANEL — 100% original content
-        ════════════════════════════════════ */}
+        {/* LEFT PANEL  */}
         <LeftBrandingPanel>
           <FloatingMedicalIcon delay={0} size="120px" left="10%" top="20%" color="rgba(255,255,255,0.08)">
             <Healing />
@@ -476,9 +473,7 @@ export default function HealthRegisterPage() {
           </Fade>
         </LeftBrandingPanel>
 
-        {/* ════════════════════════════════════
-            RIGHT PANEL — dark
-        ════════════════════════════════════ */}
+        {/*  RIGHT PANEL — dark */}
         <RightRegisterPanel>
           <Fade in timeout={1500}>
             <RegisterFormContainer sx={{ animation: `${slideInRight} 1.2s ease-out` }}>

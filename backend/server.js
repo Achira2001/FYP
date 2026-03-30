@@ -45,25 +45,25 @@ app.use(cookieParser());
 app.use(morgan('combined'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ── Health check ─────────────────────────────────────────────
+//  Health check 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success:   true,
     message:   'Server is running',
     timestamp: new Date().toISOString(),
     services: {
-      sms:      smsReady(),      // ✅ Text.lk
+      sms:      smsReady(),      
       email:    !!transporter,
       database: true
     }
   });
 });
 
-// ── Rate limiting ─────────────────────────────────────────────
+//  Rate limiting 
 app.use('/api',              apiLimiter);
 app.use('/api/notifications', notificationLimiter);
 
-// ── Routes ────────────────────────────────────────────────────
+//  Routes 
 app.use('/api/diet-plans',     dietPlanRoutes);
 app.use('/api/auth',           authRoutes);
 app.use('/api/auth',           googleAuthRoutes);
@@ -74,22 +74,21 @@ app.use('/api/admin',          adminRoutes);
 app.use('/api/notifications',  notificationRoutes);
 app.use('/api',                doctorRoutes);   
 
-// ═══════════════════════════════════════════════════════════════
+
 // CRON: Medication reminders — runs every minute
-// ═══════════════════════════════════════════════════════════════
 cron.schedule('* * * * *', async () => {
   try {
     const now         = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    console.log(`⏰ Reminder check at ${currentTime}...`);
+    console.log(` Reminder check at ${currentTime}...`);
 
     const medications = await Medication.getMedicationsDueForReminder(currentTime);
-    console.log(`📋 ${medications.length} medication(s) due`);
+    console.log(` ${medications.length} medication(s) due`);
 
     for (const medication of medications) {
       const user = medication.userId;
-      if (!user) { console.log(`❌ No user for: ${medication.name}`); continue; }
+      if (!user) { console.log(` No user for: ${medication.name}`); continue; }
 
       // Find the specific reminder(s) matching currentTime
       const dueReminders = medication.reminders.filter(r => r.time === currentTime);
@@ -99,14 +98,14 @@ cron.schedule('* * * * *', async () => {
       const maxReminderDays = medication.reminderDays || 30;
 
       if (daysSinceStart > maxReminderDays) {
-        console.log(`⏭️  ${medication.name} — past reminder window (${daysSinceStart}/${maxReminderDays} days)`);
+        console.log(`  ${medication.name} — past reminder window (${daysSinceStart}/${maxReminderDays} days)`);
         continue;
       }
 
       for (const reminder of dueReminders) {
-        console.log(`✅ Reminding ${user.fullName} → ${medication.name} @ ${reminder.period} (${reminder.time}) Day ${daysSinceStart + 1}/${maxReminderDays}`);
+        console.log(` Reminding ${user.fullName} → ${medication.name} @ ${reminder.period} (${reminder.time}) Day ${daysSinceStart + 1}/${maxReminderDays}`);
 
-        // ── SMS ───────────────────────────────────────────────
+        //  SMS 
         const smsAllowed =
           medication.reminderSettings?.smsEnabled !== false &&
           user.notificationPreferences?.sms !== false &&
@@ -116,12 +115,12 @@ cron.schedule('* * * * *', async () => {
         if (smsAllowed) {
           const smsResult = await sendSMS({
             to:      user.phone,
-            message: `💊 MEDICATION REMINDER\n\nTime to take: ${medication.name}\nDosage: ${medication.quantity} ${medication.dosage}\nPeriod: ${reminder.period} (${reminder.time})\n\n${medication.notes ? 'Notes: ' + medication.notes : 'Stay healthy!'}`
+            message: `\u25CF MEDICATION REMINDER\n\nTime to take: ${medication.name}\nDosage: ${medication.quantity} ${medication.dosage}\nPeriod: ${reminder.period} (${reminder.time})\n\n${medication.notes ? 'Notes: ' + medication.notes : 'Stay healthy!'}`
           });
-          console.log(smsResult.success ? `✅ SMS sent to ${user.phone}` : `❌ SMS failed: ${smsResult.reason}`);
+          console.log(smsResult.success ? ` SMS sent to ${user.phone}` : ` SMS failed: ${smsResult.reason}`);
         }
 
-        // ── Email ─────────────────────────────────────────────
+        //  Email 
         const emailAllowed =
           medication.reminderSettings?.emailEnabled !== false &&
           user.notificationPreferences?.email !== false &&
@@ -133,11 +132,11 @@ cron.schedule('* * * * *', async () => {
             await transporter.sendMail({
               from:    `"${process.env.FROM_NAME || 'Smart Medical Reminder'}" <${process.env.FROM_EMAIL || process.env.EMAIL_USER}>`,
               to:      user.email,
-              subject: `💊 Medication Reminder: ${medication.name} (${reminder.period})`,
+              subject: `\u25CF Medication Reminder: ${medication.name} (${reminder.period})`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
                   <div style="background: linear-gradient(45deg, #2196F3 30%, #21CBF3 90%); color: white; padding: 20px; text-align: center;">
-                    <h2 style="margin: 0;">⏰ Medication Reminder</h2>
+                    <h2 style="margin: 0;">&#9679 Medication Reminder</h2>
                   </div>
                   <div style="padding: 20px;">
                     <h3 style="color: #2196F3; margin: 0 0 15px 0;">Time to take your medication!</h3>
@@ -153,31 +152,31 @@ cron.schedule('* * * * *', async () => {
                 </div>
               `
             });
-            console.log(`📧 Email sent to ${user.email} for ${medication.name} (${reminder.period})`);
+            console.log(` Email sent to ${user.email} for ${medication.name} (${reminder.period})`);
           } catch (error) {
-            console.error(`❌ Email failed to ${user.email}:`, error.message);
+            console.error(` Email failed to ${user.email}:`, error.message);
           }
         }
       }
 
-      // ← Update lastReminderSent ONCE per medication per cron tick
+      // Update lastReminderSent ONCE per medication per cron tick
       medication.lastReminderSent = new Date();
       await medication.save();
     }
 
-    if (!medications.length) console.log(`ℹ️  No medications due at ${currentTime}`);
+    if (!medications.length) console.log(`  No medications due at ${currentTime}`);
 
   } catch (error) {
-    console.error('❌ Cron job error:', error);
+    console.error(' Cron job error:', error);
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // CRON: Daily summary email at 7 AM
-// ═══════════════════════════════════════════════════════════════
+
 cron.schedule('0 7 * * *', async () => {
   try {
-    console.log('📅 Running daily medication summary...');
+    console.log(' Running daily medication summary...');
 
     const users = await User.find({
       'notificationPreferences.email': true,
@@ -207,11 +206,11 @@ cron.schedule('0 7 * * *', async () => {
           await transporter.sendMail({
             from:    `"${process.env.FROM_NAME || 'Smart Medical Reminder'}" <${process.env.FROM_EMAIL || process.env.EMAIL_USER}>`,
             to:      user.email,
-            subject: '📅 Your Daily Medication Schedule',
+            subject: '[SCHEDULE] Your Daily Medication Schedule',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(45deg, #2196F3 30%, #21CBF3 90%); color: white; padding: 20px; text-align: center;">
-                  <h1 style="margin: 0;">📅 Daily Medication Schedule</h1>
+                  <h1 style="margin: 0;">&#9632; Daily Medication Schedule</h1>
                   <p style="margin: 10px 0 0 0;">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
                 <div style="padding: 20px;">
@@ -225,49 +224,49 @@ cron.schedule('0 7 * * *', async () => {
               </div>
             `
           });
-          console.log(`✅ Daily summary → ${user.fullName} (${user.email})`);
+          console.log(` Daily summary -> ${user.fullName} (${user.email})`);
         }
       } catch (err) {
-        console.error(`❌ Daily summary failed for ${user.fullName}:`, err.message);
+        console.error(` Daily summary failed for ${user.fullName}:`, err.message);
       }
     }
   } catch (error) {
-    console.error('❌ Daily summary cron error:', error);
+    console.error(' Daily summary cron error:', error);
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
+
 // CRON: System status every 5 minutes
-// ═══════════════════════════════════════════════════════════════
+
 cron.schedule('*/5 * * * *', async () => {
   try {
     const medCount  = await Medication.countDocuments({ isActive: true });
     const userCount = await User.countDocuments({ isActive: true });
-    console.log(`🔍 Status — ${new Date().toLocaleTimeString()} | Meds: ${medCount} | Users: ${userCount} | SMS (Text.lk): ${smsReady() ? '✅' : '❌'} | Email: ${!!transporter}`);
+    console.log(` Status — ${new Date().toLocaleTimeString()} | Meds: ${medCount} | Users: ${userCount} | SMS (Text.lk): ${smsReady() ? '[Ok]' : '[Error]'} | Email: ${!!transporter}`);
   } catch (error) {
-    console.error('❌ Status check error:', error);
+    console.error(' Status check error:', error);
   }
 });
 
-// ── Error handlers ────────────────────────────────────────────
+// Error handlers 
 app.use(globalErrorHandler);
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-// ── Graceful shutdown ─────────────────────────────────────────
-process.on('SIGTERM', () => { console.log('⚠️ SIGTERM'); process.exit(0); });
-process.on('SIGINT',  () => { console.log('⚠️ SIGINT');  process.exit(0); });
+//Graceful shutdown 
+process.on('SIGTERM', () => { console.log(' SIGTERM'); process.exit(0); });
+process.on('SIGINT',  () => { console.log(' SIGINT');  process.exit(0); });
 
-// ── Start server ──────────────────────────────────────────────
+//  Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, async () => {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('🚀 MEDIVA SERVER STARTED');
+  console.log(' MEDIVA SERVER STARTED');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log(`📡 Port: ${PORT}  |  ENV: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📧 Email: ${transporter ? '✅' : '❌'}  |  📱 SMS (Text.lk): ${smsReady() ? '✅' : '❌'}`);
+  console.log(` Port: ${PORT}  |  ENV: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` Email: ${transporter ? '[OK]' : '[FAIL]'}  |   SMS (Text.lk): ${smsReady() ? '[OK]' : '[FAIL]'}`);
   console.log('═══════════════════════════════════════════════════════════');
   if (smsReady()) await checkSMSBalance();
 });

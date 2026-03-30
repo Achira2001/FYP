@@ -1,11 +1,4 @@
-"""
-Test OCR with the medical report that failed
-Run this to verify the improvements work
 
-NOTE: This is a simplified test that only tests the regex patterns.
-To test with actual OCR, make sure all packages are installed:
-pip install pytesseract Pillow pdf2image PyPDF2 opencv-python fuzzywuzzy python-Levenshtein
-"""
 
 import re
 
@@ -109,21 +102,21 @@ def test_extraction():
     print(f"\n1. NAME EXTRACTION:")
     print(f"   Result: {name}")
     print(f"   Expected: Amarasena")
-    print(f"   Status: {'✓ PASS' if name and 'amarasena' in name.lower() else '✗ FAIL'}")
+    print(f"   Status: {'[OK] PASS' if name and 'amarasena' in name.lower() else '✗ FAIL'}")
     
     # Test age extraction
     age = extract_age_test(sample_report_text)
     print(f"\n2. AGE EXTRACTION:")
     print(f"   Result: {age}")
     print(f"   Expected: 56")
-    print(f"   Status: {'✓ PASS' if age == 56 else '✗ FAIL'}")
+    print(f"   Status: {'[OK] PASS' if age == 56 else '✗ FAIL'}")
     
     # Test cholesterol extraction
     cholesterol = extract_cholesterol_test(sample_report_text)
     print(f"\n3. CHOLESTEROL EXTRACTION:")
     print(f"   Result: {cholesterol}")
     print(f"   Expected: 225.8")
-    print(f"   Status: {'✓ PASS' if cholesterol == 225.8 else '✗ FAIL'}")
+    print(f"   Status: {'[OK] PASS' if cholesterol == 225.8 else '✗ FAIL'}")
     
     # Test disease detection
     has_high_chol = detect_high_cholesterol_test(cholesterol)
@@ -131,7 +124,7 @@ def test_extraction():
     print(f"   Cholesterol: {cholesterol} mg/dl")
     print(f"   Threshold: >= 200 mg/dl")
     print(f"   High Cholesterol Detected: {has_high_chol}")
-    print(f"   Status: {'✓ PASS' if has_high_chol else '✗ FAIL'}")
+    print(f"   Status: {'[OK] PASS' if has_high_chol else '✗ FAIL'}")
     
     # Overall result
     print("\n" + "="*60)
@@ -143,12 +136,12 @@ def test_extraction():
     )
     
     if all_pass:
-        print("🎉 ALL TESTS PASSED!")
+        print(" ALL TESTS PASSED!")
         print("="*60)
         print("\nThe OCR improvements are working correctly!")
         print("Your medical report should now be read properly.")
     else:
-        print("❌ SOME TESTS FAILED")
+        print(" SOME TESTS FAILED")
         print("="*60)
         print("\nPlease check the ocr_processor.py file.")
     

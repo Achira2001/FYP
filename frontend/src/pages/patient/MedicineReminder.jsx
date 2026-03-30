@@ -453,63 +453,82 @@ const MedicalReminderSystem = () => {
   };
 
   const handleAddMedication = async () => {
-    if (!currentMedication.name || !currentMedication.dosage || currentMedication.timePeriods.length === 0) {
-      showSnackbar('Please fill in all required fields', 'error');
-      return;
-    }
+  if (!currentMedication.name || !currentMedication.dosage || currentMedication.timePeriods.length === 0) {
+    showSnackbar('Please fill in all required fields', 'error');
+    return;
+  }
 
-    try {
-      setLoading(true);
-      const reminders = currentMedication.timePeriods.map(period => ({
-        period,
-        time: calculateReminderTime(period, currentMedication.mealRelation)
-      }));
+  try {
+    setLoading(true);
 
-      const medicationData = {
-        ...currentMedication,
-        reminders,
-        mealTimesSnapshot: mealTimes
-      };
+    const reminders = currentMedication.timePeriods.map(period => ({
+      period,
+      time: calculateReminderTime(period, currentMedication.mealRelation)
+    }));
 
-      const response = await apiRequest('/medications', {
+    const medicationData = {
+      ...currentMedication,
+      reminders,
+      mealTimesSnapshot: mealTimes
+    };
+
+    // 1. Save medication first
+    const response = await apiRequest('/medications', {
+      method: 'POST',
+      body: JSON.stringify(medicationData)
+    });
+
+    const newMedication = response.data || response.medication;
+    setMedications(prev => [newMedication, ...prev]);
+
+    // 2. Call only selected reminder methods
+    const selectedMedicationPayload = [newMedication];
+
+    if (newMedication.reminderSettings?.smsEnabled) {
+      await apiRequest('/medications/schedule/sms', {
         method: 'POST',
-        body: JSON.stringify(medicationData)
+        body: JSON.stringify({ medications: selectedMedicationPayload })
       });
-
-      const newMedication = response.data || response.medication;
-      setMedications(prev => [newMedication, ...prev]);
-      
-      setCurrentMedication({
-        drugType: drugTypes[activeTab].key,
-        drugSubcategory: drugTypes[activeTab].subcategories[0],
-        name: '',
-        dosage: '',
-        quantity: 1,
-        timePeriods: [],
-        mealRelation: 'before_meals',
-        notes: '',
-        reminderDays: 7,
-        reminderSettings: {
-          smsEnabled: true,
-          emailEnabled: true,
-          calendarEnabled: true,
-          phoneCallEnabled: false
-        },
-        frequency: {
-          type: 'daily',
-          interval: 1,
-          duration: 30
-        }
-      });
-
-      showSnackbar('Medication added successfully!');
-    } catch (error) {
-      console.error('Add medication error:', error);
-      showSnackbar('Failed to add medication: ' + error.message, 'error');
-    } finally {
-      setLoading(false);
     }
-  };
+
+    if (newMedication.reminderSettings?.emailEnabled) {
+      await apiRequest('/medications/schedule/email', {
+        method: 'POST',
+        body: JSON.stringify({ medications: selectedMedicationPayload })
+      });
+    }
+
+    setCurrentMedication({
+      drugType: drugTypes[activeTab].key,
+      drugSubcategory: drugTypes[activeTab].subcategories[0],
+      name: '',
+      dosage: '',
+      quantity: 1,
+      timePeriods: [],
+      mealRelation: 'before_meals',
+      notes: '',
+      reminderDays: 7,
+      reminderSettings: {
+        smsEnabled: true,
+        emailEnabled: true,
+        calendarEnabled: true,
+        phoneCallEnabled: false
+      },
+      frequency: {
+        type: 'daily',
+        interval: 1,
+        duration: 30
+      }
+    });
+
+    showSnackbar('Medication added and selected reminders scheduled successfully!');
+  } catch (error) {
+    console.error('Add medication error:', error);
+    showSnackbar('Failed to add medication: ' + error.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDeleteMedication = async (id) => {
     try {
@@ -768,10 +787,8 @@ const MedicalReminderSystem = () => {
                       <Paper sx={{ p: 2.5, bgcolor: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
                         <Grid container spacing={2}>
                           {[
-                            { key: 'calendarEnabled', icon: <CalendarToday />, label: 'Calendar' },
                             { key: 'smsEnabled', icon: <Sms />, label: 'SMS' },
                             { key: 'emailEnabled', icon: <Email />, label: 'Email' },
-                            { key: 'phoneCallEnabled', icon: <Phone />, label: 'Phone' }
                           ].map(method => (
                             <Grid item xs={6} sm={3} key={method.key}>
                               <FormControlLabel

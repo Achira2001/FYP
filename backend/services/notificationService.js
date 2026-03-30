@@ -3,64 +3,52 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// ═══════════════════════════════════════════════════════════════
+
 // TEXT.LK SMS SERVICE  — Sri Lankan SMS Gateway (Free Trial)
-// ═══════════════════════════════════════════════════════════════
-//
-//  SETUP (one-time, 3 steps):
-//  1. Sign up FREE at https://app.text.lk/register  (no credit card)
-//  2. Dashboard → Developer → API Token → copy your token
-//  3. Add to .env:
-//       TEXTLK_API_KEY=your_token_here
-//       TEXTLK_SENDER_ID=MedReminder      ← register in Dashboard → Sender IDs
-//
-//  Phone format:  94XXXXXXXXX  (Sri Lanka, no + prefix)
-//  Cost:          Free trial credits on signup; ~Rs.0.64 / SMS after that
-// ═══════════════════════════════════════════════════════════════
+
 
 const TEXTLK_SEND_URL    = 'https://app.text.lk/api/v3/sms/send';
 const TEXTLK_BALANCE_URL = 'https://app.text.lk/api/v3/balance';
 
-// ─────────────────────────────────────────────
-// HELPER: Format phone → 94XXXXXXXXX
-// ─────────────────────────────────────────────
+
+// Format phone -> 94XXXXXXXXX
+
 export const formatPhone = (phone, countryCode = '94') => {
   if (!phone) return null;
   const cleaned = phone.trim();
   const digits  = cleaned.replace(/\D/g, '');
 
-  if (cleaned.startsWith('+'))                                  return digits;           // +94771234567 → 94771234567
-  if (digits.startsWith('0') && digits.length === 10)           return `${countryCode}${digits.slice(1)}`;  // 0771234567 → 94771234567
+  if (cleaned.startsWith('+'))                                  return digits;           // +94771234567 -> 94771234567
+  if (digits.startsWith('0') && digits.length === 10)           return `${countryCode}${digits.slice(1)}`;  // 0771234567 -> 94771234567
   if (digits.startsWith(countryCode) && digits.length >= 11)   return digits;           // already 94...
   return `${countryCode}${digits}`;                             // fallback
 };
 
-// ─────────────────────────────────────────────
+
 // SEND SMS
-// ─────────────────────────────────────────────
 export const sendSMS = async ({ to, message }) => {
   const apiKey   = process.env.TEXTLK_API_KEY;
   const senderId = process.env.TEXTLK_SENDER_ID || 'MedReminder';
 
   if (!apiKey) {
-    console.warn('⚠️  SMS skipped — TEXTLK_API_KEY not set in .env');
+    console.warn('  SMS skipped — TEXTLK_API_KEY not set in .env');
     console.warn('   Sign up free → https://app.text.lk/register');
     return { success: false, reason: 'TEXTLK_API_KEY not configured' };
   }
 
   if (!to) {
-    console.warn('⚠️  SMS skipped — no recipient phone');
+    console.warn('  SMS skipped — no recipient phone');
     return { success: false, reason: 'No phone number' };
   }
 
   const formattedPhone = formatPhone(to);
   if (!formattedPhone) {
-    console.warn(`⚠️  SMS skipped — cannot format phone: ${to}`);
+    console.warn(`  SMS skipped — cannot format phone: ${to}`);
     return { success: false, reason: 'Invalid phone number' };
   }
 
   try {
-    console.log(`📱 Sending SMS via Text.lk to ${formattedPhone}...`);
+    console.log(` Sending SMS via Text.lk to ${formattedPhone}...`);
 
     const response = await fetch(TEXTLK_SEND_URL, {
       method: 'POST',
@@ -81,22 +69,22 @@ export const sendSMS = async ({ to, message }) => {
 
     if (response.ok && result.status === 'success') {
       const msgId = result.data?.uid || result.data?.id || 'N/A';
-      console.log(`✅ SMS sent — UID: ${msgId} | To: ${formattedPhone}`);
+      console.log(` SMS sent — UID: ${msgId} | To: ${formattedPhone}`);
       return { success: true, messageId: msgId };
     }
 
-    console.error(`❌ Text.lk SMS failed (${formattedPhone}):`, result);
+    console.error(` Text.lk SMS failed (${formattedPhone}):`, result);
     return { success: false, reason: result.message || JSON.stringify(result) };
 
   } catch (error) {
-    console.error(`❌ Text.lk network error (${formattedPhone}):`, error.message);
+    console.error(` Text.lk network error (${formattedPhone}):`, error.message);
     return { success: false, reason: error.message };
   }
 };
 
-// ─────────────────────────────────────────────
-// CHECK BALANCE (called on server startup)
-// ─────────────────────────────────────────────
+
+// CHECK BALANCE 
+
 export const checkSMSBalance = async () => {
   const apiKey = process.env.TEXTLK_API_KEY;
   if (!apiKey) return null;
@@ -106,23 +94,23 @@ export const checkSMSBalance = async () => {
     });
     const data = await response.json();
     if (data.status === 'success') {
-      console.log(`💰 Text.lk Balance: ${data.data?.balance} credits`);
+      console.log(` Text.lk Balance: ${data.data?.balance} credits`);
     }
     return data;
   } catch (error) {
-    console.error('❌ Could not fetch Text.lk balance:', error.message);
+    console.error(' Could not fetch Text.lk balance:', error.message);
     return null;
   }
 };
 
-// ─────────────────────────────────────────────
+
 // SMS READY CHECK
-// ─────────────────────────────────────────────
+
 export const smsReady = () => !!process.env.TEXTLK_API_KEY;
 
-// ═══════════════════════════════════════════════════════════════
+
 // EMAIL TRANSPORTER (Gmail)
-// ═══════════════════════════════════════════════════════════════
+
 let transporter = null;
 
 try {
@@ -137,22 +125,22 @@ try {
 
     transporter.verify((error) => {
       if (error) {
-        console.error('❌ Email transporter verification failed:', error.message);
+        console.error(' Email transporter verification failed:', error.message);
         console.error('   Check EMAIL_USER and EMAIL_PASS (use Gmail App Password)');
       } else {
-        console.log('✅ Email transporter ready');
+        console.log(' Email transporter ready');
       }
     });
   } else {
-    console.warn('⚠️  Email credentials missing — set EMAIL_USER and EMAIL_PASS in .env');
+    console.warn('  Email credentials missing — set EMAIL_USER and EMAIL_PASS in .env');
   }
 } catch (error) {
-  console.error('❌ Email transporter init failed:', error.message);
+  console.error(' Email transporter init failed:', error.message);
 }
 
-// ─────────────────────────────────────────────
+
 // SEND EMAIL
-// ─────────────────────────────────────────────
+
 export const sendEmail = async ({ to, subject, html }) => {
   if (!transporter) return { success: false, reason: 'Email transporter not initialized' };
   if (!to)          return { success: false, reason: 'No recipient email' };
@@ -162,10 +150,10 @@ export const sendEmail = async ({ to, subject, html }) => {
       from: `"${process.env.FROM_NAME || 'Smart Medical Reminder'}" <${process.env.FROM_EMAIL || process.env.EMAIL_USER}>`,
       to, subject, html
     });
-    console.log(`✅ Email sent — ID: ${result.messageId} | To: ${to}`);
+    console.log(` Email sent — ID: ${result.messageId} | To: ${to}`);
     return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error(`❌ Email failed (${to}):`, error.message);
+    console.error(` Email failed (${to}):`, error.message);
     return { success: false, reason: error.message };
   }
 };

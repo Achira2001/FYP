@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 
-// ========== GENERAL API RATE LIMITER ==========
+//GENERAL API RATE LIMITER 
 // Applies to all /api routes
 export const apiLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute window
@@ -13,7 +13,7 @@ export const apiLimiter = rateLimit({
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-// ========== AUTHENTICATION RATE LIMITER ==========
+//  AUTHENTICATION RATE LIMITER
 // Stricter limits for login/register endpoints
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -27,7 +27,7 @@ export const authLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// ========== NOTIFICATION RATE LIMITER ==========
+//  NOTIFICATION RATE LIMITER 
 // Custom limits for notification endpoints to prevent spam
 export const notificationLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute window
@@ -42,7 +42,7 @@ export const notificationLimiter = rateLimit({
     // keyGenerator: (req) => req.user?.id || req.ip,
 });
 
-// ========== FILE UPLOAD RATE LIMITER ==========
+//  FILE UPLOAD RATE LIMITER 
 // For endpoints that handle file uploads
 export const uploadLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
@@ -55,7 +55,7 @@ export const uploadLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// ========== STRICT RATE LIMITER ==========
+//  STRICT RATE LIMITER 
 // For very sensitive endpoints (password reset, etc.)
 export const strictLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour

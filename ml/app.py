@@ -1,16 +1,3 @@
-"""
-Diet Recommendation API Server
-==============================
-Flask API that serves the trained XGBoost models for personalized
-diet recommendations.
-
-Endpoints:
-- GET  /api/health          - Health check
-- POST /api/predict         - Get diet recommendations
-- GET  /api/meal-plans      - Get available meal plans
-- POST /api/process-report  - OCR extract from medical report
-"""
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
@@ -36,12 +23,12 @@ warnings.filterwarnings(
     category=UserWarning
 )
 
-# Import OCR processor (unchanged)
+# Import OCR processor 
 from ocr_processor import process_medical_report
 
-# ============================================
+
 # APP SETUP
-# ============================================
+
 
 app = Flask(__name__)
 CORS(app)
@@ -56,17 +43,17 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
 NODEJS_API_URL = 'http://localhost:5000/api/diet-plans'
 
-# ============================================
+
 # GLOBALS
-# ============================================
+
 
 models         = {}
 metadata       = {}
 label_encoders = {}
 
-# ============================================
+
 # HELPERS
-# ============================================
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -79,7 +66,7 @@ def load_models():
     MODELS_DIR = '../models'
 
     try:
-        # ── Regression models (native XGBoost .ubj — zero pickle warnings)
+        #  Regression models
         for name in ['calories', 'protein', 'carbs', 'fats']:
             path = os.path.join(MODELS_DIR, f'{name}_model.ubj')
             m = xgb.XGBRegressor()
@@ -87,17 +74,15 @@ def load_models():
             models[name] = m
             print(f"   Loaded {name}_model.ubj")
 
-        # ── Meal plan: rule-based (no ML classifier needed)
-        # The old classifier had 25% accuracy because the CSV labels were random.
-        # We now use deterministic clinical rules — 100% consistent & explainable.
+        #  Meal plan: rule-based 
         print("   Meal plan: using rule-based clinical logic (no ML model)")
 
-        # ── Metadata
+        #  Metadata
         with open(os.path.join(MODELS_DIR, 'metadata.json'), 'r') as f:
             metadata = json.load(f)
         print("   Loaded metadata.json")
 
-        # ── Label encoders
+        #  Label encoders
         label_encoders = joblib.load(os.path.join(MODELS_DIR, 'label_encoders.joblib'))
         print("   Loaded label_encoders.joblib")
 
@@ -125,36 +110,30 @@ def load_models():
 
 
 
-# ============================================
-# RULE-BASED MEAL PLAN  (replaces ML classifier)
-# ============================================
+
+# RULE-BASED MEAL PLAN  
+
 
 MEAL_PLAN_CLASSES = ['Balanced Diet', 'High-Protein Diet', 'Low-Carb Diet', 'Low-Fat Diet']
 
 def predict_meal_plan_rule(frontend_data: dict) -> str:
-    """
-    Deterministic clinical rule for meal plan prediction.
-    This replaces the XGBoost classifier that had 25% accuracy
-    due to randomly assigned labels in the original CSV.
-
-    Priority: explicit diet habit → disease flags → biometrics → default.
-    """
+   
     diseases = frontend_data.get('diseases', [])
     disease  = diseases[0] if diseases and diseases[0] != 'None' else ''
     diet     = str(frontend_data.get('dietPreference', ''))
     bmi      = float(frontend_data.get('bmi', 0))
     activity = frontend_data.get('activityLevel', 'moderate')
 
-    # Activity → exercise frequency proxy
+    # Activity -> exercise frequency proxy
     activity_map = {'sedentary': 0, 'light': 2, 'moderate': 3, 'very': 5, 'extra': 6}
     exercise = activity_map.get(activity, 3)
 
-    # Disease-driven blood values (same defaults as map_frontend_to_model)
+    # Disease-driven blood values 
     sugar = 180 if disease == 'Diabetes'     else 95
     chol  = 250 if disease in ('High Cholesterol', 'Heart Disease') else 200
     bp    = 140 if disease == 'Hypertension' else 120
 
-    # ── Rules ────────────────────────────────────────────────
+    #  Rules 
     if diet == 'Keto':                                              return 'Low-Carb Diet'
     if diet in ('Vegan', 'Vegetarian', 'Mediterranean'):            return 'Balanced Diet'
     if disease == 'Diabetes'     or sugar > 180:                    return 'Low-Carb Diet'
@@ -228,29 +207,29 @@ def save_to_mongodb(user_data, predictions, data_source='manual', report_data=No
             result = response.json()
             if result.get('success'):
                 diet_plan_id = result.get('data', {}).get('_id')
-                print(f"✓ Diet plan saved to MongoDB!  ID: {diet_plan_id}")
+                print(f"[OK] Diet plan saved to MongoDB!  ID: {diet_plan_id}")
                 return diet_plan_id
             else:
-                print(f"✗ MongoDB save failed: {result.get('message')}")
+                print(f"[ERROR] MongoDB save failed: {result.get('message')}")
                 return None
         else:
-            print(f"✗ MongoDB API error: {response.status_code}  {response.text}")
+            print(f"[ERROR] MongoDB API error: {response.status_code}  {response.text}")
             return None
 
     except requests.exceptions.ConnectionError:
-        print("✗ Could not connect to Node.js backend — MongoDB storage skipped.")
+        print("[ERROR] Could not connect to Node.js backend — MongoDB storage skipped.")
         print("  Make sure Node.js server is running on port 5000.")
         return None
     except Exception as e:
-        print(f"✗ Error saving to MongoDB: {str(e)}")
+        print(f"[ERROR] Error saving to MongoDB: {str(e)}")
         import traceback
         traceback.print_exc()
         return None
 
 
-# ============================================
+
 # FEATURE MAPPING
-# ============================================
+
 
 def map_frontend_to_model(frontend_data):
     """
@@ -350,9 +329,9 @@ def create_feature_vector(model_input, feature_columns):
     return np.array(features).reshape(1, -1)
 
 
-# ============================================
+
 # HEALTH INSIGHTS
-# ============================================
+
 
 def generate_health_insights(user_data, predictions):
     insights = []
@@ -396,9 +375,9 @@ def generate_health_insights(user_data, predictions):
     return insights
 
 
-# ============================================
+
 # ROUTES
-# ============================================
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -424,10 +403,7 @@ def get_meal_plans():
 
 @app.route('/api/process-report', methods=['POST'])
 def process_report():
-    """
-    Process uploaded medical report with OCR.
-    Extract diseases and allergies from the document.
-    """
+
     try:
         if 'file' not in request.files:
             return jsonify({'success': False, 'error': 'No file uploaded'}), 400
@@ -449,7 +425,7 @@ def process_report():
         result = process_medical_report(file)
 
         if result.get('success'):
-            print(f"\n✓ Successfully processed report")
+            print(f"\n[OK] Successfully processed report")
             print(f"  Diseases:  {result.get('diseases', [])}")
             print(f"  Allergies: {result.get('allergies', 'None')}")
 
@@ -470,7 +446,7 @@ def predict():
     file        = None
 
     try:
-        # ── Determine input mode ──────────────────────────────────────
+        #  Determine input mode 
         if request.files and 'file' in request.files:
             if 'data' not in request.form:
                 return jsonify({'success': False, 'error': 'Missing data field in form'}), 400
@@ -487,7 +463,7 @@ def predict():
                 ocr_result = process_medical_report(file)
 
                 if ocr_result.get('success'):
-                    print(f"\n✓ OCR extraction successful!")
+                    print(f"\n[OK] OCR extraction successful!")
                     print(f"  Extracted diseases:  {ocr_result.get('diseases', [])}")
                     print(f"  Extracted allergies: {ocr_result.get('allergies', '')}")
 
@@ -505,18 +481,18 @@ def predict():
                         existing = data.get('allergies', '')
                         data['allergies'] = f"{existing}, {ocr_allergies}" if existing else ocr_allergies
 
-                    print(f"\n✓ Final merged data:")
+                    print(f"\n[OK] Final merged data:")
                     print(f"  Diseases:  {data.get('diseases', [])}")
                     print(f"  Allergies: {data.get('allergies', '')}")
                 else:
-                    print(f"\n⚠ OCR processing failed: {ocr_result.get('error', 'Unknown error')}")
+                    print(f"\n[WARN] OCR processing failed: {ocr_result.get('error', 'Unknown error')}")
         else:
             data = request.get_json()
 
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
 
-        # ── Validate required fields ──────────────────────────────────
+        #  Validate required fields 
         required_fields = ['age', 'gender', 'height', 'weight', 'bmi', 'activityLevel']
         missing = [f for f in required_fields if f not in data]
         if missing:
@@ -525,11 +501,11 @@ def predict():
                 'error':   f'Missing required fields: {", ".join(missing)}'
             }), 400
 
-        # ── Build feature vector ──────────────────────────────────────
+        # Build feature vector
         model_input    = map_frontend_to_model(data)
         feature_vector = create_feature_vector(model_input, metadata['feature_columns'])
 
-        # ── Predictions ───────────────────────────────────────────────
+        # Predictions 
         predictions = {
             'recommended_calories': int(models['calories'].predict(feature_vector)[0]),
             'recommended_protein':  int(models['protein'].predict(feature_vector)[0]),
@@ -537,7 +513,7 @@ def predict():
             'recommended_fats':     int(models['fats'].predict(feature_vector)[0]),
         }
 
-        # ── Meal plan — deterministic clinical rule (100% consistent)
+        #  Meal plan — deterministic clinical rule
         predictions['recommended_meal_plan'] = predict_meal_plan_rule(data)
 
         # Alternative plans with rule-based confidence labels
@@ -583,7 +559,7 @@ def predict():
 
         health_insights = generate_health_insights(data, predictions)
 
-        # ── Build response ────────────────────────────────────────────
+        # Build response 
         response = {
             'success':   True,
             'timestamp': datetime.now().isoformat(),
@@ -607,7 +583,7 @@ def predict():
             'health_insights':   health_insights
         }
 
-        # ── Save to MongoDB ───────────────────────────────────────────
+        # Save to MongoDB 
         report_data_for_mongo = None
         if data_source == 'report' and ocr_result and ocr_result.get('success'):
             report_data_for_mongo = {
@@ -636,29 +612,24 @@ def predict():
         return jsonify({'success': False, 'error': f'Internal server error: {str(e)}'}), 500
 
 
-# ============================================
+
 # STARTUP
-# ============================================
+
 
 if __name__ == '__main__':
     print("\n" + "=" * 50)
-    print("🚀 Starting Diet Recommendation API Server")
+    print(" Starting Diet Recommendation API Server")
     print("=" * 50)
 
     if load_models():
-        print("\n✓ Server is ready!")
+        print("\n Server is ready!")
         print("  - Calories Model  : Loaded")
         print("  - Protein Model   : Loaded")
         print("  - Carbs Model     : Loaded")
         print("  - Fats Model      : Loaded")
-        print("  - Meal Plan       : Rule-Based Clinical Logic ✓")
+        print("  - Meal Plan       : Rule-Based Clinical Logic ")
         print("\n" + "=" * 50)
 
         app.run(host='0.0.0.0', port=5001, debug=True)
     else:
-        print("\n✗ Failed to load models.")
-        print("  Steps to fix:")
-        print("  1. Open train_model.py in Google Colab and run all cells.")
-        print("  2. Download diet_models.zip when prompted.")
-        print("  3. Extract it into the models/ folder next to app.py.")
-        print("  4. Run app.py again.")
+        print("\n Failed to load models.")

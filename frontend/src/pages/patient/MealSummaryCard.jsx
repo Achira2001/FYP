@@ -1,12 +1,3 @@
-// ============================================================
-//  MealSummaryCard.jsx
-//  Compact food summary shown INSIDE the existing results screen.
-//  Shows top 3 recipes per meal + a "See Full Plan" button
-//  that navigates to the detailed DietPlanPage.
-//
-//  Place in: src/components/MealSummaryCard.jsx
-// ============================================================
-
 import React, { useState, useEffect } from 'react';
 import {
   Alert, Box, Button, Card, CardActionArea, CardContent,
@@ -21,9 +12,9 @@ import {
 } from '@mui/icons-material';
 import { fetchMealPlan, AVOID_FOODS_BY_DIET } from '../../services/spoonacularService';
 
-// ─────────────────────────────────────────────────────────
+
 // Tiny recipe card used in the 3-column summary grid
-// ─────────────────────────────────────────────────────────
+
 function MiniRecipeCard({ recipe, onClick }) {
   return (
     <Card
@@ -92,9 +83,9 @@ function MiniRecipeCard({ recipe, onClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 // Skeleton loader for a meal section while fetching
-// ─────────────────────────────────────────────────────────
+
 function MealSectionSkeleton() {
   return (
     <Grid container spacing={1.5}>
@@ -113,9 +104,9 @@ function MealSectionSkeleton() {
   );
 }
 
-// ─────────────────────────────────────────────────────────
+
 // MAIN COMPONENT
-// ─────────────────────────────────────────────────────────
+
 export default function MealSummaryCard({
   mealPlanType,
   diseases = [],
