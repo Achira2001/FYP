@@ -1,21 +1,12 @@
 import Notification from '../models/Notification.js';
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
-<<<<<<< HEAD
-import mongoose from 'mongoose';
-
-const getPopulateOptions = () => ({
-  path: 'relatedId',
-  options: { strictPopulate: false }
-});
-=======
 
 
 const safePopulateOptions = {
     path: 'relatedId',
     options: { strictPopulate: false }
 };
->>>>>>> main
 
 // GET ALL NOTIFICATIONS 
 export const getNotifications = catchAsync(async (req, res, next) => {
