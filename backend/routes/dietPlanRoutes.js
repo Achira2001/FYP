@@ -1,14 +1,15 @@
 import express from 'express';
 const router = express.Router();
 import DietPlan from '../models/DietPlan.js';
+import { protect } from '../middleware/auth.js';
+import { createInAppNotification } from '../utils/notificationHelper.js';
 
 
-// PUBLIC ROUTES 
+router.use(protect);
 
 
 // @route   POST /api/diet-plans
 // @desc    Save a new diet plan to MongoDB
-// @access  Public (No authentication required)
 router.post('/', async (req, res) => {
   try {
     console.log(' Received diet plan data:', {
@@ -17,13 +18,30 @@ router.post('/', async (req, res) => {
       generatedFrom: req.body.generatedFrom
     });
 
-    const dietPlanData = req.body;
+    const dietPlanData = { ...req.body, userId: req.user.id };
 
     // Create new diet plan
     const dietPlan = new DietPlan(dietPlanData);
     await dietPlan.save();
 
     console.log(' Diet plan saved successfully! ID:', dietPlan._id);
+
+    await createInAppNotification({
+      userId: req.user.id,
+      type: 'diet_recommendation',
+      title: 'Diet Plan Generated',
+      message: `${dietPlan.recommendations?.meal_plan_type || 'Your personalized'} diet plan is ready`,
+      icon: '\u{1F957}',
+      relatedId: dietPlan._id,
+      relatedModel: 'DietPlan',
+      priority: 'medium',
+      actionUrl: '/patient/diet-plan',
+      metadata: {
+        mealPlanType: dietPlan.recommendations?.meal_plan_type,
+        generatedFrom: dietPlan.generatedFrom
+      },
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    });
 
     res.status(201).json({
       success: true,
@@ -42,7 +60,6 @@ router.post('/', async (req, res) => {
 
 // @route   GET /api/diet-plans
 // @desc    Get all diet plans
-// @access  Public (No authentication required)
 router.get('/', async (req, res) => {
   try {
     const { userId, limit = 10, page = 1 } = req.query;
@@ -50,9 +67,9 @@ router.get('/', async (req, res) => {
     console.log(' Fetching diet plans...');
 
     // Build query
-    const query = { status: 'active' };
-    if (userId) {
-      query.userId = userId;
+    const query = { status: 'active', userId: req.user.id };
+    if (userId && userId !== String(req.user.id)) {
+      return res.status(403).json({ success: false, message: 'Not authorized to access these diet plans' });
     }
 
     // Execute query with pagination
@@ -85,16 +102,15 @@ router.get('/', async (req, res) => {
 
 // @route   GET /api/diet-plans/recent
 // @desc    Get recent diet plans (last 5)
-// @access  Public (No authentication required)
 router.get('/recent', async (req, res) => {
   try {
     const { userId } = req.query;
 
     console.log(' Fetching recent diet plans...');
 
-    const query = { status: 'active' };
-    if (userId) {
-      query.userId = userId;
+    const query = { status: 'active', userId: req.user.id };
+    if (userId && userId !== String(req.user.id)) {
+      return res.status(403).json({ success: false, message: 'Not authorized to access these diet plans' });
     }
 
     const recentPlans = await DietPlan.find(query)
@@ -120,12 +136,11 @@ router.get('/recent', async (req, res) => {
 
 // @route   GET /api/diet-plans/:id
 // @desc    Get single diet plan by ID
-// @access  Public (No authentication required)
 router.get('/:id', async (req, res) => {
   try {
     console.log(' Fetching diet plan ID:', req.params.id);
 
-    const dietPlan = await DietPlan.findById(req.params.id);
+    const dietPlan = await DietPlan.findOne({ _id: req.params.id, userId: req.user.id });
 
     if (!dietPlan) {
       console.log(' Diet plan not found');
@@ -153,12 +168,11 @@ router.get('/:id', async (req, res) => {
 
 // @route   DELETE /api/diet-plans/:id
 // @desc    Archive a diet plan (soft delete)
-// @access  Public (No authentication required)
 router.delete('/:id', async (req, res) => {
   try {
-    console.log('🗑️ Archiving diet plan ID:', req.params.id);
+    console.log(' Archiving diet plan ID:', req.params.id);
 
-    const dietPlan = await DietPlan.findById(req.params.id);
+    const dietPlan = await DietPlan.findOne({ _id: req.params.id, userId: req.user.id });
 
     if (!dietPlan) {
       console.log(' Diet plan not found');
@@ -190,16 +204,15 @@ router.delete('/:id', async (req, res) => {
 
 // @route   GET /api/diet-plans/stats/summary
 // @desc    Get diet plan statistics
-// @access  Public (No authentication required)
 router.get('/stats/summary', async (req, res) => {
   try {
     console.log(' Fetching diet plan statistics...');
 
     const { userId } = req.query;
 
-    const query = { status: 'active' };
-    if (userId) {
-      query.userId = userId;
+    const query = { status: 'active', userId: req.user.id };
+    if (userId && userId !== String(req.user.id)) {
+      return res.status(403).json({ success: false, message: 'Not authorized to access these diet plans' });
     }
 
     // Get total count

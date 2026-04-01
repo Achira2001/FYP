@@ -22,6 +22,7 @@ import doctorRoutes from './routes/doctorRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import dietPlanRoutes from './routes/dietPlanRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import { createNotificationIfNotExists } from './utils/notificationHelper.js';
 import { apiLimiter, notificationLimiter } from './middleware/rateLimiter.js';
 
 dotenv.config();
@@ -104,6 +105,27 @@ cron.schedule('* * * * *', async () => {
 
       for (const reminder of dueReminders) {
         console.log(` Reminding ${user.fullName} → ${medication.name} @ ${reminder.period} (${reminder.time}) Day ${daysSinceStart + 1}/${maxReminderDays}`);
+
+        await createNotificationIfNotExists({
+          userId: user._id,
+          type: 'medication_reminder',
+          title: 'Medication Reminder',
+          message: `It is time to take ${medication.name} at ${reminder.time} (${reminder.period})`,
+          icon: '\u{1F48A}',
+          relatedId: medication._id,
+          relatedModel: 'Medication',
+          priority: 'high',
+          actionUrl: '/patient/medicine-reminders',
+          metadata: {
+            medicationName: medication.name,
+            dosage: medication.dosage,
+            quantity: medication.quantity,
+            period: reminder.period,
+            time: reminder.time
+          },
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          dedupeMinutes: 2
+        });
 
         //  SMS 
         const smsAllowed =

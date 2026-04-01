@@ -1,10 +1,10 @@
 const SPOONACULAR_API_KEY = '3368455df45845ed9674a78c2c8c818a';
 const BASE_URL = 'https://api.spoonacular.com';
 
-// ─────────────────────────────────────────────────────────
+
 //  DIET TYPE MAPPING
 //  Maps ML model's diet names -> Spoonacular diet tags
-// ─────────────────────────────────────────────────────────
+
 const DIET_TYPE_MAP = {
   'Balanced Diet':      { diet: '',              tag: 'balanced' },
   'High-Protein Diet':  { diet: 'paleo',         tag: 'high-protein' },
@@ -200,34 +200,34 @@ export async function getRecipeNutrition(recipeId) {
 //  FOODS TO AVOID 
 export const AVOID_FOODS_BY_DIET = {
   'Balanced Diet': [
-    { name: 'Sugary Sodas',        reason: 'Empty calories, spikes blood sugar',           emoji: '🥤', avoid: true },
-    { name: 'Deep-fried foods',    reason: 'Trans fats, excess saturated fat',             emoji: '🍟', avoid: true },
-    { name: 'White bread',         reason: 'Low fibre, rapid glucose rise',                emoji: '🍞', avoid: true },
-    { name: 'Processed snacks',    reason: 'High sodium, artificial additives',            emoji: '🍪', avoid: true },
-    { name: 'Excess alcohol',      reason: 'Empty calories, disrupts metabolism',          emoji: '🍺', avoid: true },
+    { name: 'Sugary Sodas',        reason: 'Empty calories, spikes blood sugar',           emoji: '\u{1F964}', avoid: true },
+    { name: 'Deep-fried foods',    reason: 'Trans fats, excess saturated fat',             emoji: '\u{1F35F}', avoid: true },
+    { name: 'White bread',         reason: 'Low fibre, rapid glucose rise',                emoji: '\u{1F35E}', avoid: true },
+    { name: 'Processed snacks',    reason: 'High sodium, artificial additives',            emoji: '\u{1F36A}', avoid: true },
+    { name: 'Excess alcohol',      reason: 'Empty calories, disrupts metabolism',          emoji: '\u{1F37A}', avoid: true },
   ],
   'High-Protein Diet': [
-    { name: 'Sugary desserts',     reason: 'High calorie, no protein value',               emoji: '🍰', avoid: true },
-    { name: 'Sugary drinks',       reason: 'Spikes insulin, promotes fat storage',         emoji: '🧃', avoid: true },
-    { name: 'White rice (excess)', reason: 'High carb-to-protein ratio',                  emoji: '🍚', avoid: true },
-    { name: 'Processed meats',     reason: 'High sodium, low quality protein',             emoji: '🌭', avoid: true },
-    { name: 'Alcohol',             reason: 'Inhibits muscle protein synthesis',            emoji: '🍺', avoid: true },
+    { name: 'Sugary desserts',     reason: 'High calorie, no protein value',               emoji: '\u{1F370}', avoid: true },
+    { name: 'Sugary drinks',       reason: 'Spikes insulin, promotes fat storage',         emoji: '\u{1F963}', avoid: true },
+    { name: 'White rice (excess)', reason: 'High carb-to-protein ratio',                  emoji: '\u{1F35A}', avoid: true },
+    { name: 'Processed meats',     reason: 'High sodium, low quality protein',             emoji: '\u{1F35C}', avoid: true },
+    { name: 'Alcohol',             reason: 'Inhibits muscle protein synthesis',            emoji: '\u{1F37A}', avoid: true },
   ],
   'Low-Carb Diet': [
-    { name: 'White rice & pasta',  reason: 'High glycemic — spikes blood sugar rapidly',  emoji: '🍚', avoid: true },
-    { name: 'Potatoes & corn',     reason: 'High starch content',                          emoji: '🥔', avoid: true },
-    { name: 'Sugary fruits',       reason: 'Mango, grapes, banana — high natural sugar',  emoji: '🍇', avoid: true },
-    { name: 'Soft drinks & juices',reason: 'Very high sugar content',                     emoji: '🥤', avoid: true },
-    { name: 'Cakes & pastries',    reason: 'Refined flour + sugar = carb overload',       emoji: '🎂', avoid: true },
-    { name: 'Sweetened yogurt',    reason: 'Hidden sugars spike blood sugar',             emoji: '🍮', avoid: true },
+    { name: 'White rice & pasta',  reason: 'High glycemic — spikes blood sugar rapidly',  emoji: '\u{1F35A}', avoid: true },
+    { name: 'Potatoes & corn',     reason: 'High starch content',                          emoji: '\u{1F954}', avoid: true },
+    { name: 'Sugary fruits',       reason: 'Mango, grapes, banana — high natural sugar',  emoji: '\u{1F347}', avoid: true },
+    { name: 'Soft drinks & juices',reason: 'Very high sugar content',                     emoji: '\u{1F964}', avoid: true },
+    { name: 'Cakes & pastries',    reason: 'Refined flour + sugar = carb overload',       emoji: '\u{1F370}', avoid: true },
+    { name: 'Sweetened yogurt',    reason: 'Hidden sugars spike blood sugar',             emoji: '\u{1F354}', avoid: true },
   ],
   'Low-Fat Diet': [
-    { name: 'Fried foods',         reason: 'High in saturated & trans fats',              emoji: '🍟', avoid: true },
-    { name: 'Full-fat dairy',      reason: 'Raises LDL cholesterol',                     emoji: '🧈', avoid: true },
-    { name: 'Fatty red meat',      reason: 'Saturated fat harmful for heart health',      emoji: '🥩', avoid: true },
-    { name: 'Coconut & palm oil',  reason: 'High in saturated fatty acids',              emoji: '🫙', avoid: true },
-    { name: 'Pastries & biscuits', reason: 'Trans fats, calorie dense',                  emoji: '🍰', avoid: true },
-    { name: 'Packaged snacks',     reason: 'Hidden trans fats, high sodium',             emoji: '🍪', avoid: true },
+    { name: 'Fried foods',         reason: 'High in saturated & trans fats',              emoji: '\u{1F35F}', avoid: true },
+    { name: 'Full-fat dairy',      reason: 'Raises LDL cholesterol',                     emoji: '\u{1F9C0}', avoid: true },
+    { name: 'Fatty red meat',      reason: 'Saturated fat harmful for heart health',      emoji: '\u{1F969}', avoid: true },
+    { name: 'Coconut & palm oil',  reason: 'High in saturated fatty acids',              emoji: '\u{1F964}', avoid: true },
+    { name: 'Pastries & biscuits', reason: 'Trans fats, calorie dense',                  emoji: '\u{1F370}', avoid: true },
+    { name: 'Packaged snacks',     reason: 'Hidden trans fats, high sodium',             emoji: '\u{1F36A}', avoid: true },
   ],
 };
 
@@ -236,25 +236,25 @@ export const AVOID_FOODS_BY_DIET = {
 
 export const EXERCISES_BY_DIET = {
   'Balanced Diet': [
-    { name: 'Brisk Walking',       duration: '30 min', frequency: 'Daily',    calories: 150, emoji: '🚶', type: 'Cardio',    intensity: 'Low' },
-    { name: 'Swimming',            duration: '30 min', frequency: '3×/week',  calories: 250, emoji: '🏊', type: 'Full Body', intensity: 'Moderate' },
-    { name: 'Yoga',                duration: '45 min', frequency: '3×/week',  calories: 180, emoji: '🧘', type: 'Flexibility', intensity: 'Low' },
-    { name: 'Cycling',             duration: '30 min', frequency: '3×/week',  calories: 220, emoji: '🚴', type: 'Cardio',    intensity: 'Moderate' },
-    { name: 'Bodyweight Circuit',  duration: '20 min', frequency: '3×/week',  calories: 160, emoji: '💪', type: 'Strength',  intensity: 'Moderate' },
+    { name: 'Brisk Walking',       duration: '30 min', frequency: 'Daily',    calories: 150, emoji: '\u{1F6B6}', type: 'Cardio',    intensity: 'Low' },
+    { name: 'Swimming',            duration: '30 min', frequency: '3×/week',  calories: 250, emoji: '\u{1F3CA}', type: 'Full Body', intensity: 'Moderate' },
+    { name: 'Yoga',                duration: '45 min', frequency: '3×/week',  calories: 180, emoji: '\u{1F9D8}', type: 'Flexibility', intensity: 'Low' },
+    { name: 'Cycling',             duration: '30 min', frequency: '3×/week',  calories: 220, emoji: '\u{1F6B4}', type: 'Cardio',    intensity: 'Moderate' },
+    { name: 'Bodyweight Circuit',  duration: '20 min', frequency: '3×/week',  calories: 160, emoji: '\u{1F4AA}', type: 'Strength',  intensity: 'Moderate' },
   ],
   'High-Protein Diet': [
-    { name: 'Weight Training',     duration: '45–60 min', frequency: '4×/week', calories: 300, emoji: '🏋️', type: 'Strength', intensity: 'High' },
-    { name: 'HIIT',                duration: '25 min',    frequency: '3×/week', calories: 350, emoji: '⚡', type: 'Cardio',   intensity: 'High' },
-    { name: 'Pull-ups & Push-ups', duration: '20 min',    frequency: 'Daily',   calories: 150, emoji: '🤸', type: 'Bodyweight', intensity: 'Moderate' },
-    { name: 'Sprint Intervals',    duration: '20 min',    frequency: '2×/week', calories: 280, emoji: '🏃', type: 'Cardio',   intensity: 'High' },
-    { name: 'Resistance Bands',    duration: '30 min',    frequency: '3×/week', calories: 200, emoji: '💪', type: 'Strength', intensity: 'Moderate' },
+    { name: 'Weight Training',     duration: '45–60 min', frequency: '4×/week', calories: 300, emoji: '\u{1F3CB}', type: 'Strength', intensity: 'High' },
+    { name: 'HIIT',                duration: '25 min',    frequency: '3×/week', calories: 350, emoji: '\u{26A1}', type: 'Cardio',   intensity: 'High' },
+    { name: 'Pull-ups & Push-ups', duration: '20 min',    frequency: 'Daily',   calories: 150, emoji: '\u{1F3C3}', type: 'Bodyweight', intensity: 'Moderate' },
+    { name: 'Sprint Intervals',    duration: '20 min',    frequency: '2×/week', calories: 280, emoji: '\u{1F3C3}', type: 'Cardio',   intensity: 'High' },
+    { name: 'Resistance Bands',    duration: '30 min',    frequency: '3×/week', calories: 200, emoji: '\u{1F4AA}', type: 'Strength', intensity: 'Moderate' },
   ],
   'Low-Carb Diet': [
-    { name: 'Post-meal Walking',   duration: '15–20 min', frequency: 'After each meal', calories: 80,  emoji: '🚶', type: 'Blood Sugar', intensity: 'Low' },
-    { name: 'Low-Impact Cardio',   duration: '30 min',    frequency: 'Daily',           calories: 180, emoji: '🚴', type: 'Cardio',      intensity: 'Low' },
-    { name: 'Resistance Training', duration: '30 min',    frequency: '3×/week',         calories: 220, emoji: '🏋️', type: 'Strength',    intensity: 'Moderate' },
-    { name: 'Swimming',            duration: '30 min',    frequency: '3×/week',         calories: 250, emoji: '🏊', type: 'Full Body',   intensity: 'Moderate' },
-    { name: 'Yoga / Tai Chi',      duration: '40 min',    frequency: '3×/week',         calories: 140, emoji: '🧘', type: 'Stress',      intensity: 'Low' },
+    { name: 'Post-meal Walking',   duration: '15–20 min', frequency: 'After each meal', calories: 80,  emoji: '\u{1F6B6}', type: 'Blood Sugar', intensity: 'Low' },
+    { name: 'Low-Impact Cardio',   duration: '30 min',    frequency: 'Daily',           calories: 180, emoji: '\u{1F6B4}', type: 'Cardio',      intensity: 'Low' },
+    { name: 'Resistance Training', duration: '30 min',    frequency: '3×/week',         calories: 220, emoji: '\u{1F4AA}', type: 'Strength',    intensity: 'Moderate' },
+    { name: 'Swimming',            duration: '30 min',    frequency: '3×/week',         calories: 250, emoji: '\u{1F3CA}', type: 'Full Body',   intensity: 'Moderate' },
+    { name: 'Yoga / Tai Chi',      duration: '40 min',    frequency: '3×/week',         calories: 140, emoji: '\u{1F9D8}', type: 'Stress',      intensity: 'Low' },
   ],
   'Low-Fat Diet': [
     { name: 'Brisk Walking/Jog',   duration: '30–45 min', frequency: '5×/week', calories: 200, emoji: '🏃', type: 'Cardio',     intensity: 'Moderate' },

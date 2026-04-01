@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Query from '../models/Query.js';
 import Medication from '../models/Medication.js';
 import Notification from '../models/Notification.js';
+import { createInAppNotification } from '../utils/notificationHelper.js';
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import { sendSMS, sendEmail, smsReady } from '../services/notificationService.js';
@@ -187,7 +188,7 @@ export const sendDoctorQuery = catchAsync(async (req, res, next) => {
 
   // Create in-app notification for doctor
   try {
-    await Notification.create({
+    await createInAppNotification({
       userId:       doctor._id,
       type:         'patient_query',
       title:        '\u{1F4AC} New Patient Query',
@@ -196,7 +197,7 @@ export const sendDoctorQuery = catchAsync(async (req, res, next) => {
       relatedId:    query._id,
       relatedModel: 'Query',
       priority:     'high',
-      actionUrl:    '/doctor/queries',
+      actionUrl:    '/doctor',
       metadata: {
         patientName:  user.fullName,
         patientEmail: user.email,
@@ -340,7 +341,7 @@ export const replyToQuery = catchAsync(async (req, res, next) => {
 
   // Create in-app notification for patient
   try {
-    await Notification.create({
+    await createInAppNotification({
       userId:       patient._id,
       type:         'doctor_response',
       title:        '\u{1F4AC} Doctor Responded',
@@ -349,7 +350,7 @@ export const replyToQuery = catchAsync(async (req, res, next) => {
       relatedId:    query._id,
       relatedModel: 'Query',
       priority:     'high',
-      actionUrl:    '/dashboard?tab=3',
+      actionUrl:    '/patient',
       metadata: {
         doctorName:      doctor.fullName,
         responsePreview: response.substring(0, 100)

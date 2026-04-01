@@ -24,16 +24,16 @@ import {
 } from "@mui/icons-material";
 import { Medication } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
 const TYPE_ICON = {
-  medication_reminder: "💊",
-  medication_scheduled: "📅",
-  doctor_response: "🩺",
-  patient_query: "❓",
-  appointment: "📋",
-  system: "⚙️",
-  diet_recommendation: "🥗",
+  medication_reminder: "\u{1F48A}",
+  medication_scheduled: "\u{1F4C5}",
+  doctor_response: "\u{1FA7A}",
+  patient_query: "\u{2753}",
+  appointment: "\u{1F4CB}",
+  system: "\u{2699}\u{FE0F}",
+  diet_recommendation: "\u{1F957}",
 };
 
 export default function Navbar({ onLogout, username, role, onMenuClick, isMobile }) {
@@ -47,7 +47,7 @@ export default function Navbar({ onLogout, username, role, onMenuClick, isMobile
 
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const { data } = await axios.get("/api/notifications/unread/count");
+      const { data } = await api.get("/notifications/unread/count");
       if (data.success) setUnreadCount(data.count);
     } catch (err) {
       console.error("Failed to fetch unread count:", err);
@@ -63,7 +63,7 @@ export default function Navbar({ onLogout, username, role, onMenuClick, isMobile
   const fetchNotifications = useCallback(async () => {
     setNotifLoading(true);
     try {
-      const { data } = await axios.get("/api/notifications?limit=5");
+      const { data } = await api.get("/notifications?limit=5");
       if (data.success) setNotifications(data.data);
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
@@ -74,7 +74,7 @@ export default function Navbar({ onLogout, username, role, onMenuClick, isMobile
 
   const handleMarkRead = async (id) => {
     try {
-      await axios.patch(`/api/notifications/${id}/read`);
+      await api.patch(`/notifications/${id}/read`);
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
       );
@@ -86,7 +86,7 @@ export default function Navbar({ onLogout, username, role, onMenuClick, isMobile
 
   const handleMarkAllRead = async () => {
     try {
-      await axios.patch("/api/notifications/mark-all-read");
+      await api.patch("/notifications/mark-all-read");
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (err) {

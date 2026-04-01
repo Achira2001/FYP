@@ -34,7 +34,6 @@ export default function Sidebar({ role, onItemClick }) {
     ],
     doctor: [
       { to: "/doctor", label: "Dashboard", icon: <MedicalServices /> },
-      { to: "/doctor/patients", label: "My Patients", icon: <Group /> },
     ],
     admin: [
       { to: "/admin", label: "Dashboard", icon: <Dashboard /> },

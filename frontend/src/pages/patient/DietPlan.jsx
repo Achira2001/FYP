@@ -59,6 +59,7 @@ import {
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
+import api from '../../services/api';
 
 import MealSummaryCard from './MealSummaryCard';
 import DietPlanPage from './DietPlanPage';
@@ -326,7 +327,7 @@ export default function DietPlanForm() {
   const fetchSavedPlans = async () => {
     try {
       setLoadingHistory(true);
-      const response = await axios.get(`${MERN_API_BASE_URL}/diet-plans/recent`);
+      const response = await api.get('/diet-plans/recent');
       if (response.data.success) {
         setSavedPlans(response.data.data);
       }
@@ -370,7 +371,7 @@ export default function DietPlanForm() {
         },
       };
 
-      const response = await axios.post(`${MERN_API_BASE_URL}/diet-plans`, dietPlanData);
+      const response = await api.post('/diet-plans', dietPlanData);
       if (response.data.success) {
         console.log('✓ Diet plan saved to MongoDB:', response.data.data._id);
         fetchSavedPlans();
@@ -384,7 +385,7 @@ export default function DietPlanForm() {
 
   const loadSavedPlan = async (planId) => {
     try {
-      const response = await axios.get(`${MERN_API_BASE_URL}/diet-plans/${planId}`);
+      const response = await api.get(`/diet-plans/${planId}`);
       if (response.data.success) {
         const plan = response.data.data;
         const recommendationsData = {
@@ -410,7 +411,7 @@ export default function DietPlanForm() {
   const deleteSavedPlan = async (planId) => {
     if (!window.confirm('Are you sure you want to delete this diet plan?')) return;
     try {
-      const response = await axios.delete(`${MERN_API_BASE_URL}/diet-plans/${planId}`);
+      const response = await api.delete(`/diet-plans/${planId}`);
       if (response.data.success) {
         fetchSavedPlans();
         alert('Diet plan deleted successfully');
@@ -823,7 +824,7 @@ export default function DietPlanForm() {
                   variant={isMobile ? 'h5' : 'h4'}
                   sx={{ color: 'text.primary', mb: 1, px: 1, wordBreak: 'break-word' }}
                 >
-                  Your Personalized Diet Plan is Ready! 🎉
+                  {"Your Personalized Diet Plan is Ready! \u{1F389}"}
                 </Typography>
                 <Typography sx={{ color: 'text.secondary', px: 1 }}>
                   Based on your health profile and goals
@@ -835,7 +836,7 @@ export default function DietPlanForm() {
                 sx={{ p: { xs: 2, sm: 3 }, mb: 3, bgcolor: 'background.default' }}
               >
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  📋 Your Profile
+                  {"\u{1F4CB} Your Profile"}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6} md={3}>
@@ -863,7 +864,7 @@ export default function DietPlanForm() {
                 variant={isMobile ? 'h6' : 'h5'}
                 sx={{ mb: 3, color: 'primary.main', wordBreak: 'break-word' }}
               >
-                🎯 Recommended: {recs.meal_plan_type}
+                {`\u{1F3AF} Recommended: ${recs.meal_plan_type}`}
               </Typography>
 
               <Grid container spacing={2} mb={3}>
@@ -925,7 +926,7 @@ export default function DietPlanForm() {
 
               <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  📊 Macronutrient Distribution
+                  {"\u{1F4CA} Macronutrient Distribution"}
                 </Typography>
                 <Stack spacing={2}>
                   <Box>
@@ -966,7 +967,7 @@ export default function DietPlanForm() {
 
               <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  🍽️ Meal Breakdown
+                  {"\u{1F37D}\u{FE0F} Meal Breakdown"}
                 </Typography>
                 <Grid container spacing={2}>
                   {meal_breakdown.map((meal, index) => (
@@ -995,7 +996,7 @@ export default function DietPlanForm() {
               {health_insights && health_insights.length > 0 && (
                 <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
-                    💡 Personalized Health Insights
+                    {"\u{1F4A1} Personalized Health Insights"}
                   </Typography>
                   <Stack spacing={1.5}>
                     {health_insights.map((insight, index) => (
@@ -1454,7 +1455,7 @@ export default function DietPlanForm() {
 
                       <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mt: 3, bgcolor: 'background.default' }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>
-                          📋 Summary
+                          {"\u{1F4C4} Summary"}
                         </Typography>
                         <Stack spacing={1}>
                           <Typography><strong>Name:</strong> {formData.name || 'N/A'}</Typography>
@@ -1613,7 +1614,7 @@ export default function DietPlanForm() {
                       sx={{ p: { xs: 2, sm: 3 }, mb: 3, bgcolor: 'background.default' }}
                     >
                       <Typography variant="h6" sx={{ mb: 2 }}>
-                        📄 Extracted from Report
+                        {"\u{1F4C4} Extracted from Report"}
                       </Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={12} md={4}>
@@ -1670,7 +1671,7 @@ export default function DietPlanForm() {
 
                     <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, mb: 3 }}>
                       <Typography variant="h6" sx={{ mb: 3 }}>
-                        📝 Complete Your Profile
+                        {"\u{1F4DD} Complete Your Profile"}
                       </Typography>
                       <Stack spacing={3}>
                         <Grid container spacing={2}>
