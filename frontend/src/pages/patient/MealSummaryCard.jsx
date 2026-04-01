@@ -130,9 +130,9 @@ export default function MealSummaryCard({
       .catch(err => {
         if (!cancelled) {
           if (err.message === 'INVALID_API_KEY') {
-            setError('⚠️ Spoonacular API key is missing or invalid. Add your key to spoonacularService.js');
+            setError('\u{26A0}\u{FE0F} Spoonacular API key is missing or invalid. Add your key to spoonacularService.js');
           } else if (err.message === 'API_LIMIT_REACHED') {
-            setError('⚠️ Daily API limit reached (150 requests/day on free plan). Try again tomorrow.');
+            setError('\u{26A0}\u{FE0F} Daily API limit reached (150 requests/day on free plan). Try again tomorrow.');
           } else {
             setError('Could not load recipes. Check your internet connection.');
           }
@@ -146,9 +146,9 @@ export default function MealSummaryCard({
   const avoidFoods = AVOID_FOODS_BY_DIET[mealPlanType] || [];
 
   const mealSections = [
-    { key: 'breakfast', label: '🌅 Breakfast',  emoji: '🌅' },
-    { key: 'lunch',     label: '☀️ Lunch',      emoji: '☀️' },
-    { key: 'dinner',    label: '🌙 Dinner',     emoji: '🌙' },
+    { key: 'breakfast', label: '\u{1F305} Breakfast',  emoji: '\u{1F305}' },
+    { key: 'lunch',     label: '\u{2603} Lunch',      emoji: '\u{2603}' },
+    { key: 'dinner',    label: '\u{1F30C} Dinner',     emoji: '\u{1F30C}' },
   ];
 
   return (
@@ -166,7 +166,7 @@ export default function MealSummaryCard({
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3} flexWrap="wrap" gap={1}>
         <Box>
           <Typography variant="h6" fontWeight={700} color="text.primary">
-            🍽️ Real Food Recommendations
+            {'\u{1F37D}\u{FE0F}'} Real Food Recommendations
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Live recipes from Spoonacular matched to your {mealPlanType}
@@ -222,7 +222,7 @@ export default function MealSummaryCard({
       {/* Foods to avoid — static, no API needed */}
       <Box>
         <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={1.5}>
-          ❌ Foods to Avoid on {mealPlanType}
+          {"\u{274C}"} Foods to Avoid on {mealPlanType}
         </Typography>
         <Grid container spacing={1.5}>
           {avoidFoods.map((item, i) => (

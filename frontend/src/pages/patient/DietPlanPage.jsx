@@ -243,7 +243,7 @@ function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
             {/* Ingredients */}
             <Accordion defaultExpanded sx={{ bgcolor: '#0F172A', border: '1px solid #334155', borderRadius: '8px !important', mb: 1.5 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontWeight={700}>🥕 Ingredients ({detail.ingredients?.length || 0})</Typography>
+                <Typography fontWeight={700}>{'\u{1F955}'} Ingredients ({detail.ingredients?.length || 0})</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Grid container spacing={1}>
@@ -262,7 +262,7 @@ function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
             {/* Instructions */}
             <Accordion sx={{ bgcolor: '#0F172A', border: '1px solid #334155', borderRadius: '8px !important', mb: 1.5 }}>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography fontWeight={700}>👨‍🍳 Instructions ({detail.instructions?.length || 0} steps)</Typography>
+                <Typography fontWeight={700}>{"\u{1F468}\u{200D}\u{1F373}"} Instructions ({detail.instructions?.length || 0} steps)</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Stack spacing={1.5}>
@@ -353,10 +353,10 @@ function WeeklyScheduleTab({ meals, mealSplit, accentColor }) {
               <AccordionDetails sx={{ pt: 0 }}>
                 <Grid container spacing={2}>
                   {[
-                    { label: '🌅 Breakfast', recipe: b, budget: mealSplit?.breakfast },
-                    { label: '☀️ Lunch',     recipe: l, budget: mealSplit?.lunch },
-                    { label: '🌙 Dinner',    recipe: d, budget: mealSplit?.dinner },
-                    { label: '🍎 Snack',     recipe: s, budget: mealSplit?.snack },
+                    { label: '\u{1F305} Breakfast', recipe: b, budget: mealSplit?.breakfast },
+                    { label: '\u{2603} Lunch',     recipe: l, budget: mealSplit?.lunch },
+                    { label: '\u{1F30C} Dinner',    recipe: d, budget: mealSplit?.dinner },
+                    { label: '\u{1F34E} Snack',     recipe: s, budget: mealSplit?.snack },
                   ].map(({ label, recipe, budget }) => (
                     <Grid item xs={12} sm={6} md={3} key={label}>
                       <Paper sx={{ p: 1.5, bgcolor: '#0F172A', borderRadius: 2, height: '100%' }}>
@@ -489,7 +489,7 @@ function AvoidFoodsTab({ mealPlanType }) {
                   <Typography fontSize={32}>{item.emoji}</Typography>
                   <Box>
                     <Typography variant="subtitle2" fontWeight={700} color="#FCA5A5">
-                      ❌ {item.name}
+                      {"\u274C}"} {item.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mt={0.3}>
                       {item.reason}
@@ -547,10 +547,10 @@ export default function DietPlanPage({
   }, [mealPlanType, dailyCalories]);
 
   const mealSections = [
-    { key: 'breakfast', label: 'Breakfast', emoji: '🌅' },
-    { key: 'lunch',     label: 'Lunch',     emoji: '☀️' },
-    { key: 'dinner',    label: 'Dinner',    emoji: '🌙' },
-    { key: 'snacks',    label: 'Snacks',    emoji: '🍎' },
+    { key: 'breakfast', label: 'Breakfast', emoji: '\u{1F305}' },
+    { key: 'lunch',     label: 'Lunch',     emoji: '\u{2603}' },
+    { key: 'dinner',    label: 'Dinner',    emoji: '\u{1F30C}' },
+    { key: 'snacks',    label: 'Snacks',    emoji: '\u{1F34E}' },
   ];
 
   return (

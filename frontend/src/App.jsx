@@ -74,7 +74,14 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-otp" element={<OTPVerifyPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route
+          path="/notifications"
+          element={
+            <PrivateRoute>
+              <NotificationsPage />
+            </PrivateRoute>
+          }
+        />
         {/* PATIENT ROUTES  */}
         <Route
           path="/patient"

@@ -18,7 +18,9 @@ const notificationSchema = new mongoose.Schema({
             'patient_query',
             'appointment',
             'system',
-            'diet_recommendation'
+            'diet_recommendation',
+            'message',
+            'admin_alert'
         ]
     },
 
@@ -36,7 +38,7 @@ const notificationSchema = new mongoose.Schema({
 
     icon: {
         type: String,
-        default: '🔔'
+        default: '\u{1F514}'
     },
 
     // Reference to related documents
@@ -47,7 +49,7 @@ const notificationSchema = new mongoose.Schema({
 
     relatedModel: {
         type: String,
-        enum: ['Medication', 'Query', 'User']
+        enum: ['Medication', 'Query', 'User', 'DietPlan']
     },
 
     // Notification status

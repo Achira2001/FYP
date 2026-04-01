@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
 import { sendSMS, sendEmail, smsReady, transporter } from '../services/notificationService.js';
+import { createInAppNotification } from '../utils/notificationHelper.js';
 
 
 // HELPER: Calculate exact reminder time
@@ -93,7 +94,24 @@ export const createMedication = catchAsync(async (req, res, next) => {
 
   await medication.populate('userId', 'fullName email phone mealTimes notificationPreferences');
 
-  console.log(`✅ Medication created: ${name} | Reminders: ${reminders.map(r => r.time).join(', ')}`);
+  await createInAppNotification({
+    userId: req.user.id,
+    type: 'medication_scheduled',
+    title: 'Medication Schedule Created',
+    message: `${name} reminders were scheduled for ${reminders.map(r => `${r.period} (${r.time})`).join(', ')}` ,
+    icon: '\u{1F4C5}',
+    relatedId: medication._id,
+    relatedModel: 'Medication',
+    priority: 'medium',
+    actionUrl: '/patient/medicine-reminders',
+    metadata: {
+      medicationName: name,
+      reminders
+    },
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  });
+
+  console.log(` Medication created: ${name} | Reminders: ${reminders.map(r => r.time).join(', ')}`);
 
   res.status(201).json({
     success: true,
@@ -126,6 +144,23 @@ export const updateMedication = catchAsync(async (req, res, next) => {
   ).populate('userId', 'fullName email phone mealTimes notificationPreferences');
 
   if (!medication) return next(new AppError('Medication not found', 404));
+
+  await createInAppNotification({
+    userId: req.user.id,
+    type: 'medication_scheduled',
+    title: 'Medication Schedule Updated',
+    message: `${medication.name} reminder schedule was updated successfully`,
+    icon: '\u{1F4C5}',
+    relatedId: medication._id,
+    relatedModel: 'Medication',
+    priority: 'medium',
+    actionUrl: '/patient/medicine-reminders',
+    metadata: {
+      medicationName: medication.name,
+      reminders: medication.reminders || []
+    },
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  });
 
   res.status(200).json({ success: true, message: 'Medication updated successfully', data: medication });
 });

@@ -31,17 +31,17 @@ import {
   OpenInNew,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
 //  Constants 
 const TYPE_META = {
-  medication_reminder:  { icon: "💊", label: "Medication Reminder",  color: "#4fc3f7" },
-  medication_scheduled: { icon: "📅", label: "Medication Scheduled", color: "#81c784" },
-  doctor_response:      { icon: "🩺", label: "Doctor Response",      color: "#ce93d8" },
-  patient_query:        { icon: "❓", label: "Patient Query",         color: "#ffb74d" },
-  appointment:          { icon: "📋", label: "Appointment",           color: "#f48fb1" },
-  system:               { icon: "⚙️", label: "System",               color: "#90a4ae" },
-  diet_recommendation:  { icon: "🥗", label: "Diet Recommendation",  color: "#a5d6a7" },
+  medication_reminder:  { icon: "\u{1F48A}", label: "Medication Reminder",  color: "#4fc3f7" },
+  medication_scheduled: { icon: "\u{1F4C5}", label: "Medication Scheduled", color: "#81c784" },
+  doctor_response:      { icon: "\u{1FA7A}", label: "Doctor Response",      color: "#ce93d8" },
+  patient_query:        { icon: "\u{2753}", label: "Patient Query",         color: "#ffb74d" },
+  appointment:          { icon: "\u{1F4CB}", label: "Appointment",           color: "#f48fb1" },
+  system:               { icon: "\u{2699}\u{FE0F}", label: "System",               color: "#90a4ae" },
+  diet_recommendation:  { icon: "\u{1F957}", label: "Diet Recommendation",  color: "#a5d6a7" },
 };
 
 const PRIORITY_COLOR = {
@@ -75,7 +75,7 @@ function fullDate(dateStr) {
 
 //  NotificationCard 
 function NotificationCard({ notif, onRead, onDelete, onClick }) {
-  const meta = TYPE_META[notif.type] || { icon: "🔔", label: notif.type, color: "#667eea" };
+  const meta = TYPE_META[notif.type] || { icon: "\u{1F514}", label: notif.type, color: "#667eea" };
   const priorityColor = PRIORITY_COLOR[notif.priority] || PRIORITY_COLOR.medium;
 
   return (
@@ -387,7 +387,7 @@ export default function NotificationsPage() {
       if (typeFilter !== "all") params.set("type",   typeFilter);
       if (readFilter !== "all") params.set("isRead", readFilter);
 
-      const { data } = await axios.get(`/api/notifications?${params}`);
+      const { data } = await api.get(`/notifications?${params}`);
       if (data.success) {
         setNotifications(data.data);
         setTotal(data.pagination.total);
@@ -401,7 +401,7 @@ export default function NotificationsPage() {
 
   const fetchUnread = useCallback(async () => {
     try {
-      const { data } = await axios.get("/api/notifications/unread/count");
+      const { data } = await api.get("/notifications/unread/count");
       if (data.success) setUnreadCount(data.count);
     } catch { /* silent */ }
   }, []);
@@ -415,7 +415,7 @@ export default function NotificationsPage() {
   //  Actions 
   const handleRead = async (id) => {
     try {
-      await axios.patch(`/api/notifications/${id}/read`);
+      await api.patch(`/notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch (err) { console.error(err); }
@@ -423,7 +423,7 @@ export default function NotificationsPage() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/api/notifications/${id}`);
+      await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(n => n._id !== id));
       setTotal(t => t - 1);
       await fetchUnread();
@@ -432,7 +432,7 @@ export default function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     try {
-      await axios.patch("/api/notifications/mark-all-read");
+      await api.patch("/notifications/mark-all-read");
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true, readAt: new Date().toISOString() })));
       setUnreadCount(0);
     } catch (err) { console.error(err); }
@@ -440,7 +440,7 @@ export default function NotificationsPage() {
 
   const handleDeleteAllRead = async () => {
     try {
-      await axios.delete("/api/notifications/read");
+      await api.delete("/notifications/read");
       setNotifications(prev => prev.filter(n => !n.isRead));
       await fetchUnread();
       setTotal(0); // will recalculate on next fetch

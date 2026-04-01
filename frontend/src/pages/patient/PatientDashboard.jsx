@@ -620,7 +620,7 @@ export default function PatientDashboard() {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Typography variant="h5" sx={{ color: '#FFFFFF', fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' } }}>
-          💪 Health Information
+          {'\u{1F4AA}'} Health Information
         </Typography>
         <Button
           variant={editMode ? 'contained' : 'outlined'}
@@ -867,7 +867,7 @@ export default function PatientDashboard() {
                     variant="h4"
                     sx={{ fontSize: { xs: '1rem', sm: '1.4rem', md: '1.9rem' }, fontWeight: 700, mb: 0.5, lineHeight: 1.3 }}
                   >
-                    Welcome, {userData?.fullName}! 👋
+                    Welcome, {userData?.fullName}! {'\u{1F44B}'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' } }}>
                     Manage your health information and medical records
