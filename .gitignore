@@ -1,2 +1,11 @@
-backend/.env
+node_modules/
 .env
+dist/
+build/
+coverage/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.DS_Store

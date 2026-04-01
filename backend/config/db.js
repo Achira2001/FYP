@@ -6,7 +6,7 @@ const connectDB = async () => {
     const mongoURI = process.env.MONGO_URI || process.env.MONGODB_URI;
     
     if (!mongoURI) {
-      console.error(' MongoDB connection string not found!');
+      console.error('❌ MongoDB connection string not found!');
       console.error('   Please ensure MONGO_URI is set in your .env file');
       console.error('   Example: MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname');
       process.exit(1);
