@@ -1,12 +1,12 @@
 import Notification from '../models/Notification.js';
 import catchAsync from '../utils/catchAsync.js';
 import AppError from '../utils/appError.js';
+import mongoose from 'mongoose';
 
-
-const safePopulateOptions = {
-    path: 'relatedId',
-    options: { strictPopulate: false }
-};
+const getPopulateOptions = () => ({
+  path: 'relatedId',
+  options: { strictPopulate: false }
+});
 
 // GET ALL NOTIFICATIONS 
 export const getNotifications = catchAsync(async (req, res, next) => {
@@ -24,9 +24,22 @@ export const getNotifications = catchAsync(async (req, res, next) => {
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip((page - 1) * limit)
-        .populate(safePopulateOptions)
+        .populate(getPopulateOptions())
         .lean();   // plain JS objects — faster, safe for JSON
 
+
+        const populated = await Promise.all(
+        notifications.map(async (n) => {
+            if (!n.relatedModel || !n.relatedId) return n;
+            try {
+                const doc = await mongoose.model(n.relatedModel).findById(n.relatedId).lean();
+                return { ...n, relatedId: doc };
+            } catch {
+                return n;
+            }
+        })
+    );
+        
     const total = await Notification.countDocuments(filter);
 
     res.status(200).json({
