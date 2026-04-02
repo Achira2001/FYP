@@ -39,6 +39,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   process.env.FRONTEND_URL,
   process.env.CLIENT_URL,
+  'https://fyp-five-lime.vercel.app',
 ].filter(Boolean);
 
 app.use(cors({
