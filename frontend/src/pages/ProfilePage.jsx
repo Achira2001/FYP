@@ -368,51 +368,51 @@ const UserProfile = () => {
             </>
           )}
           {user?.role === 'doctor' && (
-  <>
-    <Grid item xs={12} sm={6}>
-      <TextField
-        fullWidth
-        label="Medical License"
-        value={editData.medicalLicense || ''}
-        onChange={(e) => handleInputChange('medicalLicense', e.target.value)}
-        disabled={!editMode}
-        variant="outlined"
-        size="small"
-      />
-    </Grid>
+            <>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Medical License"
+                  value={editData.medicalLicense || ''}
+                  onChange={(e) => handleInputChange('medicalLicense', e.target.value)}
+                  disabled={!editMode}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
 
-    <Grid item xs={12} sm={6}>
-      <TextField
-        fullWidth
-        label="Specialization"
-        value={editData.specialization || ''}
-        onChange={(e) => handleInputChange('specialization', e.target.value)}
-        disabled={!editMode}
-        variant="outlined"
-        size="small"
-      />
-    </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Specialization"
+                  value={editData.specialization || ''}
+                  onChange={(e) => handleInputChange('specialization', e.target.value)}
+                  disabled={!editMode}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
 
-    <Grid item xs={12}>
-      <TextField
-        fullWidth
-        label="Hospital / Workplace"
-        value={editData.workplace || ''}
-        onChange={(e) => handleInputChange('workplace', e.target.value)}
-        disabled={!editMode}
-        variant="outlined"
-        size="small"
-        InputProps={{
-          startAdornment: (
-            <HospitalIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
-          )
-        }}
-      />
-    </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Hospital / Workplace"
+                  value={editData.workplace || ''}
+                  onChange={(e) => handleInputChange('workplace', e.target.value)}
+                  disabled={!editMode}
+                  variant="outlined"
+                  size="small"
+                  InputProps={{
+                    startAdornment: (
+                      <HospitalIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                    )
+                  }}
+                />
+              </Grid>
 
-  
-  </>
-)}
+
+            </>
+          )}
         </Grid>
       </CardContent>
     </Card>
@@ -725,12 +725,25 @@ const UserProfile = () => {
                   border: '1px solid rgba(102, 126, 234, 0.3)',
                 }}>
                   <CardContent sx={{ p: 4 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-                      <Box display="flex" alignItems="center" flexWrap="wrap" gap={3}>
+                    <Box
+                      display="flex"
+                      alignItems={{ xs: 'center', md: 'center' }}
+                      justifyContent="space-between"
+                      flexDirection={{ xs: 'column', md: 'row' }}
+                      textAlign={{ xs: 'center', md: 'left' }}
+                      gap={2}
+                    >
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        flexDirection={{ xs: 'column', md: 'row' }}
+                        textAlign={{ xs: 'center', md: 'left' }}
+                        gap={2}
+                      >
                         <Box position="relative">
                           <Avatar sx={{
-                            width: 120,
-                            height: 120,
+                            width: { xs: 80, md: 120 },
+                            height: { xs: 80, md: 120 },
                             border: '4px solid rgba(255,255,255,0.2)',
                             boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
                           }}>
@@ -798,7 +811,13 @@ const UserProfile = () => {
                         </Box>
                       </Box>
 
-                      <Box display="flex" gap={1} flexWrap="wrap">
+                      <Box
+                        display="flex"
+                        gap={1}
+                        flexWrap="wrap"
+                        justifyContent={{ xs: 'center', md: 'flex-end' }}
+                        width={{ xs: '100%', md: 'auto' }}
+                      >
                         <Button
                           variant={editMode ? "contained" : "outlined"}
                           startIcon={editMode ? <CancelIcon /> : <EditIcon />}
@@ -864,29 +883,20 @@ const UserProfile = () => {
               {/* Content Tabs */}
               <Card elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
                 <Tabs
-                  value={activeTab}
-                  onChange={handleTabChange}
-                  sx={{
-                    borderBottom: '1px solid rgba(102, 126, 234, 0.2)',
-                    '& .MuiTab-root': {
-                      color: 'text.secondary',
-                      fontWeight: 600,
-                      fontSize: '0.95rem',
-                      py: 2,
-                      '&.Mui-selected': { color: 'primary.main' },
-                      '&:hover': {
-                        color: 'primary.light',
-                        bgcolor: 'rgba(102, 126, 234, 0.05)'
-                      }
-                    },
-                    '& .MuiTabs-indicator': {
-                      backgroundColor: 'primary.main',
-                      height: 3
-                    }
-                  }}
-                  variant="scrollable"
-                  scrollButtons="auto"
-                >
+  value={activeTab}
+  onChange={handleTabChange}
+  variant="fullWidth"
+  scrollButtons={false}
+  sx={{
+    borderBottom: '1px solid rgba(102, 126, 234, 0.2)',
+
+    '& .MuiTab-root': {
+  fontSize: { xs: '0.65rem', md: '0.95rem' },
+  minHeight: { xs: 36, md: 48 },
+  padding: { xs: '6px 4px', md: '12px 16px' },
+}
+  }}
+>
                   <Tab label="Basic Information" />
                   {user.role === 'patient' && <Tab label="Health Information" />}
 
@@ -895,14 +905,14 @@ const UserProfile = () => {
                 </Tabs>
 
                 <Box sx={{ p: 3, minHeight: 400 }}>
-  <Fade in key={activeTab} timeout={500}>
-    <Box>
-      {activeTab === 0 && renderBasicInfo()}
-      {activeTab === 1 && user.role === 'patient' && renderHealthInfo()}
-      {activeTab === 2 && user.role === 'patient' && renderMedications()}
-    </Box>
-  </Fade>
-</Box>
+                  <Fade in key={activeTab} timeout={500}>
+                    <Box>
+                      {activeTab === 0 && renderBasicInfo()}
+                      {activeTab === 1 && user.role === 'patient' && renderHealthInfo()}
+                      {activeTab === 2 && user.role === 'patient' && renderMedications()}
+                    </Box>
+                  </Fade>
+                </Box>
               </Card>
             </Box>
           </Fade>
