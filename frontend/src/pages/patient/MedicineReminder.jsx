@@ -149,7 +149,7 @@ const MedicalReminderSystem = () => {
     breakfast: '08:00',
     lunch: '13:00',
     dinner: '19:00',
-    night: '22:00' 
+    night: '22:00'
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -158,7 +158,7 @@ const MedicalReminderSystem = () => {
   });
   const [reminderDialog, setReminderDialog] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  
+
   const [doctorInfo, setDoctorInfo] = useState({
     name: '',
     hospital: '',
@@ -398,39 +398,39 @@ const MedicalReminderSystem = () => {
   };
 
   const handleMealTimeChange = async (meal, time) => {
-  const updatedMealTimes = {
-    ...mealTimes,
-    [meal]: time
-  };
+    const updatedMealTimes = {
+      ...mealTimes,
+      [meal]: time
+    };
 
-  setMealTimes(updatedMealTimes);
+    setMealTimes(updatedMealTimes);
 
-  try {
-    const response = await apiRequest('/profile', {
-      method: 'PUT',
-      body: JSON.stringify({
-        mealTimes: updatedMealTimes
-      })
-    });
+    try {
+      const response = await apiRequest('/profile', {
+        method: 'PUT',
+        body: JSON.stringify({
+          mealTimes: updatedMealTimes
+        })
+      });
 
-    if (response?.user) {
-      setUserProfile(response.user);
-      setMealTimes(response.user.mealTimes || updatedMealTimes);
+      if (response?.user) {
+        setUserProfile(response.user);
+        setMealTimes(response.user.mealTimes || updatedMealTimes);
+      }
+
+      showSnackbar('Meal times updated successfully!');
+    } catch (error) {
+      console.error('Failed to update meal times:', error);
+      showSnackbar('Failed to update meal times', 'error');
     }
-
-    showSnackbar('Meal times updated successfully!');
-  } catch (error) {
-    console.error('Failed to update meal times:', error);
-    showSnackbar('Failed to update meal times', 'error');
-  }
-};
+  };
 
   const calculateReminderTime = (timePeriod, mealRelation) => {
     const mealTimeMap = {
       morning: mealTimes.breakfast,
       afternoon: mealTimes.lunch,
       evening: mealTimes.dinner,
-      night: mealTimes.night 
+      night: mealTimes.night
     };
 
     const relation = mealRelations.find(r => r.key === mealRelation);
@@ -453,82 +453,82 @@ const MedicalReminderSystem = () => {
   };
 
   const handleAddMedication = async () => {
-  if (!currentMedication.name || !currentMedication.dosage || currentMedication.timePeriods.length === 0) {
-    showSnackbar('Please fill in all required fields', 'error');
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const reminders = currentMedication.timePeriods.map(period => ({
-      period,
-      time: calculateReminderTime(period, currentMedication.mealRelation)
-    }));
-
-    const medicationData = {
-      ...currentMedication,
-      reminders,
-      mealTimesSnapshot: mealTimes
-    };
-
-    // 1. Save medication first
-    const response = await apiRequest('/medications', {
-      method: 'POST',
-      body: JSON.stringify(medicationData)
-    });
-
-    const newMedication = response.data || response.medication;
-    setMedications(prev => [newMedication, ...prev]);
-
-    // 2. Call only selected reminder methods
-    const selectedMedicationPayload = [newMedication];
-
-    if (newMedication.reminderSettings?.smsEnabled) {
-      await apiRequest('/medications/schedule/sms', {
-        method: 'POST',
-        body: JSON.stringify({ medications: selectedMedicationPayload })
-      });
+    if (!currentMedication.name || !currentMedication.dosage || currentMedication.timePeriods.length === 0) {
+      showSnackbar('Please fill in all required fields', 'error');
+      return;
     }
 
-    if (newMedication.reminderSettings?.emailEnabled) {
-      await apiRequest('/medications/schedule/email', {
-        method: 'POST',
-        body: JSON.stringify({ medications: selectedMedicationPayload })
-      });
-    }
+    try {
+      setLoading(true);
 
-    setCurrentMedication({
-      drugType: drugTypes[activeTab].key,
-      drugSubcategory: drugTypes[activeTab].subcategories[0],
-      name: '',
-      dosage: '',
-      quantity: 1,
-      timePeriods: [],
-      mealRelation: 'before_meals',
-      notes: '',
-      reminderDays: 7,
-      reminderSettings: {
-        smsEnabled: true,
-        emailEnabled: true,
-        calendarEnabled: true,
-        phoneCallEnabled: false
-      },
-      frequency: {
-        type: 'daily',
-        interval: 1,
-        duration: 30
+      const reminders = currentMedication.timePeriods.map(period => ({
+        period,
+        time: calculateReminderTime(period, currentMedication.mealRelation)
+      }));
+
+      const medicationData = {
+        ...currentMedication,
+        reminders,
+        mealTimesSnapshot: mealTimes
+      };
+
+      // 1. Save medication first
+      const response = await apiRequest('/medications', {
+        method: 'POST',
+        body: JSON.stringify(medicationData)
+      });
+
+      const newMedication = response.data || response.medication;
+      setMedications(prev => [newMedication, ...prev]);
+
+      // 2. Call only selected reminder methods
+      const selectedMedicationPayload = [newMedication];
+
+      if (newMedication.reminderSettings?.smsEnabled) {
+        await apiRequest('/medications/schedule/sms', {
+          method: 'POST',
+          body: JSON.stringify({ medications: selectedMedicationPayload })
+        });
       }
-    });
 
-    showSnackbar('Medication added and selected reminders scheduled successfully!');
-  } catch (error) {
-    console.error('Add medication error:', error);
-    showSnackbar('Failed to add medication: ' + error.message, 'error');
-  } finally {
-    setLoading(false);
-  }
-};
+      if (newMedication.reminderSettings?.emailEnabled) {
+        await apiRequest('/medications/schedule/email', {
+          method: 'POST',
+          body: JSON.stringify({ medications: selectedMedicationPayload })
+        });
+      }
+
+      setCurrentMedication({
+        drugType: drugTypes[activeTab].key,
+        drugSubcategory: drugTypes[activeTab].subcategories[0],
+        name: '',
+        dosage: '',
+        quantity: 1,
+        timePeriods: [],
+        mealRelation: 'before_meals',
+        notes: '',
+        reminderDays: 7,
+        reminderSettings: {
+          smsEnabled: true,
+          emailEnabled: true,
+          calendarEnabled: true,
+          phoneCallEnabled: false
+        },
+        frequency: {
+          type: 'daily',
+          interval: 1,
+          duration: 30
+        }
+      });
+
+      showSnackbar('Medication added and selected reminders scheduled successfully!');
+    } catch (error) {
+      console.error('Add medication error:', error);
+      showSnackbar('Failed to add medication: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteMedication = async (id) => {
     try {
@@ -562,20 +562,19 @@ const MedicalReminderSystem = () => {
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
-              variant="fullWidth"
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
                 '& .MuiTab-root': {
-                  minHeight: 80,
+                  minHeight: 70,
+                  minWidth: 120,   // important for spacing
                   textTransform: 'none',
-                  fontSize: '0.95rem',
+                  fontSize: '0.85rem',
                   fontWeight: 600,
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    bgcolor: 'rgba(102, 126, 234, 0.05)',
-                  }
                 },
-                '& .Mui-selected': {
-                  color: currentDrugType.color + ' !important',
+                '& .MuiTabs-scrollButtons': {
+                  color: '#667eea'
                 }
               }}
             >
@@ -687,7 +686,7 @@ const MedicalReminderSystem = () => {
                       <ToggleButtonGroup
                         value={currentMedication.timePeriods}
                         onChange={handleTimePeriodChange}
-                        sx={{ 
+                        sx={{
                           display: 'flex',
                           flexWrap: 'wrap',
                           gap: 1.5,
@@ -842,9 +841,9 @@ const MedicalReminderSystem = () => {
                           <Grid container spacing={1.5}>
                             {currentMedication.timePeriods.map(period => (
                               <Grid item xs={12} sm={6} md={3} key={period}>
-                                <Box sx={{ 
-                                  p: 1.5, 
-                                  bgcolor: 'background.paper', 
+                                <Box sx={{
+                                  p: 1.5,
+                                  bgcolor: 'background.paper',
                                   borderRadius: 2,
                                   border: '1px solid rgba(3, 218, 198, 0.2)',
                                   textAlign: 'center'
@@ -867,7 +866,7 @@ const MedicalReminderSystem = () => {
                     )}
                   </Grid>
                 </CardContent>
-                
+
                 <CardActions sx={{ p: 3, pt: 0 }}>
                   <Button
                     variant="contained"
@@ -915,10 +914,10 @@ const MedicalReminderSystem = () => {
 
                       {medications.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Box sx={{ 
-                            width: 70, 
-                            height: 70, 
-                            borderRadius: '50%', 
+                          <Box sx={{
+                            width: 70,
+                            height: 70,
+                            borderRadius: '50%',
                             bgcolor: 'rgba(102, 126, 234, 0.1)',
                             display: 'flex',
                             alignItems: 'center',
@@ -939,11 +938,11 @@ const MedicalReminderSystem = () => {
                             {medications.map((med) => {
                               const typeInfo = drugTypes.find(type => type.key === med.drugType);
                               return (
-                                <Paper 
-                                  key={med._id} 
-                                  sx={{ 
-                                    mb: 1.5, 
-                                    p: 1.5, 
+                                <Paper
+                                  key={med._id}
+                                  sx={{
+                                    mb: 1.5,
+                                    p: 1.5,
                                     bgcolor: 'rgba(102, 126, 234, 0.05)',
                                     border: '1px solid rgba(102, 126, 234, 0.2)',
                                     borderRadius: 2,
@@ -966,25 +965,25 @@ const MedicalReminderSystem = () => {
                                       </Typography>
                                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.8 }}>
                                         {(med.timePeriods || []).map(period => (
-                                          <Chip 
-                                            key={period} 
-                                            label={period} 
+                                          <Chip
+                                            key={period}
+                                            label={period}
                                             size="small"
-                                            sx={{ 
+                                            sx={{
                                               bgcolor: typeInfo?.color + '30',
                                               color: typeInfo?.color,
                                               fontWeight: 600,
                                               fontSize: '0.65rem',
                                               height: 20
-                                            }} 
+                                            }}
                                           />
                                         ))}
                                       </Box>
                                     </Box>
-                                    <IconButton 
-                                      onClick={() => handleDeleteMedication(med._id)} 
+                                    <IconButton
+                                      onClick={() => handleDeleteMedication(med._id)}
                                       size="small"
-                                      sx={{ 
+                                      sx={{
                                         color: 'error.main',
                                         width: 32,
                                         height: 32,
@@ -1027,10 +1026,10 @@ const MedicalReminderSystem = () => {
                           </Avatar>
                           <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.1rem' }}>Doctor Info</Typography>
                         </Box>
-                        <IconButton 
+                        <IconButton
                           onClick={() => setShowDoctorForm(!showDoctorForm)}
                           size="small"
-                          sx={{ 
+                          sx={{
                             transform: showDoctorForm ? 'rotate(180deg)' : 'none',
                             transition: 'transform 0.3s'
                           }}
@@ -1042,47 +1041,47 @@ const MedicalReminderSystem = () => {
                       <Collapse in={showDoctorForm}>
                         <Grid container spacing={1.5} sx={{ mb: 2 }}>
                           <Grid item xs={12}>
-                            <TextField 
-                              label="Doctor Name" 
-                              value={doctorInfo.name} 
-                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, name: e.target.value }))} 
-                              fullWidth 
+                            <TextField
+                              label="Doctor Name"
+                              value={doctorInfo.name}
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, name: e.target.value }))}
+                              fullWidth
                               size="small"
                             />
                           </Grid>
                           <Grid item xs={12}>
-                            <TextField 
-                              label="Hospital/Clinic" 
-                              value={doctorInfo.hospital} 
-                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, hospital: e.target.value }))} 
-                              fullWidth 
+                            <TextField
+                              label="Hospital/Clinic"
+                              value={doctorInfo.hospital}
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, hospital: e.target.value }))}
+                              fullWidth
                               size="small"
                             />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField 
-                              label="Email" 
-                              type="email" 
-                              value={doctorInfo.email} 
-                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, email: e.target.value }))} 
-                              fullWidth 
+                            <TextField
+                              label="Email"
+                              type="email"
+                              value={doctorInfo.email}
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, email: e.target.value }))}
+                              fullWidth
                               size="small"
                             />
                           </Grid>
                           <Grid item xs={12} sm={6}>
-                            <TextField 
-                              label="Phone" 
-                              value={doctorInfo.phone} 
-                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, phone: e.target.value }))} 
-                              fullWidth 
+                            <TextField
+                              label="Phone"
+                              value={doctorInfo.phone}
+                              onChange={(e) => setDoctorInfo(prev => ({ ...prev, phone: e.target.value }))}
+                              fullWidth
                               size="small"
                             />
                           </Grid>
                           <Grid item xs={12}>
-                            <Button 
-                              variant="contained" 
-                              onClick={handleSaveDoctorInfo} 
-                              fullWidth 
+                            <Button
+                              variant="contained"
+                              onClick={handleSaveDoctorInfo}
+                              fullWidth
                               startIcon={<Save />}
                               size="small"
                               sx={{ bgcolor: 'success.main' }}
@@ -1116,10 +1115,10 @@ const MedicalReminderSystem = () => {
                         </Paper>
                       )}
 
-                      <Button 
-                        variant="outlined" 
-                        onClick={() => setShowAskDoctor(true)} 
-                        fullWidth 
+                      <Button
+                        variant="outlined"
+                        onClick={() => setShowAskDoctor(true)}
+                        fullWidth
                         startIcon={<Send />}
                         size="small"
                         disabled={!doctorInfo.email && !doctorInfo.phone}
@@ -1135,10 +1134,10 @@ const MedicalReminderSystem = () => {
         </Container>
 
         {/* Success Dialog */}
-        <Dialog 
-          open={reminderDialog} 
-          onClose={() => setReminderDialog(false)} 
-          maxWidth="md" 
+        <Dialog
+          open={reminderDialog}
+          onClose={() => setReminderDialog(false)}
+          maxWidth="md"
           fullWidth
           PaperProps={{
             sx: {
@@ -1168,8 +1167,8 @@ const MedicalReminderSystem = () => {
                 { icon: <Email />, title: 'Email Reminders', desc: 'Daily summary and alerts', color: 'primary.main' }
               ].map((item, idx) => (
                 <Grid item xs={12} md={4} key={idx}>
-                  <Paper sx={{ 
-                    p: 2.5, 
+                  <Paper sx={{
+                    p: 2.5,
                     textAlign: 'center',
                     bgcolor: 'rgba(102, 126, 234, 0.05)',
                     border: '1px solid rgba(102, 126, 234, 0.2)'
@@ -1192,10 +1191,10 @@ const MedicalReminderSystem = () => {
         </Dialog>
 
         {/* Ask Doctor Dialog */}
-        <Dialog 
-          open={showAskDoctor} 
-          onClose={() => setShowAskDoctor(false)} 
-          maxWidth="sm" 
+        <Dialog
+          open={showAskDoctor}
+          onClose={() => setShowAskDoctor(false)}
+          maxWidth="sm"
           fullWidth
           PaperProps={{
             sx: {
@@ -1211,13 +1210,13 @@ const MedicalReminderSystem = () => {
             </Typography>
           </DialogTitle>
           <DialogContent>
-            <TextField 
-              label="Describe your concern" 
-              value={doctorQuery} 
-              onChange={(e) => setDoctorQuery(e.target.value)} 
-              multiline 
-              rows={5} 
-              fullWidth 
+            <TextField
+              label="Describe your concern"
+              value={doctorQuery}
+              onChange={(e) => setDoctorQuery(e.target.value)}
+              multiline
+              rows={5}
+              fullWidth
               placeholder="Please describe your symptoms, concerns, or questions..."
               sx={{ mt: 1.5 }}
             />
@@ -1226,10 +1225,10 @@ const MedicalReminderSystem = () => {
             <Button onClick={() => setShowAskDoctor(false)} variant="outlined">
               Cancel
             </Button>
-            <Button 
-              onClick={handleAskDoctor} 
-              variant="contained" 
-              disabled={loading || !doctorQuery.trim()} 
+            <Button
+              onClick={handleAskDoctor}
+              variant="contained"
+              disabled={loading || !doctorQuery.trim()}
               startIcon={<Send />}
             >
               Send Message
@@ -1244,10 +1243,10 @@ const MedicalReminderSystem = () => {
           onClose={handleCloseSnackbar}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity} 
-            sx={{ 
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{
               width: '100%',
               borderRadius: 2,
               border: '1px solid rgb(255, 255, 255)',

@@ -55,8 +55,6 @@ const particleFloat = keyframes`
 `;
 
 
-// LEFT PANEL STYLED — identical to original
-
 const FullScreenBackground = styled(Box)({
   position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -3,
   background: `
@@ -88,9 +86,14 @@ const FullScreenBackground = styled(Box)({
 
 const SplitScreenContainer = styled(Box)({
   display: 'flex', minHeight: '100vh', width: '100vw', position: 'relative',
+  overflow: 'hidden',
+  '@media (max-width: 900px)': {
+    flexDirection: 'column',
+    minHeight: '100dvh',
+    overflow: 'visible',
+  },
 });
 
-// Left panel 
 const LeftBrandingPanel = styled(Box)({
   flex: '1',
   background: 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%)',
@@ -104,31 +107,50 @@ const LeftBrandingPanel = styled(Box)({
       radial-gradient(circle at 70% 70%, rgba(255,255,255,0.08) 0%, transparent 50%)
     `,
     animation: `${float} 12s ease-in-out infinite`,
-  }
+  },
+  '@media (max-width: 900px)': {
+    padding: '34px 20px 24px',
+    minHeight: 'auto',
+  },
+  '@media (max-width: 600px)': {
+    padding: '28px 16px 20px',
+  },
 });
 
-// Right panel — DARK
+// RIGHT PANEL 
 const RightRegisterPanel = styled(Box)({
   flex: '1',
   background: '#111827',
   borderLeft: '1px solid rgba(99,102,241,0.15)',
-  display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center',
-  padding: '40px 60px', position: 'relative', overflowY: 'auto',
-  '&::before': {
-    content: '""', position: 'absolute', inset: 0,
-    background: `
-      radial-gradient(ellipse 70% 50% at 80% 10%, rgba(99,102,241,0.1) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 60% at 20% 90%, rgba(16,185,129,0.07) 0%, transparent 60%)
-    `,
-    pointerEvents: 'none',
-  }
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  padding: '16px 24px',
+  position: 'relative',
+  overflowY: 'auto',
+  minHeight: '100vh',
+  boxSizing: 'border-box',
+  '@media (max-width: 900px)': {
+    borderLeft: 'none',
+    borderTop: '1px solid rgba(99,102,241,0.15)',
+    padding: '20px 16px 40px',
+    minHeight: '100dvh',
+    width: '100%',
+  },
 });
 
+// FORM CONTAINER 
 const RegisterFormContainer = styled(Box)({
-  width: '100%', maxWidth: '600px', position: 'relative', zIndex: 2, marginTop: '20px',
+  width: '100%',
+  maxWidth: '600px',
+  boxSizing: 'border-box',
+  '@media (max-width: 900px)': {
+    maxWidth: '100%',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
 });
 
-// Left branding — EXACTLY original
 const BrandingAvatar = styled(Avatar)(({ theme }) => ({
   width: 180, height: 180,
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
@@ -142,6 +164,8 @@ const BrandingAvatar = styled(Avatar)(({ theme }) => ({
     borderRadius: '50%', zIndex: -1,
     animation: `${rotateGlow} 8s linear infinite`, backgroundSize: '300% 300%',
   },
+  '@media (max-width: 900px)': { width: 110, height: 110, marginBottom: theme.spacing(2.5) },
+  '@media (max-width: 600px)': { width: 92, height: 92 },
 }));
 
 const BrandingTitle = styled(Typography)({
@@ -163,6 +187,7 @@ const DesktopRoleCard = styled(Box)(({ rolecolor }) => ({
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   cursor: 'pointer', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(15px)',
   '&:hover': { transform: 'translateY(-8px) scale(1.05)', boxShadow: `0 20px 40px ${rolecolor}30` },
+  '@media (max-width: 900px)': { padding: '14px 10px', borderRadius: '16px' },
 }));
 
 const FloatingParticle = styled(Box)(({ size, delay, duration, opacity, left, top }) => ({
@@ -181,34 +206,60 @@ const FloatingMedicalIcon = styled(Box)(({ delay, size, left, top, color }) => (
   position: 'absolute', fontSize: size, color, left, top, zIndex: 1,
   animation: `${particleFloat} ${8 + delay}s ease-in-out infinite`,
   animationDelay: `${delay}s`,
+  '@media (max-width: 900px)': { display: 'none' },
 }));
 
-
-// DARK RIGHT PANEL FORM ELEMENTS
-
+// StyledTextField 
 const StyledTextField = styled(TextField)({
+  width: '100% !important',
+  display: 'block',
   '& .MuiOutlinedInput-root': {
     borderRadius: '14px',
     background: 'rgba(15,23,42,0.8)',
     border: '1px solid rgba(99,102,241,0.2)',
     transition: 'all 0.3s ease',
+    minHeight: '56px',
+    width: '100%',
+    boxSizing: 'border-box',
     '& fieldset': { border: 'none' },
-    '&:hover': { border: '1px solid rgba(99,102,241,0.45)', background: 'rgba(15,23,42,0.95)' },
+    '&:hover': {
+      border: '1px solid rgba(99,102,241,0.45)',
+      background: 'rgba(15,23,42,0.95)'
+    },
     '&.Mui-focused': {
-      border: '1px solid #6366F1', background: 'rgba(15,23,42,0.95)',
+      border: '1px solid #6366F1',
+      background: 'rgba(15,23,42,0.95)',
       boxShadow: '0 0 0 3px rgba(99,102,241,0.15)',
     },
-    '&.Mui-error': {
-      border: '1px solid rgba(239,68,68,0.6)',
-      '&.Mui-focused': { border: '1px solid #EF4444', boxShadow: '0 0 0 3px rgba(239,68,68,0.12)' },
-    },
+  },
+  '& .MuiInputBase-root': {
+    width: '100%',
   },
   '& .MuiOutlinedInput-input': {
-    padding: '14px 16px', fontSize: '15px', fontWeight: 500, color: '#F1F5F9',
+    padding: '16px 14px',
+    fontSize: '15px',
+    fontWeight: 500,
+    color: '#F1F5F9',
+    boxSizing: 'border-box',
     '&::placeholder': { color: '#475569', opacity: 1, fontWeight: 400 },
   },
   '& .MuiFormHelperText-root': {
-    color: '#EF4444', fontSize: '11px', marginLeft: '2px', marginTop: '3px',
+    color: '#EF4444',
+    fontSize: '12px',
+    marginLeft: '4px',
+    marginTop: '4px',
+  },
+  '@media (max-width: 900px)': {
+    width: '100% !important',
+    '& .MuiOutlinedInput-root': {
+      minHeight: '54px',
+      width: '100%',
+      borderRadius: '12px',
+    },
+    '& .MuiOutlinedInput-input': {
+      padding: '15px 14px',
+      fontSize: '15px',
+    },
   },
 });
 
@@ -225,9 +276,9 @@ const GradientButton = styled(Button)(({ rolecolor }) => ({
     background: 'linear-gradient(135deg, #667eea 0%, #4facfe 100%)',
     color: 'rgba(255,255,255,0.5)',
   },
+  '@media (max-width: 600px)': { padding: '14px 20px', fontSize: '15px' },
 }));
 
-// Dark role toggle
 const StyledToggleButtonGroup = styled(ToggleButtonGroup)({
   borderRadius: '14px', overflow: 'hidden',
   border: '1px solid rgba(99,102,241,0.25)',
@@ -243,37 +294,37 @@ const roleConfig = {
     icon: Favorite, solidColor: '#e91e63',
     gradient: 'linear-gradient(135deg, #e91e63 0%, #ad1457 50%, #880e4f 100%)',
     fields: [
-      { name: 'fullName',         label: 'Full Name',         type: 'text',     icon: Person,         placeholder: 'Enter your full name' },
-      { name: 'email',            label: 'Email',             type: 'email',    icon: Email,          placeholder: 'Enter your email address' },
-      { name: 'password',         label: 'Password',          type: 'password', icon: Lock,           placeholder: 'Create a secure password' },
-      { name: 'phone',            label: 'Phone',             type: 'tel',      icon: Phone,          placeholder: 'Enter your phone number' },
-      { name: 'dateOfBirth',      label: 'Date of Birth',     type: 'date',     icon: CalendarToday,  placeholder: '' },
-      { name: 'address',          label: 'Address',           type: 'text',     icon: LocationOn,     placeholder: 'Enter your address' },
-      { name: 'emergencyContact', label: 'Emergency Contact', type: 'tel',      icon: Phone,          placeholder: 'Emergency contact number' },
+      { name: 'fullName', label: 'Full Name', type: 'text', icon: Person, placeholder: 'Enter your full name' },
+      { name: 'email', label: 'Email', type: 'email', icon: Email, placeholder: 'Enter your email address' },
+      { name: 'password', label: 'Password', type: 'password', icon: Lock, placeholder: 'Create a secure password' },
+      { name: 'phone', label: 'Phone', type: 'tel', icon: Phone, placeholder: 'Enter your phone number' },
+      { name: 'dateOfBirth', label: 'Date of Birth', type: 'date', icon: CalendarToday, placeholder: '' },
+      { name: 'address', label: 'Address', type: 'text', icon: LocationOn, placeholder: 'Enter your address' },
+      { name: 'emergencyContact', label: 'Emergency Contact', type: 'tel', icon: Phone, placeholder: 'Emergency contact number' },
     ]
   },
   doctor: {
     icon: MedicalServices, solidColor: '#2196f3',
     gradient: 'linear-gradient(135deg, #2196f3 0%, #1565c0 50%, #0d47a1 100%)',
     fields: [
-      { name: 'fullName',       label: 'Full Name',         type: 'text',     icon: Person,          placeholder: 'Enter your full name' },
-      { name: 'email',          label: 'Email',             type: 'email',    icon: Email,           placeholder: 'Enter your email address' },
-      { name: 'password',       label: 'Password',          type: 'password', icon: Lock,            placeholder: 'Create a secure password' },
-      { name: 'phone',          label: 'Phone',             type: 'tel',      icon: Phone,           placeholder: 'Enter your phone number' },
-      { name: 'medicalLicense', label: 'Medical License',   type: 'text',     icon: MedicalServices, placeholder: 'Enter your medical license number' },
-      { name: 'specialization', label: 'Specialization',    type: 'text',     icon: MedicalServices, placeholder: 'Enter your specialization' },
-      { name: 'workplace',      label: 'Hospital/Clinic',   type: 'text',     icon: LocationOn,      placeholder: 'Enter your workplace' },
+      { name: 'fullName', label: 'Full Name', type: 'text', icon: Person, placeholder: 'Enter your full name' },
+      { name: 'email', label: 'Email', type: 'email', icon: Email, placeholder: 'Enter your email address' },
+      { name: 'password', label: 'Password', type: 'password', icon: Lock, placeholder: 'Create a secure password' },
+      { name: 'phone', label: 'Phone', type: 'tel', icon: Phone, placeholder: 'Enter your phone number' },
+      { name: 'medicalLicense', label: 'Medical License', type: 'text', icon: MedicalServices, placeholder: 'Enter your medical license number' },
+      { name: 'specialization', label: 'Specialization', type: 'text', icon: MedicalServices, placeholder: 'Enter your specialization' },
+      { name: 'workplace', label: 'Hospital/Clinic', type: 'text', icon: LocationOn, placeholder: 'Enter your workplace' },
     ]
   },
   admin: {
     icon: Security, solidColor: '#9c27b0',
     gradient: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 50%, #4a148c 100%)',
     fields: [
-      { name: 'fullName',  label: 'Full Name',  type: 'text',     icon: Person,   placeholder: 'Enter your full name' },
-      { name: 'email',     label: 'Email',      type: 'email',    icon: Email,    placeholder: 'Enter your email address' },
-      { name: 'password',  label: 'Password',   type: 'password', icon: Lock,     placeholder: 'Create a secure password' },
-      { name: 'phone',     label: 'Phone',      type: 'tel',      icon: Phone,    placeholder: 'Enter your phone number' },
-      { name: 'adminCode', label: 'Admin Code', type: 'text',     icon: Security, placeholder: 'Enter admin verification code' },
+      { name: 'fullName', label: 'Full Name', type: 'text', icon: Person, placeholder: 'Enter your full name' },
+      { name: 'email', label: 'Email', type: 'email', icon: Email, placeholder: 'Enter your email address' },
+      { name: 'password', label: 'Password', type: 'password', icon: Lock, placeholder: 'Create a secure password' },
+      { name: 'phone', label: 'Phone', type: 'tel', icon: Phone, placeholder: 'Enter your phone number' },
+      { name: 'adminCode', label: 'Admin Code', type: 'text', icon: Security, placeholder: 'Enter admin verification code' },
     ]
   }
 };
@@ -302,14 +353,11 @@ const VALIDATORS = {
     return '';
   },
   phone(v) {
-  const value = v.replace(/\s/g, '');
-
-  if (!value) return 'Phone number is required';
-  if (!/^(?:\+94|94|0)?7\d{8}$/.test(value)) {
-    return 'Enter a valid phone number (eg: +94712345678)';
-  }
-  return '';
-},
+    const value = v.replace(/\s/g, '');
+    if (!value) return 'Phone number is required';
+    if (!/^(?:\+94|94|0)?7\d{8}$/.test(value)) return 'Enter a valid phone number (eg: +94712345678)';
+    return '';
+  },
   dateOfBirth(v) {
     if (!v) return 'Date of birth is required';
     const age = (Date.now() - new Date(v)) / (365.25 * 24 * 60 * 60 * 1000);
@@ -322,14 +370,11 @@ const VALIDATORS = {
     return '';
   },
   emergencyContact(v) {
-  const value = v.replace(/\s/g, '');
-
-  if (!value) return 'Emergency Contact number is required';
-  if (!/^(?:\+94|94|0)?7\d{8}$/.test(value)) {
-    return 'Enter a valid phone number (eg: +94712345678)';
-  }
-  return '';
-},
+    const value = v.replace(/\s/g, '');
+    if (!value) return 'Emergency Contact number is required';
+    if (!/^(?:\+94|94|0)?7\d{8}$/.test(value)) return 'Enter a valid phone number (eg: +94712345678)';
+    return '';
+  },
   medicalLicense(v) {
     if (!v.trim()) return 'Medical license is required';
     if (v.trim().length < 5) return 'Must be at least 5 characters';
@@ -415,16 +460,18 @@ export default function HealthRegisterPage() {
     <>
       <FullScreenBackground />
 
-      <FloatingParticle size="80px"  delay={0} duration={10} opacity={0.08} left="5%"  top="15%" />
-      <FloatingParticle size="60px"  delay={2} duration={8}  opacity={0.12} left="90%" top="25%" />
-      <FloatingParticle size="100px" delay={4} duration={12} opacity={0.06} left="85%" top="70%" />
-      <FloatingParticle size="70px"  delay={1} duration={9}  opacity={0.1}  left="10%" top="75%" />
-      <FloatingParticle size="90px"  delay={3} duration={11} opacity={0.08} left="15%" top="45%" />
-      <FloatingParticle size="55px"  delay={5} duration={7}  opacity={0.15} left="75%" top="50%" />
+      <Box sx={{ '@media (max-width: 900px)': { display: 'none' } }}>
+        <FloatingParticle size="80px" delay={0} duration={10} opacity={0.08} left="5%" top="15%" />
+        <FloatingParticle size="60px" delay={2} duration={8} opacity={0.12} left="90%" top="25%" />
+        <FloatingParticle size="100px" delay={4} duration={12} opacity={0.06} left="85%" top="70%" />
+        <FloatingParticle size="70px" delay={1} duration={9} opacity={0.1} left="10%" top="75%" />
+        <FloatingParticle size="90px" delay={3} duration={11} opacity={0.08} left="15%" top="45%" />
+        <FloatingParticle size="55px" delay={5} duration={7} opacity={0.15} left="75%" top="50%" />
+      </Box>
 
       <SplitScreenContainer>
 
-        {/* LEFT PANEL  */}
+        {/* LEFT PANEL */}
         <LeftBrandingPanel>
           <FloatingMedicalIcon delay={0} size="120px" left="10%" top="20%" color="rgba(255,255,255,0.08)">
             <Healing />
@@ -432,7 +479,7 @@ export default function HealthRegisterPage() {
           <FloatingMedicalIcon delay={2} size="100px" left="80%" top="15%" color="rgba(255,255,255,0.06)">
             <LocalHospital />
           </FloatingMedicalIcon>
-          <FloatingMedicalIcon delay={4} size="90px"  left="85%" top="75%" color="rgba(255,255,255,0.10)">
+          <FloatingMedicalIcon delay={4} size="90px" left="85%" top="75%" color="rgba(255,255,255,0.10)">
             <Security />
           </FloatingMedicalIcon>
           <FloatingMedicalIcon delay={1} size="110px" left="15%" top="70%" color="rgba(255,255,255,0.07)">
@@ -440,29 +487,36 @@ export default function HealthRegisterPage() {
           </FloatingMedicalIcon>
 
           <Fade in timeout={1200}>
-            <Box sx={{ animation: `${slideInLeft} 1.2s ease-out`, position: 'relative', zIndex: 2 }}>
+            <Box sx={{ animation: `${slideInLeft} 1.2s ease-out`, position: 'relative', zIndex: 2, width: '100%' }}>
               <BrandingAvatar>
-                <FavoriteRounded sx={{ fontSize: 80, color: 'white' }} />
+                <FavoriteRounded sx={{ fontSize: { xs: 42, sm: 56, md: 80 }, color: 'white' }} />
               </BrandingAvatar>
 
-              <BrandingTitle variant="h1" sx={{ fontSize: '4.5rem', mb: 2 }}>Smart Health</BrandingTitle>
-              <BrandingTitle variant="h2" sx={{ fontSize: '3rem', mb: 4 }}>Assistant</BrandingTitle>
+              <BrandingTitle variant="h1" sx={{ fontSize: { xs: '2rem', sm: '2.8rem', md: '4.5rem' }, mb: { xs: 1, md: 2 } }}>
+                Smart Health
+              </BrandingTitle>
+              <BrandingTitle variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' }, mb: { xs: 3, md: 4 } }}>
+                Assistant
+              </BrandingTitle>
 
-              <BrandingSubtitle variant="h5" sx={{ fontSize: '1.4rem', mb: 6, lineHeight: 1.5 }}>
+              <BrandingSubtitle variant="h5" sx={{
+                fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.4rem' }, mb: { xs: 4, md: 6 },
+                lineHeight: 1.5, textAlign: { xs: 'left', md: 'center' }, maxWidth: '400px', mx: { xs: 0, md: 'auto' }
+              }}>
                 Join our comprehensive healthcare management platform.
                 Create your account and connect with our secure medical ecosystem.
               </BrandingSubtitle>
 
-              <Grid container spacing={3} justifyContent="center" sx={{ mt: 4 }}>
+              <Grid container spacing={{ xs: 1.5, md: 3 }} justifyContent="center" sx={{ mt: { xs: 0, md: 4 } }}>
                 {[
-                  { color: '#e91e63', Icon: FavoriteRounded,    label: 'Patient Portal' },
-                  { color: '#2196f3', Icon: LocalHospital,      label: 'Doctor Dashboard' },
+                  { color: '#e91e63', Icon: FavoriteRounded, label: 'Patient Portal' },
+                  { color: '#2196f3', Icon: LocalHospital, label: 'Doctor Dashboard' },
                   { color: '#9c27b0', Icon: AdminPanelSettings, label: 'Admin Control' },
                 ].map(({ color, Icon, label }) => (
                   <Grid item xs={4} key={label}>
                     <DesktopRoleCard rolecolor={color}>
-                      <Icon sx={{ fontSize: 36, color: 'rgba(255,255,255,0.9)', mb: 1, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
-                      <Typography sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.95)', fontSize: '15px' }}>
+                      <Icon sx={{ fontSize: { xs: 24, sm: 28, md: 36 }, color: 'rgba(255,255,255,0.9)', mb: 1, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+                      <Typography sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.95)', fontSize: { xs: '11px', sm: '12px', md: '15px' } }}>
                         {label}
                       </Typography>
                     </DesktopRoleCard>
@@ -473,21 +527,23 @@ export default function HealthRegisterPage() {
           </Fade>
         </LeftBrandingPanel>
 
-        {/*  RIGHT PANEL — dark */}
+        {/* RIGHT PANEL — dark */}
         <RightRegisterPanel>
           <Fade in timeout={1500}>
             <RegisterFormContainer sx={{ animation: `${slideInRight} 1.2s ease-out` }}>
 
               {/* Header */}
-              <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
                 <Typography sx={{
-                  fontWeight: 800, mb: 1.5, fontSize: '2.8rem', letterSpacing: '-0.02em', mt: 2,
+                  fontWeight: 800, mb: 1.5,
+                  fontSize: { xs: '2rem', sm: '2.3rem', md: '2.8rem' },
+                  letterSpacing: '-0.02em', mt: { xs: 0, md: 2 },
                   background: 'linear-gradient(135deg, #F1F5F9 0%, #A5B4FC 50%, #C084FC 100%)',
                   backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent',
                 }}>
                   Join Us Today
                 </Typography>
-                <Typography sx={{ color: '#64748B', fontWeight: 500, fontSize: '1.05rem' }}>
+                <Typography sx={{ color: '#64748B', fontWeight: 500, fontSize: { xs: '0.95rem', md: '1.05rem' } }}>
                   Create your account and access healthcare services
                 </Typography>
               </Box>
@@ -514,7 +570,10 @@ export default function HealthRegisterPage() {
 
               {/* Role Selection */}
               <Box sx={{ mb: 4 }}>
-                <Typography sx={{ textAlign: 'center', mb: 2, color: '#94A3B8', fontWeight: 700, fontSize: '16px', letterSpacing: '0.4px' }}>
+                <Typography sx={{
+                  textAlign: 'center', mb: 2, color: '#94A3B8', fontWeight: 700,
+                  fontSize: { xs: '14px', md: '16px' }, letterSpacing: '0.4px'
+                }}>
                   I am registering as a:
                 </Typography>
                 <StyledToggleButtonGroup value={role} exclusive onChange={handleRoleChange} size="large">
@@ -522,9 +581,15 @@ export default function HealthRegisterPage() {
                     const Icon = config.icon;
                     return (
                       <ToggleButton key={key} value={key} sx={{
-                        flex: 1, py: 2, display: 'flex', flexDirection: 'column', gap: '4px',
+                        flex: 1,
+                        py: { xs: 1.4, md: 2 },
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
                         color: role === key ? '#fff' : '#64748B',
-                        fontSize: '13px', fontWeight: 700, textTransform: 'capitalize',
+                        fontSize: { xs: '11px', md: '13px' },
+                        fontWeight: 700,
+                        textTransform: 'capitalize',
                         transition: 'all 0.25s',
                         background: role === key ? config.gradient : 'transparent',
                         '&.Mui-selected, &.Mui-selected:hover': {
@@ -532,7 +597,7 @@ export default function HealthRegisterPage() {
                         },
                         '&:hover': { bgcolor: `${config.solidColor}18`, color: '#F1F5F9' },
                       }}>
-                        <Icon sx={{ mb: 0.3, fontSize: 26, color: role === key ? 'white' : config.solidColor }} />
+                        <Icon sx={{ mb: 0.3, fontSize: { xs: 22, md: 26 }, color: role === key ? 'white' : config.solidColor }} />
                         {key.charAt(0).toUpperCase() + key.slice(1)}
                       </ToggleButton>
                     );
@@ -541,87 +606,122 @@ export default function HealthRegisterPage() {
               </Box>
 
               {/* Form */}
-              <Box component="form" onSubmit={handleSubmit} sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Grid container spacing={2.5}>
-                  {currentConfig.fields.map(({ name, label, type, icon: FieldIcon, placeholder }) => (
-                    <Grid item xs={12} sm={currentConfig.fields.length <= 5 ? 12 : 6} key={name}>
-                      <Box>
-                        <Typography sx={{ mb: 1, fontWeight: 700, color: '#94A3B8', fontSize: '13px', letterSpacing: '0.04em' }}>
-                          {label}
-                        </Typography>
-                        <StyledTextField
-                          fullWidth name={name}
-                          type={type === 'password' && showPassword ? 'text' : type}
-                          placeholder={placeholder}
-                          value={formData[name] || ''}
-                          onChange={handleChange} onBlur={handleBlur}
-                          error={touched[name] && Boolean(errors[name])}
-                          helperText={touched[name] && errors[name]}
-                          disabled={loading}
-                          InputLabelProps={type === 'date' ? { shrink: true } : undefined}
-                          inputProps={type === 'date' ? { max: new Date().toISOString().split('T')[0] } : undefined}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <FieldIcon sx={{
-                                  color: errors[name] && touched[name] ? '#EF4444' : currentConfig.solidColor,
-                                  fontSize: 20, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-                                }} />
-                              </InputAdornment>
-                            ),
-                            ...(type === 'password' && {
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton onClick={() => setShowPassword(!showPassword)}
-                                    sx={{ color: '#475569', '&:hover': { color: '#94A3B8' } }}>
-                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                  </IconButton>
-                                </InputAdornment>
-                              )
-                            }),
-                          }}
-                        />
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
+              <Box
+                component="form"
+                onSubmit={handleSubmit}
+                sx={{
+                  flex: 1,
+                  // On desktop: 2-column grid when many fields
+                  display: { xs: 'flex', sm: currentConfig.fields.length > 5 ? 'grid' : 'flex' },
+                  flexDirection: 'column',
+                  gridTemplateColumns: { sm: '1fr 1fr' },
+                  gap: { xs: '18px', sm: '20px' },
+                  width: '100%',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {currentConfig.fields.map(({ name, label, type, icon: FieldIcon, placeholder }) => (
+                  <Box
+                    key={name}
+                    sx={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      minWidth: 0, // prevents grid blowout
+                    }}
+                  >
+                    <Typography sx={{
+                      mb: 1, fontWeight: 700, color: '#94A3B8',
+                      fontSize: { xs: '13px', sm: '13.5px' }, letterSpacing: '0.4px'
+                    }}>
+                      {label}
+                    </Typography>
 
-                <Box sx={{ mt: 4 }}>
+                    <StyledTextField
+                      fullWidth
+                      name={name}
+                      type={type === 'password' && showPassword ? 'text' : type}
+                      placeholder={placeholder}
+                      value={formData[name] || ''}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={touched[name] && Boolean(errors[name])}
+                      helperText={touched[name] && errors[name]}
+                      disabled={loading}
+                      InputLabelProps={type === 'date' ? { shrink: true } : undefined}
+                      inputProps={type === 'date' ? { max: new Date().toISOString().split('T')[0] } : undefined}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <FieldIcon sx={{
+                              color: errors[name] && touched[name] ? '#EF4444' : currentConfig.solidColor,
+                              fontSize: 20,
+                            }} />
+                          </InputAdornment>
+                        ),
+                        ...(type === 'password' && {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => setShowPassword(!showPassword)}
+                                sx={{ color: '#64748B' }}
+                              >
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </InputAdornment>
+                          )
+                        }),
+                      }}
+                    />
+                  </Box>
+                ))}
+
+                {/* Submit + Sign In */}
+                <Box sx={{
+                  gridColumn: { sm: currentConfig.fields.length > 5 ? '1 / -1' : undefined },
+                  mt: { xs: 2, sm: 2 },
+                  width: '100%',
+                }}>
                   <GradientButton
                     fullWidth type="submit" disabled={loading}
-                    rolecolor={currentConfig.gradient} sx={{ mb: 3, py: 2 }}>
+                    rolecolor={currentConfig.gradient} sx={{ mb: 3, py: { xs: 1.7, md: 2 } }}>
                     {loading ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
                         <CircularProgress size={22} sx={{ color: 'white' }} />
-                        <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '16px' }}>Creating Account…</Typography>
+                        <Typography sx={{ color: 'white', fontWeight: 700, fontSize: { xs: '14px', md: '16px' } }}>
+                          Creating Account…
+                        </Typography>
                       </Box>
                     ) : (
-                      <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '16px', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                      <Typography sx={{ color: 'white', fontWeight: 700, fontSize: { xs: '14px', md: '16px' }, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                         Create {role.charAt(0).toUpperCase() + role.slice(1)} Account
                       </Typography>
                     )}
                   </GradientButton>
 
                   <Box sx={{ pt: 3, borderTop: '1px solid rgba(99,102,241,0.12)', textAlign: 'center' }}>
-                    <Typography sx={{ color: '#64748B', mb: 2, fontSize: '15px' }}>
+                    <Typography sx={{ color: '#64748B', mb: 2, fontSize: { xs: '14px', md: '15px' } }}>
                       Already have an account?
                     </Typography>
-                    <Link component="button" type="button"
+                    <Link
+                      component="button" type="button"
                       onClick={() => window.location.href = '/login'}
                       sx={{
-                        color: '#667eea', fontWeight: 700, textDecoration: 'none', fontSize: '16px',
-                        padding: '10px 22px', borderRadius: '14px', border: '1px solid rgba(99,102,241,0.35)',
+                        color: '#667eea', fontWeight: 700, textDecoration: 'none',
+                        fontSize: { xs: '14px', md: '16px' },
+                        padding: { xs: '10px 16px', md: '10px 22px' },
+                        borderRadius: '14px', border: '1px solid rgba(99,102,241,0.35)',
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           bgcolor: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.7)',
                           color: '#A855F7', textDecoration: 'none',
                         },
                       }}>
-                      Sign In Here →
+                      Sign In Here 
                     </Link>
                   </Box>
                 </Box>
               </Box>
+
             </RegisterFormContainer>
           </Fade>
         </RightRegisterPanel>

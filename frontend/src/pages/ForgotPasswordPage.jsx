@@ -34,15 +34,21 @@ const stepIn = keyframes`
 //  Styled 
 const Root = styled(Box)({
   minHeight: "100vh",
+
   width: "100vw",
   background: "#0F172A",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontFamily: "'DM Sans','Segoe UI',sans-serif",
-  padding: "24px",
+  padding: "24px 16px",
+  boxSizing: "border-box",
   position: "relative",
   overflow: "hidden",
+  "@media (max-width: 600px)": {
+    alignItems: "flex-start",
+    padding: "24px 16px 40px",
+  },
   "&::before": {
     content: '""',
     position: "absolute",
@@ -63,10 +69,16 @@ const Card = styled(Box)({
   padding: "48px 44px",
   width: "100%",
   maxWidth: "440px",
+  boxSizing: "border-box",
   position: "relative",
   backdropFilter: "blur(20px)",
   boxShadow: "0 32px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1)",
   animation: `${slideUp} 0.6s ease-out`,
+  "@media (max-width: 600px)": {
+    padding: "32px 20px 28px",
+    borderRadius: "20px",
+    maxWidth: "100%",
+  },
   "&::before": {
     content: '""',
     position: "absolute",
@@ -83,6 +95,11 @@ const IconRing = styled(Box)(({ stepColor }) => ({
   margin: "0 auto 20px",
   position: "relative",
   animation: `${pulse} 3s ease-in-out infinite`,
+  "@media (max-width: 600px)": {
+    width: 60,
+    height: 60,
+    marginBottom: "16px",
+  },
   "&::before": {
     content: '""',
     position: "absolute",
@@ -96,11 +113,15 @@ const IconRing = styled(Box)(({ stepColor }) => ({
 }));
 
 const StyledInput = styled(TextField)({
+  width: "100%",
+  boxSizing: "border-box",
   "& .MuiOutlinedInput-root": {
     borderRadius: "10px",
     background: "rgba(15,23,42,0.8)",
     border: "1px solid rgba(99,102,241,0.2)",
     transition: "all 0.25s",
+    width: "100%",
+    boxSizing: "border-box",
     "& fieldset": { border: "none" },
     "&:hover": { border: "1px solid rgba(99,102,241,0.4)", background: "rgba(15,23,42,0.95)" },
     "&.Mui-focused": {
@@ -112,12 +133,26 @@ const StyledInput = styled(TextField)({
       "&.Mui-focused": { border: "1px solid #EF4444", boxShadow: "0 0 0 3px rgba(239,68,68,0.12)" },
     },
   },
+  "& .MuiInputBase-root": {
+    width: "100%",
+  },
   "& .MuiOutlinedInput-input": {
     padding: "13px 14px", fontSize: "14px", color: "#F1F5F9",
+    boxSizing: "border-box",
     "&::placeholder": { color: "#475569", opacity: 1 },
   },
   "& .MuiFormHelperText-root": {
     color: "#EF4444", fontSize: "11px", ml: "2px", mt: "3px",
+  },
+  "@media (max-width: 600px)": {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      minHeight: "50px",
+    },
+    "& .MuiOutlinedInput-input": {
+      padding: "13px 12px",
+      fontSize: "15px",
+    },
   },
 });
 
@@ -129,11 +164,17 @@ const PrimaryButton = styled(Button)(({ stepgradient }) => ({
   animation: `${gradientShift} 6s ease infinite`,
   boxShadow: "0 8px 24px rgba(99,102,241,0.3)", color: "#fff",
   transition: "all 0.25s ease",
+  width: "100%",
+  boxSizing: "border-box",
   "&:hover": { transform: "translateY(-2px)", boxShadow: "0 12px 32px rgba(99,102,241,0.4)" },
   "&.Mui-disabled": {
     opacity: 0.5, transform: "none", animation: "none",
     background: "linear-gradient(135deg, #6366F1, #A855F7)",
     color: "rgba(255,255,255,0.4)",
+  },
+  "@media (max-width: 600px)": {
+    padding: "14px 24px",
+    fontSize: "15px",
   },
 }));
 
@@ -151,6 +192,11 @@ const StepDot = styled(Box)(({ active, done }) => ({
   fontSize: "12px", fontWeight: 700, color: "#fff",
   transition: "all 0.3s ease",
   boxShadow: active === "true" ? "0 0 0 4px rgba(99,102,241,0.2)" : "none",
+  "@media (max-width: 600px)": {
+    width: done === "true" ? 26 : active === "true" ? 26 : 22,
+    height: done === "true" ? 26 : active === "true" ? 26 : 22,
+    fontSize: "11px",
+  },
 }));
 
 // Validators 
@@ -253,7 +299,6 @@ export default function ForgotPasswordPage() {
   };
 
   const handleSubmit = async () => {
-    // Validate current step fields
     const stepFields = currentStep.fields;
     const newTouched = { ...touched };
     const newErrors = { ...errors };
@@ -332,18 +377,15 @@ export default function ForgotPasswordPage() {
     <Root>
       <Card>
         {/* Step indicators */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: "32px", gap: "0" }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: { xs: "24px", sm: "32px" }, gap: "0" }}>
           {STEPS.map((s, i) => (
             <React.Fragment key={s.id}>
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                <StepDot
-                  active={String(i === step)}
-                  done={String(i < step)}
-                >
+                <StepDot active={String(i === step)} done={String(i < step)}>
                   {i < step ? <CheckCircle sx={{ fontSize: "14px" }} /> : i + 1}
                 </StepDot>
                 <Typography sx={{
-                  fontSize: "10px", fontWeight: 600,
+                  fontSize: { xs: "9px", sm: "10px" }, fontWeight: 600,
                   color: i === step ? "#6366F1" : i < step ? "#10B981" : "#475569",
                   letterSpacing: "0.05em",
                 }}>
@@ -352,7 +394,7 @@ export default function ForgotPasswordPage() {
               </Box>
               {i < STEPS.length - 1 && (
                 <Box sx={{
-                  flex: 1, height: "2px", mx: "8px", mb: "18px",
+                  flex: 1, height: "2px", mx: { xs: "6px", sm: "8px" }, mb: "18px",
                   background: i < step
                     ? "linear-gradient(90deg,#10B981,#059669)"
                     : "rgba(99,102,241,0.15)",
@@ -365,17 +407,24 @@ export default function ForgotPasswordPage() {
 
         {/* Icon */}
         <IconRing stepColor={currentStep.gradient} key={step}>
-          {done ? <CheckCircle sx={{ fontSize: 32, color: "#fff" }} /> : currentStep.icon}
+          {done ? <CheckCircle sx={{ fontSize: { xs: 26, sm: 32 }, color: "#fff" }} /> : currentStep.icon}
         </IconRing>
 
         {/* Title */}
         <Typography sx={{
-          textAlign: "center", fontSize: "24px", fontWeight: 800, color: "#F1F5F9",
+          textAlign: "center",
+          fontSize: { xs: "20px", sm: "24px" },
+          fontWeight: 800, color: "#F1F5F9",
           mb: "8px", letterSpacing: "-0.02em",
         }}>
           {done ? "Password Reset!" : currentStep.title}
         </Typography>
-        <Typography sx={{ textAlign: "center", color: "#64748B", fontSize: "13px", mb: "28px", lineHeight: 1.6 }}>
+        <Typography sx={{
+          textAlign: "center", color: "#64748B",
+          fontSize: { xs: "12px", sm: "13px" },
+          mb: { xs: "20px", sm: "28px" },
+          lineHeight: 1.6,
+        }}>
           {done ? "Your password has been updated successfully." : currentStep.subtitle}
         </Typography>
 
@@ -401,12 +450,15 @@ export default function ForgotPasswordPage() {
 
         {/* Fields */}
         {!done && (
-          <Box sx={{ animation: `${stepIn} 0.35s ease-out` }} key={step}>
+          <Box sx={{ animation: `${stepIn} 0.35s ease-out`, width: "100%", boxSizing: "border-box" }} key={step}>
             {currentStep.fields.map((name) => {
               const cfg = fieldConfig[name];
               return (
-                <Box key={name} sx={{ mb: "16px" }}>
-                  <Typography sx={{ color: "#94A3B8", fontSize: "12px", fontWeight: 600, mb: "8px", letterSpacing: "0.04em" }}>
+                <Box key={name} sx={{ mb: "16px", width: "100%", boxSizing: "border-box" }}>
+                  <Typography sx={{
+                    color: "#94A3B8", fontSize: "12px", fontWeight: 600,
+                    mb: "8px", letterSpacing: "0.04em",
+                  }}>
                     {cfg.label}
                   </Typography>
                   <StyledInput
@@ -432,7 +484,7 @@ export default function ForgotPasswordPage() {
               );
             })}
 
-            {/* Password strength (step 2 only) */}
+            {/* Password strength  */}
             {step === 2 && form.newPassword && (
               <Box sx={{ mb: "16px" }}>
                 {[
@@ -477,10 +529,11 @@ export default function ForgotPasswordPage() {
                 onClick={() => { setStep(0); setApiError(""); setSuccessMsg(""); }}
                 sx={{
                   mt: "10px", color: "#64748B", fontSize: "13px", textTransform: "none",
+                  width: "100%",
                   "&:hover": { color: "#94A3B8", background: "rgba(99,102,241,0.05)" },
                 }}
               >
-                ← Change email address
+                 Change email address
               </Button>
             )}
           </Box>

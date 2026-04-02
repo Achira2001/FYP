@@ -194,7 +194,10 @@ export default function Navbar({ onLogout, username, role, onMenuClick, isMobile
             </Box>
           </Box>
 
+
+
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
+            {/* Notifications */}
             <IconButton
               onClick={handleNotifClick}
               sx={{
@@ -209,6 +212,25 @@ export default function Navbar({ onLogout, username, role, onMenuClick, isMobile
               </Badge>
             </IconButton>
 
+            {/* 🔴 MOBILE LOGOUT BUTTON (ADDED) */}
+            {isMobile && (
+              <IconButton
+                onClick={onLogout}
+                sx={{
+                  background: "rgba(245, 87, 108, 0.15)",
+                  color: "#f5576c",
+                  width: 42,
+                  height: 42,
+                  "&:hover": {
+                    background: "rgba(245, 87, 108, 0.25)",
+                  },
+                }}
+              >
+                <Logout />
+              </IconButton>
+            )}
+
+            {/* Desktop Profile (UNCHANGED) */}
             {!isMobile && (
               <Box
                 onClick={handleProfileClick}
