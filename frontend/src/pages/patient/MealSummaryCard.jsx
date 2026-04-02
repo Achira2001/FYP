@@ -112,7 +112,7 @@ export default function MealSummaryCard({
   diseases = [],
   allergies = '',
   dailyCalories = 2000,
-  onViewFullPlan,        // callback → navigate to DietPlanPage
+  onViewFullPlan,        // callback -> navigate to DietPlanPage
 }) {
   const [meals, setMeals] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -219,7 +219,7 @@ export default function MealSummaryCard({
 
       <Divider sx={{ borderColor: '#334155', my: 2 }} />
 
-      {/* Foods to avoid — static, no API needed */}
+      {/* Foods to avoid — static */}
       <Box>
         <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={1.5}>
           {"\u{274C}"} Foods to Avoid on {mealPlanType}

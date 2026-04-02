@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
-// TEXT.LK SMS SERVICE  — Sri Lankan SMS Gateway (Free Trial)
+// TEXT.LK SMS SERVICE  
 
 
 const TEXTLK_SEND_URL    = 'https://app.text.lk/api/v3/sms/send';

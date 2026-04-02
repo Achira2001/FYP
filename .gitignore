@@ -1,15 +1,35 @@
+
+# NODE / REACT
 node_modules/
-.env
 dist/
 build/
 coverage/
+
+
+# ENV FILES 
+
+.env
+.env.*
+backend/.env
+frontend/.env
+
+
+# PYTHON 
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.vscode/
+
+
+# SYSTEM FILES
 .DS_Store
+.vscode/
 
 
-backend/.env
-.env
+# LOG FILES
+*.log
+
+
+# OPTIONAL 
+uploads/
+tmp/
