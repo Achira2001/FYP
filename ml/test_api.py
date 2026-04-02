@@ -1,9 +1,10 @@
 import requests
 import json
 from datetime import datetime
+import os
 
 # Configuration
-API_BASE_URL = "http://localhost:5001/api"
+API_BASE_URL = os.environ.get("ML_API_BASE_URL", "http://localhost:5001/api")
 
 def print_section(title):
     """Print a formatted section header"""
@@ -20,7 +21,7 @@ def test_health_check():
         
         if response.status_code == 200:
             data = response.json()
-            print("✓ Health check passed!")
+            print(" Health check passed!")
             print(f"  Status: {data.get('status')}")
             print(f"  Models Loaded: {data.get('models_loaded')}")
             print(f"  Timestamp: {data.get('timestamp')}")
@@ -29,7 +30,7 @@ def test_health_check():
             print(f"✗ Health check failed with status code: {response.status_code}")
             return False
     except requests.exceptions.ConnectionError:
-        print("✗ Cannot connect to API server!")
+        print(" Cannot connect to API server!")
         print("  Make sure the Flask server is running on http://localhost:5001")
         return False
     except Exception as e:

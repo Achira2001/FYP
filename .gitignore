@@ -12,7 +12,7 @@ coverage/
 .env.*
 backend/.env
 frontend/.env
-
+ml/.env
 
 # PYTHON 
 __pycache__/

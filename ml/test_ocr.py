@@ -1,5 +1,3 @@
-
-
 import re
 
 # Test just the extraction patterns without full OCR
