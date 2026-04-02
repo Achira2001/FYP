@@ -53,7 +53,7 @@ const particleFloat = keyframes`
 `;
 
 
-// STYLED COMPONENTS — left side identical to original
+// STYLED COMPONENTS 
 
 const FullScreenBackground = styled(Box)({
   position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: -3,
@@ -86,6 +86,10 @@ const FullScreenBackground = styled(Box)({
 
 const SplitScreenContainer = styled(Box)({
   display: 'flex', minHeight: '100vh', width: '100vw', position: 'relative',
+  '@media (max-width:900px)': {
+    flexDirection: 'column',
+    minHeight: '100dvh',
+  },
 });
 
 // Left panel 
@@ -102,6 +106,13 @@ const LeftBrandingPanel = styled(Box)({
       radial-gradient(circle at 70% 70%, rgba(255,255,255,0.08) 0%, transparent 50%)
     `,
     animation: `${float} 12s ease-in-out infinite`,
+  },
+  '@media (max-width:900px)': {
+    padding: '40px 20px 28px',
+    minHeight: 'auto',
+  },
+  '@media (max-width:600px)': {
+    padding: '32px 16px 24px',
   }
 });
 
@@ -119,11 +130,23 @@ const RightLoginPanel = styled(Box)({
       radial-gradient(ellipse 50% 60% at 20% 90%, rgba(16,185,129,0.07) 0%, transparent 60%)
     `,
     pointerEvents: 'none',
+  },
+  '@media (max-width:900px)': {
+    borderLeft: 'none',
+    borderTop: '1px solid rgba(99,102,241,0.15)',
+    padding: '32px 20px 40px',
+    justifyContent: 'flex-start',
+  },
+  '@media (max-width:600px)': {
+    padding: '24px 16px 32px',
   }
 });
 
 const LoginFormContainer = styled(Box)({
   width: '100%', maxWidth: '500px', position: 'relative', zIndex: 2,
+  '@media (max-width:900px)': {
+    maxWidth: '100%',
+  }
 });
 
 // Left panel branding
@@ -140,6 +163,15 @@ const BrandingAvatar = styled(Avatar)(({ theme }) => ({
     borderRadius: '50%', zIndex: -1,
     animation: `${rotateGlow} 8s linear infinite`, backgroundSize: '300% 300%',
   },
+  '@media (max-width:900px)': {
+    width: 110,
+    height: 110,
+    marginBottom: theme.spacing(2.5),
+  },
+  '@media (max-width:600px)': {
+    width: 92,
+    height: 92,
+  }
 }));
 
 const BrandingTitle = styled(Typography)({
@@ -161,6 +193,10 @@ const DesktopRoleCard = styled(Box)(({ rolecolor }) => ({
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   cursor: 'pointer', position: 'relative', overflow: 'hidden', backdropFilter: 'blur(15px)',
   '&:hover': { transform: 'translateY(-8px) scale(1.05)', boxShadow: `0 20px 40px ${rolecolor}30` },
+  '@media (max-width:900px)': {
+    padding: '14px 10px',
+    borderRadius: '16px',
+  }
 }));
 
 const FloatingParticle = styled(Box)(({ size, delay, duration, opacity, left, top }) => ({
@@ -179,6 +215,9 @@ const FloatingMedicalIcon = styled(Box)(({ delay, size, left, top, color }) => (
   position: 'absolute', fontSize: size, color, left, top, zIndex: 1,
   animation: `${particleFloat} ${8 + delay}s ease-in-out infinite`,
   animationDelay: `${delay}s`,
+  '@media (max-width:900px)': {
+    display: 'none',
+  }
 }));
 
 // Dark form inputs
@@ -206,6 +245,12 @@ const StyledTextField = styled(TextField)({
   '& .MuiFormHelperText-root': {
     color: '#EF4444', fontSize: '12px', marginLeft: '4px', marginTop: '4px',
   },
+  '@media (max-width:600px)': {
+    '& .MuiOutlinedInput-input': {
+      padding: '14px 16px',
+      fontSize: '15px',
+    },
+  }
 });
 
 const GradientButton = styled(Button)({
@@ -221,6 +266,10 @@ const GradientButton = styled(Button)({
     background: 'linear-gradient(135deg, #667eea 0%, #4facfe 100%)',
     color: 'rgba(255,255,255,0.5)',
   },
+  '@media (max-width:600px)': {
+    padding: '14px 24px',
+    fontSize: '16px',
+  }
 });
 
 
@@ -269,7 +318,7 @@ export default function LoginPage() {
     });
     window.google.accounts.id.renderButton(
       document.getElementById('googleSignInButton'),
-      { theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: 360 }
+      { theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', width: window.innerWidth <= 600 ? 280 : 360 }
     );
   };
 
@@ -351,12 +400,14 @@ export default function LoginPage() {
       <FullScreenBackground />
 
       {/* Original floating particles */}
-      <FloatingParticle size="80px"  delay={0} duration={10} opacity={0.08} left="5%"  top="15%" />
-      <FloatingParticle size="60px"  delay={2} duration={8}  opacity={0.12} left="90%" top="25%" />
-      <FloatingParticle size="100px" delay={4} duration={12} opacity={0.06} left="85%" top="70%" />
-      <FloatingParticle size="70px"  delay={1} duration={9}  opacity={0.1}  left="10%" top="75%" />
-      <FloatingParticle size="90px"  delay={3} duration={11} opacity={0.08} left="15%" top="45%" />
-      <FloatingParticle size="55px"  delay={5} duration={7}  opacity={0.15} left="75%" top="50%" />
+      <Box sx={{ '@media (max-width:900px)': { display: 'none' } }}>
+        <FloatingParticle size="80px"  delay={0} duration={10} opacity={0.08} left="5%"  top="15%" />
+        <FloatingParticle size="60px"  delay={2} duration={8}  opacity={0.12} left="90%" top="25%" />
+        <FloatingParticle size="100px" delay={4} duration={12} opacity={0.06} left="85%" top="70%" />
+        <FloatingParticle size="70px"  delay={1} duration={9}  opacity={0.1}  left="10%" top="75%" />
+        <FloatingParticle size="90px"  delay={3} duration={11} opacity={0.08} left="15%" top="45%" />
+        <FloatingParticle size="55px"  delay={5} duration={7}  opacity={0.15} left="75%" top="50%" />
+      </Box>
 
       <SplitScreenContainer>
 
@@ -376,20 +427,24 @@ export default function LoginPage() {
           </FloatingMedicalIcon>
 
           <Fade in timeout={1200}>
-            <Box sx={{ animation: `${slideInLeft} 1.2s ease-out`, position: 'relative', zIndex: 2 }}>
+            <Box sx={{ animation: `${slideInLeft} 1.2s ease-out`, position: 'relative', zIndex: 2, width: '100%' }}>
               <BrandingAvatar>
-                <FavoriteRounded sx={{ fontSize: 80, color: 'white' }} />
+                <FavoriteRounded sx={{ fontSize: { xs: 42, sm: 56, md: 80 }, color: 'white' }} />
               </BrandingAvatar>
 
-              <BrandingTitle variant="h1" sx={{ fontSize: '4.5rem', mb: 2 }}>Smart Health</BrandingTitle>
-              <BrandingTitle variant="h2" sx={{ fontSize: '3rem', mb: 4 }}>Assistant</BrandingTitle>
+              <BrandingTitle variant="h1" sx={{ fontSize: { xs: '2rem', sm: '2.8rem', md: '4.5rem' }, mb: { xs: 1, md: 2 } }}>
+                Smart Health
+              </BrandingTitle>
+              <BrandingTitle variant="h2" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' }, mb: { xs: 3, md: 4 } }}>
+                Assistant
+              </BrandingTitle>
 
-              <BrandingSubtitle variant="h5" sx={{ fontSize: '1.4rem', mb: 6, lineHeight: 1.5 }}>
+              <BrandingSubtitle variant="h5" sx={{ fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.4rem' }, mb: { xs: 4, md: 6 }, lineHeight: 1.5, textAlign: { xs: 'left', md: 'center' }, maxWidth: '400px', mx: { xs: 0, md: 'auto' }}}>
                 Your comprehensive healthcare management platform.
                 Connecting patients, doctors, and administrators in one secure ecosystem.
               </BrandingSubtitle>
 
-              <Grid container spacing={3} justifyContent="center" sx={{ mt: 4 }}>
+              <Grid container spacing={{ xs: 1.5, md: 3 }} justifyContent="center" sx={{ mt: { xs: 0, md: 4 } }}>
                 {[
                   { color: '#e91e63', Icon: FavoriteRounded,    label: 'Patient Portal' },
                   { color: '#2196f3', Icon: LocalHospital,      label: 'Doctor Dashboard' },
@@ -397,8 +452,8 @@ export default function LoginPage() {
                 ].map(({ color, Icon, label }) => (
                   <Grid item xs={4} key={label}>
                     <DesktopRoleCard rolecolor={color}>
-                      <Icon sx={{ fontSize: 36, color: 'rgba(255,255,255,0.9)', mb: 1, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
-                      <Typography sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.95)', fontSize: '15px' }}>
+                      <Icon sx={{ fontSize: { xs: 24, sm: 28, md: 36 }, color: 'rgba(255,255,255,0.9)', mb: 1, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} />
+                      <Typography sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.95)', fontSize: { xs: '11px', sm: '12px', md: '15px' } }}>
                         {label}
                       </Typography>
                     </DesktopRoleCard>
@@ -414,15 +469,15 @@ export default function LoginPage() {
           <Fade in timeout={1500}>
             <LoginFormContainer sx={{ animation: `${slideInRight} 1.2s ease-out` }}>
 
-              <Box sx={{ textAlign: 'center', mb: 5 }}>
+              <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 5 } }}>
                 <Typography sx={{
-                  fontWeight: 800, mb: 1.5, fontSize: '3.2rem', letterSpacing: '-0.02em',
+                  fontWeight: 800, mb: 1.5, fontSize: { xs: '2rem', sm: '2.5rem', md: '3.2rem' }, letterSpacing: '-0.02em',
                   background: 'linear-gradient(135deg, #F1F5F9 0%, #A5B4FC 50%, #C084FC 100%)',
                   backgroundClip: 'text', WebkitBackgroundClip: 'text', color: 'transparent',
                 }}>
                   Welcome Back
                 </Typography>
-                <Typography sx={{ color: '#64748B', fontWeight: 500, fontSize: '1.1rem' }}>
+                <Typography sx={{ color: '#64748B', fontWeight: 500, fontSize: { xs: '0.95rem', md: '1.1rem' } }}>
                   Sign in to access your healthcare dashboard
                 </Typography>
               </Box>
@@ -442,7 +497,7 @@ export default function LoginPage() {
               <Box sx={{ mb: 4, textAlign: 'center' }}>
                 <Box id="googleSignInButton" sx={{
                   display: 'flex', justifyContent: 'center', mb: 1.5,
-                  '& iframe': { width: '100% !important', maxWidth: '400px' }
+                  '& iframe': { width: '100% !important', maxWidth: { xs: '280px', sm: '360px', md: '400px' } }
                 }} />
                 {googleLoading && (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mt: 1 }}>
@@ -458,7 +513,7 @@ export default function LoginPage() {
               {/* Divider */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4 }}>
                 <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(99,102,241,0.2)' }} />
-                <Typography sx={{ color: '#475569', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+                <Typography sx={{ color: '#475569', fontSize: { xs: '12px', md: '13px' }, fontWeight: 500, whiteSpace: 'nowrap' }}>
                   or sign in with email
                 </Typography>
                 <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(99,102,241,0.2)' }} />
@@ -468,7 +523,7 @@ export default function LoginPage() {
 
                 {/* Email */}
                 <Box sx={{ mb: 3 }}>
-                  <Typography sx={{ mb: 1.5, fontWeight: 700, color: '#94A3B8', fontSize: '16px', letterSpacing: '0.3px' }}>
+                  <Typography sx={{ mb: 1.5, fontWeight: 700, color: '#94A3B8', fontSize: { xs: '15px', md: '16px' }, letterSpacing: '0.3px' }}>
                     Email Address
                   </Typography>
                   <StyledTextField
@@ -482,7 +537,7 @@ export default function LoginPage() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Email sx={{ color: errors.email && touched.email ? '#EF4444' : '#667eea', fontSize: 24 }} />
+                          <Email sx={{ color: errors.email && touched.email ? '#EF4444' : '#667eea', fontSize: { xs: 22, md: 24 } }} />
                         </InputAdornment>
                       ),
                     }}
@@ -491,7 +546,7 @@ export default function LoginPage() {
 
                 {/* Password */}
                 <Box sx={{ mb: 2 }}>
-                  <Typography sx={{ mb: 1.5, fontWeight: 700, color: '#94A3B8', fontSize: '16px', letterSpacing: '0.3px' }}>
+                  <Typography sx={{ mb: 1.5, fontWeight: 700, color: '#94A3B8', fontSize: { xs: '15px', md: '16px' }, letterSpacing: '0.3px' }}>
                     Password
                   </Typography>
                   <StyledTextField
@@ -506,7 +561,7 @@ export default function LoginPage() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Lock sx={{ color: errors.password && touched.password ? '#EF4444' : '#4facfe', fontSize: 24 }} />
+                          <Lock sx={{ color: errors.password && touched.password ? '#EF4444' : '#4facfe', fontSize: { xs: 22, md: 24 } }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -523,7 +578,14 @@ export default function LoginPage() {
                 </Box>
 
                 {/* Remember me + Forgot */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: { xs: 1, sm: 0 },
+                  mb: 4
+                }}>
                   <FormControlLabel
                     control={
                       <Checkbox checked={rememberMe} onChange={e => setRememberMe(e.target.checked)}
@@ -531,6 +593,7 @@ export default function LoginPage() {
                           '& .MuiSvgIcon-root': { fontSize: 22 } }} />
                     }
                     label={<Typography sx={{ color: '#94A3B8', fontWeight: 500, fontSize: '15px' }}>Remember me</Typography>}
+                    sx={{ m: 0 }}
                   />
                   <Link component="button" type="button" variant="body1"
                     onClick={() => window.location.href = '/forgot-password'}
@@ -548,10 +611,10 @@ export default function LoginPage() {
                   {loading ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
                       <CircularProgress size={24} sx={{ color: 'white' }} />
-                      <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '17px' }}>Signing you in…</Typography>
+                      <Typography sx={{ color: 'white', fontWeight: 700, fontSize: { xs: '15px', md: '17px' } }}>Signing you in…</Typography>
                     </Box>
                   ) : (
-                    <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '17px', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                    <Typography sx={{ color: 'white', fontWeight: 700, fontSize: { xs: '15px', md: '17px' }, textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                       Sign In Securely
                     </Typography>
                   )}
@@ -559,21 +622,21 @@ export default function LoginPage() {
 
                 {/* Register link */}
                 <Box sx={{ pt: 3, borderTop: '1px solid rgba(99,102,241,0.12)', textAlign: 'center' }}>
-                  <Typography sx={{ color: '#64748B', mb: 2.5, fontSize: '16px' }}>
+                  <Typography sx={{ color: '#64748B', mb: 2.5, fontSize: { xs: '15px', md: '16px' } }}>
                     New to Smart Health Assistant?
                   </Typography>
                   <Link component="button" type="button"
                     onClick={() => window.location.href = '/register'}
                     sx={{
-                      color: '#667eea', fontWeight: 700, textDecoration: 'none', fontSize: '17px',
-                      padding: '10px 22px', borderRadius: '14px', border: '1px solid rgba(99,102,241,0.35)',
+                      color: '#667eea', fontWeight: 700, textDecoration: 'none', fontSize: { xs: '15px', md: '17px' },
+                      padding: { xs: '10px 16px', md: '10px 22px' }, borderRadius: '14px', border: '1px solid rgba(99,102,241,0.35)',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         bgcolor: 'rgba(99,102,241,0.1)', borderColor: 'rgba(99,102,241,0.7)',
                         color: '#A855F7', textDecoration: 'none', transform: 'translateY(-1px)',
                       },
                     }}>
-                    Create your account here →
+                    Create your account here 
                   </Link>
                 </Box>
               </Box>

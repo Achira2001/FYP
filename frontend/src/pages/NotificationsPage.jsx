@@ -32,22 +32,23 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 //  Constants 
 const TYPE_META = {
-  medication_reminder:  { icon: "\u{1F48A}", label: "Medication Reminder",  color: "#4fc3f7" },
+  medication_reminder: { icon: "\u{1F48A}", label: "Medication Reminder", color: "#4fc3f7" },
   medication_scheduled: { icon: "\u{1F4C5}", label: "Medication Scheduled", color: "#81c784" },
-  doctor_response:      { icon: "\u{1FA7A}", label: "Doctor Response",      color: "#ce93d8" },
-  patient_query:        { icon: "\u{2753}", label: "Patient Query",         color: "#ffb74d" },
-  appointment:          { icon: "\u{1F4CB}", label: "Appointment",           color: "#f48fb1" },
-  system:               { icon: "\u{2699}\u{FE0F}", label: "System",               color: "#90a4ae" },
-  diet_recommendation:  { icon: "\u{1F957}", label: "Diet Recommendation",  color: "#a5d6a7" },
+  doctor_response: { icon: "\u{1FA7A}", label: "Doctor Response", color: "#ce93d8" },
+  patient_query: { icon: "\u{2753}", label: "Patient Query", color: "#ffb74d" },
+  appointment: { icon: "\u{1F4CB}", label: "Appointment", color: "#f48fb1" },
+  system: { icon: "\u{2699}\u{FE0F}", label: "System", color: "#90a4ae" },
+  diet_recommendation: { icon: "\u{1F957}", label: "Diet Recommendation", color: "#a5d6a7" },
 };
 
 const PRIORITY_COLOR = {
-  low:    "#90a4ae",
+  low: "#90a4ae",
   medium: "#4fc3f7",
-  high:   "#ffb74d",
+  high: "#ffb74d",
   urgent: "#ef5350",
 };
 
@@ -57,12 +58,12 @@ const ALL_TYPES = ["all", ...Object.keys(TYPE_META)];
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1)  return "just now";
+  if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
+  if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
-  if (days < 7)  return `${days}d ago`;
+  if (days < 7) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
@@ -79,6 +80,7 @@ function NotificationCard({ notif, onRead, onDelete, onClick }) {
   const priorityColor = PRIORITY_COLOR[notif.priority] || PRIORITY_COLOR.medium;
 
   return (
+
     <Fade in timeout={300}>
       <Box
         onClick={() => onClick(notif)}
@@ -226,7 +228,7 @@ function NotificationCard({ notif, onRead, onDelete, onClick }) {
 //  Detail Dialog 
 function NotificationDetail({ notif, onClose, onRead, onDelete, navigate }) {
   if (!notif) return null;
-  const meta = TYPE_META[notif.type] || { icon: "🔔", label: notif.type, color: "#667eea" };
+  const meta = TYPE_META[notif.type] || { icon: "\u{1F514}", label: notif.type, color: "#667eea" };
 
   return (
     <Dialog
@@ -280,13 +282,13 @@ function NotificationDetail({ notif, onClose, onRead, onDelete, navigate }) {
 
         {/* Meta fields */}
         {[
-          ["Priority",   notif.priority?.toUpperCase(), PRIORITY_COLOR[notif.priority]],
-          ["Received",   fullDate(notif.createdAt), null],
+          ["Priority", notif.priority?.toUpperCase(), PRIORITY_COLOR[notif.priority]],
+          ["Received", fullDate(notif.createdAt), null],
           notif.isRead && notif.readAt
-            ? ["Read at",  fullDate(notif.readAt), null]
+            ? ["Read at", fullDate(notif.readAt), null]
             : null,
           notif.expiresAt
-            ? ["Expires",  fullDate(notif.expiresAt), "#ffb74d"]
+            ? ["Expires", fullDate(notif.expiresAt), "#ffb74d"]
             : null,
         ]
           .filter(Boolean)
@@ -367,15 +369,15 @@ export default function NotificationsPage() {
   const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState([]);
-  const [total,         setTotal]         = useState(0);
-  const [unreadCount,   setUnreadCount]   = useState(0);
-  const [page,          setPage]          = useState(1);
-  const [loading,       setLoading]       = useState(false);
-  const [selected,      setSelected]      = useState(null);   // detail dialog
+  const [total, setTotal] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState(null);   // detail dialog
 
   // Filters
-  const [typeFilter,   setTypeFilter]   = useState("all");
-  const [readFilter,   setReadFilter]   = useState("all");   // "all" | "true" | "false"
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [readFilter, setReadFilter] = useState("all");   // "all" | "true" | "false"
 
   const LIMIT = 15;
 
@@ -384,7 +386,7 @@ export default function NotificationsPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page, limit: LIMIT });
-      if (typeFilter !== "all") params.set("type",   typeFilter);
+      if (typeFilter !== "all") params.set("type", typeFilter);
       if (readFilter !== "all") params.set("isRead", readFilter);
 
       const { data } = await api.get(`/notifications?${params}`);
@@ -407,7 +409,7 @@ export default function NotificationsPage() {
   }, []);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
-  useEffect(() => { fetchUnread(); },       [fetchUnread]);
+  useEffect(() => { fetchUnread(); }, [fetchUnread]);
 
   // Reset to page 1 when filters change
   useEffect(() => { setPage(1); }, [typeFilter, readFilter]);
@@ -458,6 +460,7 @@ export default function NotificationsPage() {
   const totalPages = Math.ceil(total / LIMIT);
 
   return (
+
     <Box
       sx={{
         minHeight: "100vh",
@@ -467,8 +470,33 @@ export default function NotificationsPage() {
     >
       {/*  Header  */}
       <Box sx={{ maxWidth: 820, mx: "auto", mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+
+        {/* Back + Title Row */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 1,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+
+            {/*  BACK BUTTON */}
+            <IconButton
+              onClick={() => navigate(-1)}
+              sx={{
+                color: "#e4e6eb",
+                background: "rgba(102,126,234,0.15)",
+                "&:hover": {
+                  background: "rgba(102,126,234,0.25)",
+                },
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+
+            {/* TITLE */}
             <Typography
               variant="h4"
               sx={{
@@ -480,6 +508,7 @@ export default function NotificationsPage() {
             >
               Notifications
             </Typography>
+
             {unreadCount > 0 && (
               <Badge badgeContent={unreadCount} color="error" max={99}>
                 <Box sx={{ width: 8, height: 8 }} />
@@ -487,12 +516,14 @@ export default function NotificationsPage() {
             )}
           </Box>
 
+          {/* Right Actions */}
           <Box sx={{ display: "flex", gap: 1 }}>
             <Tooltip title="Refresh">
               <IconButton onClick={fetchNotifications} sx={{ color: "#667eea" }}>
                 <Refresh />
               </IconButton>
             </Tooltip>
+
             {unreadCount > 0 && (
               <Tooltip title="Mark all as read">
                 <IconButton onClick={handleMarkAllRead} sx={{ color: "#81c784" }}>
@@ -500,6 +531,7 @@ export default function NotificationsPage() {
                 </IconButton>
               </Tooltip>
             )}
+
             <Tooltip title="Delete all read">
               <IconButton onClick={handleDeleteAllRead} sx={{ color: "#ef5350" }}>
                 <DeleteSweep />
