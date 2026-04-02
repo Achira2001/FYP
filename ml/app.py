@@ -10,7 +10,8 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import requests
 import xgboost as xgb          
-
+from dotenv import load_dotenv
+load_dotenv()
 
 warnings.filterwarnings(
     'ignore',
@@ -33,7 +34,8 @@ from ocr_processor import process_medical_report
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = 'uploads'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 MAX_FILE_SIZE = 10 * 1024 * 1024   # 10 MB
 
@@ -41,7 +43,10 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
-NODEJS_API_URL = 'http://localhost:5000/api/diet-plans'
+NODEJS_API_URL = os.environ.get(
+    'NODEJS_API_URL',
+    'http://localhost:5000/api/diet-plans'
+)
 
 
 # GLOBALS
@@ -63,7 +68,8 @@ def load_models():
   
     global models, metadata, label_encoders
 
-    MODELS_DIR = '../models'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
     try:
         #  Regression models
@@ -616,6 +622,8 @@ def predict():
 # STARTUP
 
 
+# STARTUP
+
 if __name__ == '__main__':
     print("\n" + "=" * 50)
     print(" Starting Diet Recommendation API Server")
@@ -630,6 +638,11 @@ if __name__ == '__main__':
         print("  - Meal Plan       : Rule-Based Clinical Logic ")
         print("\n" + "=" * 50)
 
-        app.run(host='0.0.0.0', port=5001, debug=True)
+        PORT = int(os.environ.get('PORT', 5001))
+        DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+
+        app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
+
     else:
         print("\n Failed to load models.")
+
