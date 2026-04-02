@@ -173,16 +173,19 @@ const UserManagement = () => {
     calculateStats();
   }, [users]);
 
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -259,7 +262,7 @@ const UserManagement = () => {
   const handleUpdateUser = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users/${selectedUser._id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${selectedUser._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -284,14 +287,17 @@ const UserManagement = () => {
   const handleToggleBlock = async (userId, currentStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/block`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ isBlocked: !currentStatus })
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/admin/users/${userId}/block`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ isBlocked: !currentStatus })
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to update user status');
@@ -308,13 +314,16 @@ const UserManagement = () => {
   const handleConfirmDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users/${selectedUser._id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        `${API_BASE_URL}/admin/users/${selectedUser._id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error('Failed to delete user');
@@ -350,51 +359,51 @@ const UserManagement = () => {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone?.includes(searchTerm);
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone?.includes(searchTerm);
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'active' && user.isActive) ||
-                         (statusFilter === 'blocked' && user.isBlocked) ||
-                         (statusFilter === 'verified' && user.isEmailVerified);
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'active' && user.isActive) ||
+      (statusFilter === 'blocked' && user.isBlocked) ||
+      (statusFilter === 'verified' && user.isEmailVerified);
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   const paginatedUsers = filteredUsers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleExportUsers = async () => {
-  try {
-    const token = localStorage.getItem('token');
+    try {
+      const token = localStorage.getItem('token');
 
-    const response = await fetch(
-      'http://localhost:5000/api/admin/users/export?format=csv',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await fetch(
+        `${API_BASE_URL}/admin/users/export?format=csv`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to export users');
       }
-    );
 
-    if (!response.ok) {
-      throw new Error('Failed to export users');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'users-export.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      setSuccess('Users exported successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message);
     }
-
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'users-export.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-
-    setSuccess('Users exported successfully');
-    setTimeout(() => setSuccess(''), 3000);
-  } catch (err) {
-    setError(err.message);
-  }
-};
+  };
 
   if (loading) {
     return (
@@ -434,104 +443,104 @@ const UserManagement = () => {
 
               {/* Header */}
               <Zoom in timeout={600}>
-                <Card elevation={0} sx={{ 
-                  borderRadius: 3, 
+                <Card elevation={0} sx={{
+                  borderRadius: 3,
                   mb: 4,
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   border: '1px solid rgba(102, 126, 234, 0.3)'
                 }}>
                   <CardContent
-  sx={{
-    p: { xs: 2, md: 4 } // reduce padding in mobile
-  }}
->
-  <Box
-    display="flex"
-    flexDirection={{ xs: "column", md: "row" }}
-    alignItems="center"
-    justifyContent="space-between"
-    textAlign={{ xs: "center", md: "left" }}
-    gap={2}
-  >
-    {/* LEFT SIDE */}
-    <Box
-      display="flex"
-      flexDirection={{ xs: "column", md: "row" }}
-      alignItems="center"
-      gap={2}
-    >
-      <Avatar
-        sx={{
-          width: { xs: 60, md: 80 },
-          height: { xs: 60, md: 80 },
-          bgcolor: "rgba(255,255,255,0.2)",
-          border: "3px solid rgba(255,255,255,0.3)"
-        }}
-      >
-        <PeopleIcon sx={{ fontSize: { xs: 28, md: 40 } }} />
-      </Avatar>
+                    sx={{
+                      p: { xs: 2, md: 4 } // reduce padding in mobile
+                    }}
+                  >
+                    <Box
+                      display="flex"
+                      flexDirection={{ xs: "column", md: "row" }}
+                      alignItems="center"
+                      justifyContent="space-between"
+                      textAlign={{ xs: "center", md: "left" }}
+                      gap={2}
+                    >
+                      {/* LEFT SIDE */}
+                      <Box
+                        display="flex"
+                        flexDirection={{ xs: "column", md: "row" }}
+                        alignItems="center"
+                        gap={2}
+                      >
+                        <Avatar
+                          sx={{
+                            width: { xs: 60, md: 80 },
+                            height: { xs: 60, md: 80 },
+                            bgcolor: "rgba(255,255,255,0.2)",
+                            border: "3px solid rgba(255,255,255,0.3)"
+                          }}
+                        >
+                          <PeopleIcon sx={{ fontSize: { xs: 28, md: 40 } }} />
+                        </Avatar>
 
-      <Box>
-        <Typography
-          sx={{
-            fontSize: { xs: "1.4rem", md: "2.5rem" },
-            fontWeight: 700,
-            color: "white",
-            mb: 0.5
-          }}
-        >
-          User Management
-        </Typography>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "1.4rem", md: "2.5rem" },
+                              fontWeight: 700,
+                              color: "white",
+                              mb: 0.5
+                            }}
+                          >
+                            User Management
+                          </Typography>
 
-        <Typography
-          sx={{
-            fontSize: { xs: "0.85rem", md: "1rem" },
-            color: "rgba(255,255,255,0.9)"
-          }}
-        >
-          Manage and monitor all system users
-        </Typography>
-      </Box>
-    </Box>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "0.85rem", md: "1rem" },
+                              color: "rgba(255,255,255,0.9)"
+                            }}
+                          >
+                            Manage and monitor all system users
+                          </Typography>
+                        </Box>
+                      </Box>
 
-    {/* RIGHT SIDE BUTTONS */}
-    <Box
-      display="flex"
-      gap={1}
-      flexWrap="wrap"
-      justifyContent={{ xs: "center", md: "flex-end" }}
-      width={{ xs: "100%", md: "auto" }}
-    >
-      <Button
-        variant="contained"
-        startIcon={<RefreshIcon />}
-        onClick={fetchUsers}
-        fullWidth={true}
-        sx={{
-          bgcolor: "rgba(255,255,255,0.15)",
-          "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-          width: { xs: "100%", sm: "auto" }
-        }}
-      >
-        Refresh
-      </Button>
+                      {/* RIGHT SIDE BUTTONS */}
+                      <Box
+                        display="flex"
+                        gap={1}
+                        flexWrap="wrap"
+                        justifyContent={{ xs: "center", md: "flex-end" }}
+                        width={{ xs: "100%", md: "auto" }}
+                      >
+                        <Button
+                          variant="contained"
+                          startIcon={<RefreshIcon />}
+                          onClick={fetchUsers}
+                          fullWidth={true}
+                          sx={{
+                            bgcolor: "rgba(255,255,255,0.15)",
+                            "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+                            width: { xs: "100%", sm: "auto" }
+                          }}
+                        >
+                          Refresh
+                        </Button>
 
-      <Button
-        variant="contained"
-        startIcon={<DownloadIcon />}
-        onClick={handleExportUsers}
-        fullWidth={true}
-        sx={{
-          bgcolor: "rgba(255,255,255,0.15)",
-          "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-          width: { xs: "100%", sm: "auto" }
-        }}
-      >
-        Export
-      </Button>
-    </Box>
-  </Box>
-</CardContent>
+                        <Button
+                          variant="contained"
+                          startIcon={<DownloadIcon />}
+                          onClick={handleExportUsers}
+                          fullWidth={true}
+                          sx={{
+                            bgcolor: "rgba(255,255,255,0.15)",
+                            "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+                            width: { xs: "100%", sm: "auto" }
+                          }}
+                        >
+                          Export
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
                 </Card>
               </Zoom>
 
@@ -711,8 +720,8 @@ const UserManagement = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Chip 
-                              label={user.role.toUpperCase()} 
+                            <Chip
+                              label={user.role.toUpperCase()}
                               color={getRoleColor(user.role)}
                               size="small"
                               sx={{ fontWeight: 600, fontSize: '0.7rem' }}
@@ -721,33 +730,33 @@ const UserManagement = () => {
                           <TableCell>
                             <Stack spacing={0.5}>
                               {user.isEmailVerified && (
-                                <Chip 
+                                <Chip
                                   icon={<VerifiedIcon />}
-                                  label="Verified" 
-                                  color="success" 
+                                  label="Verified"
+                                  color="success"
                                   size="small"
                                   sx={{ fontSize: '0.7rem' }}
                                 />
                               )}
                               {user.isBlocked ? (
-                                <Chip 
+                                <Chip
                                   icon={<BlockIcon />}
-                                  label="Blocked" 
-                                  color="error" 
+                                  label="Blocked"
+                                  color="error"
                                   size="small"
                                   sx={{ fontSize: '0.7rem' }}
                                 />
                               ) : user.isActive ? (
-                                <Chip 
+                                <Chip
                                   icon={<CheckCircleIcon />}
-                                  label="Active" 
-                                  color="success" 
+                                  label="Active"
+                                  color="success"
                                   size="small"
                                   sx={{ fontSize: '0.7rem' }}
                                 />
                               ) : (
-                                <Chip 
-                                  label="Inactive" 
+                                <Chip
+                                  label="Inactive"
                                   size="small"
                                   sx={{ fontSize: '0.7rem' }}
                                 />
@@ -765,8 +774,8 @@ const UserManagement = () => {
                           <TableCell align="center">
                             <Box display="flex" justifyContent="center" gap={0.5}>
                               <Tooltip title="View Details">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   color="primary"
                                   onClick={() => handleViewUser(user)}
                                 >
@@ -774,8 +783,8 @@ const UserManagement = () => {
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Edit User">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   color="secondary"
                                   onClick={() => handleEditUser(user)}
                                 >
@@ -783,8 +792,8 @@ const UserManagement = () => {
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title={user.isBlocked ? "Unblock" : "Block"}>
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   color={user.isBlocked ? "success" : "warning"}
                                   onClick={() => handleToggleBlock(user._id, user.isBlocked)}
                                 >
@@ -792,8 +801,8 @@ const UserManagement = () => {
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Delete User">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   color="error"
                                   onClick={() => handleDeleteUser(user)}
                                 >
@@ -821,14 +830,14 @@ const UserManagement = () => {
           </Fade>
 
           {/* View User Dialog */}
-          <Dialog 
-            open={viewDialog} 
+          <Dialog
+            open={viewDialog}
             onClose={() => setViewDialog(false)}
             maxWidth="md"
             fullWidth
             PaperProps={{ sx: { borderRadius: 3 } }}
           >
-            <DialogTitle sx={{ 
+            <DialogTitle sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               display: 'flex',
@@ -900,8 +909,8 @@ const UserManagement = () => {
           </Dialog>
 
           {/* Edit User Dialog */}
-          <Dialog 
-            open={editDialog} 
+          <Dialog
+            open={editDialog}
             onClose={() => setEditDialog(false)}
             maxWidth="md"
             fullWidth
@@ -918,7 +927,7 @@ const UserManagement = () => {
                     fullWidth
                     label="Full Name"
                     value={editData.fullName || ''}
-                    onChange={(e) => setEditData({...editData, fullName: e.target.value})}
+                    onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
                     size="small"
                   />
                 </Grid>
@@ -936,7 +945,7 @@ const UserManagement = () => {
                     fullWidth
                     label="Phone"
                     value={editData.phone || ''}
-                    onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
                     size="small"
                   />
                 </Grid>
@@ -946,7 +955,7 @@ const UserManagement = () => {
                     <Select
                       value={editData.role || 'patient'}
                       label="Role"
-                      onChange={(e) => setEditData({...editData, role: e.target.value})}
+                      onChange={(e) => setEditData({ ...editData, role: e.target.value })}
                     >
                       <MenuItem value="patient">Patient</MenuItem>
                       <MenuItem value="doctor">Doctor</MenuItem>
@@ -959,7 +968,7 @@ const UserManagement = () => {
                     control={
                       <Switch
                         checked={editData.isActive || false}
-                        onChange={(e) => setEditData({...editData, isActive: e.target.checked})}
+                        onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
                       />
                     }
                     label="Active"
@@ -970,7 +979,7 @@ const UserManagement = () => {
                     control={
                       <Switch
                         checked={editData.isBlocked || false}
-                        onChange={(e) => setEditData({...editData, isBlocked: e.target.checked})}
+                        onChange={(e) => setEditData({ ...editData, isBlocked: e.target.checked })}
                       />
                     }
                     label="Blocked"
@@ -989,8 +998,8 @@ const UserManagement = () => {
           </Dialog>
 
           {/* Delete Confirmation Dialog */}
-          <Dialog 
-            open={deleteDialog} 
+          <Dialog
+            open={deleteDialog}
             onClose={() => setDeleteDialog(false)}
             maxWidth="sm"
             fullWidth

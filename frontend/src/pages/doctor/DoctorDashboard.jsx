@@ -151,7 +151,7 @@ const darkTheme = createTheme({
   },
 });
 
-const API_BASE = import.meta.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export default function DoctorDashboard() {
   const [stats, setStats] = useState(null);
@@ -182,7 +182,7 @@ export default function DoctorDashboard() {
     };
 
     try {
-      const response = await fetch(`${API_BASE}${url}`, defaultOptions);
+      const response = await fetch(`${API_BASE_URL}${url}`, defaultOptions);
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem("token");
@@ -325,96 +325,96 @@ export default function DoctorDashboard() {
                   }}
                 >
                   <CardContent
-  sx={{
-    p: { xs: 2, md: 4 }
-  }}
->
-  <Box
-    display="flex"
-    flexDirection={{ xs: "column", md: "row" }}
-    alignItems="center"
-    justifyContent="space-between"
-    textAlign={{ xs: "center", md: "left" }}
-    gap={2}
-  >
-    {/* LEFT SIDE */}
-    <Box
-      display="flex"
-      flexDirection={{ xs: "column", md: "row" }}
-      alignItems="center"
-      gap={2}
-    >
-      <Avatar
-        sx={{
-          width: { xs: 60, md: 80 },
-          height: { xs: 60, md: 80 },
-          bgcolor: "rgba(255,255,255,0.2)",
-          border: "3px solid rgba(255,255,255,0.3)"
-        }}
-      >
-        <MedicalServicesIcon sx={{ fontSize: { xs: 28, md: 40 } }} />
-      </Avatar>
+                    sx={{
+                      p: { xs: 2, md: 4 }
+                    }}
+                  >
+                    <Box
+                      display="flex"
+                      flexDirection={{ xs: "column", md: "row" }}
+                      alignItems="center"
+                      justifyContent="space-between"
+                      textAlign={{ xs: "center", md: "left" }}
+                      gap={2}
+                    >
+                      {/* LEFT SIDE */}
+                      <Box
+                        display="flex"
+                        flexDirection={{ xs: "column", md: "row" }}
+                        alignItems="center"
+                        gap={2}
+                      >
+                        <Avatar
+                          sx={{
+                            width: { xs: 60, md: 80 },
+                            height: { xs: 60, md: 80 },
+                            bgcolor: "rgba(255,255,255,0.2)",
+                            border: "3px solid rgba(255,255,255,0.3)"
+                          }}
+                        >
+                          <MedicalServicesIcon sx={{ fontSize: { xs: 28, md: 40 } }} />
+                        </Avatar>
 
-      <Box>
-        <Typography
-          sx={{
-            fontSize: { xs: "1.4rem", md: "2.5rem" },
-            fontWeight: 700,
-            color: "white",
-            mb: 0.5
-          }}
-        >
-          Doctor Dashboard
-        </Typography>
+                        <Box>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "1.4rem", md: "2.5rem" },
+                              fontWeight: 700,
+                              color: "white",
+                              mb: 0.5
+                            }}
+                          >
+                            Doctor Dashboard
+                          </Typography>
 
-        <Typography
-          sx={{
-            fontSize: { xs: "0.85rem", md: "1rem" },
-            color: "rgba(255,255,255,0.9)"
-          }}
-        >
-          Manage your patients and respond to queries
-        </Typography>
-      </Box>
-    </Box>
+                          <Typography
+                            sx={{
+                              fontSize: { xs: "0.85rem", md: "1rem" },
+                              color: "rgba(255,255,255,0.9)"
+                            }}
+                          >
+                            Manage your patients and respond to queries
+                          </Typography>
+                        </Box>
+                      </Box>
 
-    {/* RIGHT SIDE */}
-    <Box
-      display="flex"
-      flexDirection={{ xs: "column", sm: "row" }}
-      gap={1}
-      width={{ xs: "100%", md: "auto" }}
-      justifyContent={{ xs: "center", md: "flex-end" }}
-      alignItems="center"
-    >
-      {stats?.unreadQueries > 0 && (
-        <Chip
-          label={`${stats.unreadQueries} unread`}
-          sx={{
-            bgcolor: "rgba(255,255,255,0.2)",
-            color: "white",
-            fontWeight: 600,
-            width: { xs: "100%", sm: "auto" }
-          }}
-        />
-      )}
+                      {/* RIGHT SIDE */}
+                      <Box
+                        display="flex"
+                        flexDirection={{ xs: "column", sm: "row" }}
+                        gap={1}
+                        width={{ xs: "100%", md: "auto" }}
+                        justifyContent={{ xs: "center", md: "flex-end" }}
+                        alignItems="center"
+                      >
+                        {stats?.unreadQueries > 0 && (
+                          <Chip
+                            label={`${stats.unreadQueries} unread`}
+                            sx={{
+                              bgcolor: "rgba(255,255,255,0.2)",
+                              color: "white",
+                              fontWeight: 600,
+                              width: { xs: "100%", sm: "auto" }
+                            }}
+                          />
+                        )}
 
-      <Button
-        variant="contained"
-        startIcon={<RefreshIcon />}
-        onClick={loadDashboardData}
-        fullWidth
-        sx={{
-          bgcolor: "rgba(255,255,255,0.15)",
-          "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-          width: { xs: "100%", sm: "auto" }
-        }}
-      >
-        Refresh
-      </Button>
-    </Box>
-  </Box>
-</CardContent>
+                        <Button
+                          variant="contained"
+                          startIcon={<RefreshIcon />}
+                          onClick={loadDashboardData}
+                          fullWidth
+                          sx={{
+                            bgcolor: "rgba(255,255,255,0.15)",
+                            "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+                            width: { xs: "100%", sm: "auto" }
+                          }}
+                        >
+                          Refresh
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
                 </Card>
               </Zoom>
 

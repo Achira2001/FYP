@@ -130,9 +130,13 @@ const medivaTheme = createTheme({
 
 // API CONFIGURATION
 
-const ML_API_BASE_URL = 'http://localhost:5001/api';
-const MERN_API_BASE_URL = 'http://localhost:5000/api';
-const PROFILE_API_URL = 'http://localhost:5000/api/profile';
+const MERN_API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+const ML_API_BASE_URL =
+  import.meta.env.VITE_ML_API_BASE_URL || 'http://localhost:5001/api';
+
+const PROFILE_API_URL = `${MERN_API_BASE_URL}/profile`;
 
 
 // CONSTANTS
@@ -1369,73 +1373,73 @@ export default function DietPlanForm() {
 
                   {activeStep === 2 && (
                     <Stack spacing={2}>
-  <Grid container spacing={3}>
-  <Grid item xs={12} md={6}>
-    <TextField
-      select
-      fullWidth
-      required
-      label="Diet Preference *"
-      name="dietPreference"
-      value={formData.dietPreference}
-      onChange={handleInputChange}
-      InputLabelProps={{ shrink: true }}
-      SelectProps={{
-        displayEmpty: true,
-      }}
-      sx={{
-        minWidth: 320,
-        '& .MuiOutlinedInput-root': {
-          minHeight: 56,
-        },
-        '& .MuiSelect-select': {
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        },
-      }}
-    >
-      {dietPreferences.map((pref) => (
-        <MenuItem key={pref} value={pref}>
-          {pref}
-        </MenuItem>
-      ))}
-    </TextField>
-  </Grid>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            select
+                            fullWidth
+                            required
+                            label="Diet Preference *"
+                            name="dietPreference"
+                            value={formData.dietPreference}
+                            onChange={handleInputChange}
+                            InputLabelProps={{ shrink: true }}
+                            SelectProps={{
+                              displayEmpty: true,
+                            }}
+                            sx={{
+                              minWidth: 320,
+                              '& .MuiOutlinedInput-root': {
+                                minHeight: 56,
+                              },
+                              '& .MuiSelect-select': {
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              },
+                            }}
+                          >
+                            {dietPreferences.map((pref) => (
+                              <MenuItem key={pref} value={pref}>
+                                {pref}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </Grid>
 
-  <Grid item xs={12} md={6}>
-    <TextField
-      select
-      fullWidth
-      required
-      label="Goal *"
-      name="goal"
-      value={formData.goal}
-      onChange={handleInputChange}
-      InputLabelProps={{ shrink: true }}
-      SelectProps={{
-        displayEmpty: true,
-      }}
-      sx={{
-        minWidth: 320,
-        '& .MuiOutlinedInput-root': {
-          minHeight: 56,
-        },
-        '& .MuiSelect-select': {
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        },
-      }}
-    >
-      {goals.map((goal) => (
-        <MenuItem key={goal} value={goal}>
-          {goal}
-        </MenuItem>
-      ))}
-    </TextField>
-  </Grid>
-</Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            select
+                            fullWidth
+                            required
+                            label="Goal *"
+                            name="goal"
+                            value={formData.goal}
+                            onChange={handleInputChange}
+                            InputLabelProps={{ shrink: true }}
+                            SelectProps={{
+                              displayEmpty: true,
+                            }}
+                            sx={{
+                              minWidth: 320,
+                              '& .MuiOutlinedInput-root': {
+                                minHeight: 56,
+                              },
+                              '& .MuiSelect-select': {
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              },
+                            }}
+                          >
+                            {goals.map((goal) => (
+                              <MenuItem key={goal} value={goal}>
+                                {goal}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </Grid>
+                      </Grid>
 
                       <FormControl fullWidth>
                         <InputLabel>Meals Per Day</InputLabel>

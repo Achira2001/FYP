@@ -34,24 +34,24 @@ import {
 const medivaTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary:    { main: '#6366F1', light: '#A5B4FC', dark: '#4338CA' },
-    secondary:  { main: '#A855F7' },
+    primary: { main: '#6366F1', light: '#A5B4FC', dark: '#4338CA' },
+    secondary: { main: '#A855F7' },
     background: { default: '#0F172A', paper: '#1E293B' },
-    text:       { primary: '#F1F5F9', secondary: '#CBD5E1' },
-    divider:    '#334155',
+    text: { primary: '#F1F5F9', secondary: '#CBD5E1' },
+    divider: '#334155',
   },
   components: {
     MuiButton: { styleOverrides: { root: { borderRadius: 9999, textTransform: 'none', fontWeight: 700 } } },
-    MuiTab:    { styleOverrides: { root: { textTransform: 'none', fontWeight: 600 } } },
+    MuiTab: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600 } } },
   },
 });
 
 // Diet type accent colours
 const DIET_COLORS = {
-  'Balanced Diet':     '#6366F1',
+  'Balanced Diet': '#6366F1',
   'High-Protein Diet': '#EF4444',
-  'Low-Carb Diet':     '#F59E0B',
-  'Low-Fat Diet':      '#10B981',
+  'Low-Carb Diet': '#F59E0B',
+  'Low-Fat Diet': '#10B981',
 };
 
 
@@ -59,9 +59,9 @@ const DIET_COLORS = {
 
 function RecipeCard({ recipe, accentColor, onViewDetails }) {
   const proteinCal = recipe.protein * 4;
-  const carbsCal   = recipe.carbs * 4;
-  const fatCal     = recipe.fat * 9;
-  const total      = proteinCal + carbsCal + fatCal || 1;
+  const carbsCal = recipe.carbs * 4;
+  const fatCal = recipe.fat * 9;
+  const total = proteinCal + carbsCal + fatCal || 1;
 
   return (
     <Card
@@ -219,7 +219,7 @@ function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
       <DialogContent sx={{ p: 3 }}>
         {loading ? (
           <Stack spacing={2}>
-            {[1,2,3].map(i => <Skeleton key={i} height={40} sx={{ bgcolor: '#334155' }} />)}
+            {[1, 2, 3].map(i => <Skeleton key={i} height={40} sx={{ bgcolor: '#334155' }} />)}
           </Stack>
         ) : detail ? (
           <>
@@ -227,9 +227,9 @@ function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
             <Grid container spacing={2} mb={3}>
               {[
                 { label: 'Calories', value: `${detail.calories} kcal`, color: '#F87171' },
-                { label: 'Protein',  value: `${detail.protein}g`,      color: '#EF4444' },
-                { label: 'Carbs',    value: `${detail.carbs}g`,        color: '#F59E0B' },
-                { label: 'Fat',      value: `${detail.fat}g`,          color: '#8B5CF6' },
+                { label: 'Protein', value: `${detail.protein}g`, color: '#EF4444' },
+                { label: 'Carbs', value: `${detail.carbs}g`, color: '#F59E0B' },
+                { label: 'Fat', value: `${detail.fat}g`, color: '#8B5CF6' },
               ].map(m => (
                 <Grid item xs={6} sm={3} key={m.label}>
                   <Paper sx={{ p: 1.5, bgcolor: '#0F172A', textAlign: 'center', borderRadius: 2 }}>
@@ -308,7 +308,7 @@ function RecipeDetailDialog({ recipeId, accentColor, onClose }) {
 //  WEEKLY SCHEDULE TAB
 
 function WeeklyScheduleTab({ meals, mealSplit, accentColor }) {
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const { breakfast = [], lunch = [], dinner = [], snacks = [] } = meals || {};
 
   return (
@@ -336,7 +336,7 @@ function WeeklyScheduleTab({ meals, mealSplit, accentColor }) {
                     width: 40, height: 40, borderRadius: '50%', bgcolor: accentColor,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                   }}>
-                    <Typography fontWeight={800} color="white" fontSize={13}>{day.slice(0,3).toUpperCase()}</Typography>
+                    <Typography fontWeight={800} color="white" fontSize={13}>{day.slice(0, 3).toUpperCase()}</Typography>
                   </Box>
                   <Typography variant="subtitle1" fontWeight={700}>{day}</Typography>
                   <Box flex={1} />
@@ -354,9 +354,9 @@ function WeeklyScheduleTab({ meals, mealSplit, accentColor }) {
                 <Grid container spacing={2}>
                   {[
                     { label: '\u{1F305} Breakfast', recipe: b, budget: mealSplit?.breakfast },
-                    { label: '\u{2603} Lunch',     recipe: l, budget: mealSplit?.lunch },
-                    { label: '\u{1F30C} Dinner',    recipe: d, budget: mealSplit?.dinner },
-                    { label: '\u{1F34E} Snack',     recipe: s, budget: mealSplit?.snack },
+                    { label: '\u{2603} Lunch', recipe: l, budget: mealSplit?.lunch },
+                    { label: '\u{1F30C} Dinner', recipe: d, budget: mealSplit?.dinner },
+                    { label: '\u{1F34E} Snack', recipe: s, budget: mealSplit?.snack },
                   ].map(({ label, recipe, budget }) => (
                     <Grid item xs={12} sm={6} md={3} key={label}>
                       <Paper sx={{ p: 1.5, bgcolor: '#0F172A', borderRadius: 2, height: '100%' }}>
@@ -548,9 +548,9 @@ export default function DietPlanPage({
 
   const mealSections = [
     { key: 'breakfast', label: 'Breakfast', emoji: '\u{1F305}' },
-    { key: 'lunch',     label: 'Lunch',     emoji: '\u{2603}' },
-    { key: 'dinner',    label: 'Dinner',    emoji: '\u{1F30C}' },
-    { key: 'snacks',    label: 'Snacks',    emoji: '\u{1F34E}' },
+    { key: 'lunch', label: 'Lunch', emoji: '\u{2603}' },
+    { key: 'dinner', label: 'Dinner', emoji: '\u{1F30C}' },
+    { key: 'snacks', label: 'Snacks', emoji: '\u{1F34E}' },
   ];
 
   return (
@@ -630,10 +630,10 @@ export default function DietPlanPage({
               TabIndicatorProps={{ sx: { bgcolor: accentColor, height: 3, borderRadius: 2 } }}
               sx={{ '& .Mui-selected': { color: `${accentColor} !important` } }}
             >
-              <Tab icon={<RecipeIcon />}  label="Meal Recipes"    iconPosition="start" />
+              <Tab icon={<RecipeIcon />} label="Meal Recipes" iconPosition="start" />
               <Tab icon={<CalendarIcon />} label="7-Day Schedule" iconPosition="start" />
-              <Tab icon={<ExerciseIcon />} label="Exercises"      iconPosition="start" />
-              <Tab icon={<AvoidIcon />}   label="Foods to Avoid"  iconPosition="start" />
+              <Tab icon={<ExerciseIcon />} label="Exercises" iconPosition="start" />
+              <Tab icon={<AvoidIcon />} label="Foods to Avoid" iconPosition="start" />
             </Tabs>
           </Box>
 
@@ -646,7 +646,7 @@ export default function DietPlanPage({
                   <Box key={key} mb={5}>
                     <Typography variant="h6" fontWeight={700} mb={2}>{emoji} {label}</Typography>
                     <Grid container spacing={2}>
-                      {[0,1,2].map(i => (
+                      {[0, 1, 2].map(i => (
                         <Grid item xs={12} sm={6} md={4} key={i}>
                           <Card sx={{ bgcolor: '#1E293B', borderRadius: 3 }}>
                             <Skeleton variant="rectangular" height={180} sx={{ bgcolor: '#334155' }} />
@@ -666,7 +666,14 @@ export default function DietPlanPage({
                   return (
                     <Box key={key} mb={5}>
                       <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
-                        <Typography variant="h6" fontWeight={700}>{emoji} {label} Options</Typography>
+                        <Typography
+                          variant="h6"
+                          fontWeight={700}
+                          sx={{ color: '#FFFFFF' }}
+                        >
+                          {emoji} {label} Options
+                        </Typography>
+
                         {list.length > 0 && (
                           <Chip
                             label={`${list.length} recipes`}

@@ -137,7 +137,8 @@ const darkTheme = createTheme({
   },
 });
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -883,20 +884,20 @@ const UserProfile = () => {
               {/* Content Tabs */}
               <Card elevation={0} sx={{ borderRadius: 3, overflow: 'hidden', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
                 <Tabs
-  value={activeTab}
-  onChange={handleTabChange}
-  variant="fullWidth"
-  scrollButtons={false}
-  sx={{
-    borderBottom: '1px solid rgba(102, 126, 234, 0.2)',
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  variant="fullWidth"
+                  scrollButtons={false}
+                  sx={{
+                    borderBottom: '1px solid rgba(102, 126, 234, 0.2)',
 
-    '& .MuiTab-root': {
-  fontSize: { xs: '0.65rem', md: '0.95rem' },
-  minHeight: { xs: 36, md: 48 },
-  padding: { xs: '6px 4px', md: '12px 16px' },
-}
-  }}
->
+                    '& .MuiTab-root': {
+                      fontSize: { xs: '0.65rem', md: '0.95rem' },
+                      minHeight: { xs: 36, md: 48 },
+                      padding: { xs: '6px 4px', md: '12px 16px' },
+                    }
+                  }}
+                >
                   <Tab label="Basic Information" />
                   {user.role === 'patient' && <Tab label="Health Information" />}
 
