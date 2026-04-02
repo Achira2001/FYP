@@ -324,61 +324,97 @@ export default function DoctorDashboard() {
                     border: "1px solid rgba(102, 126, 234, 0.3)",
                   }}
                 >
-                  <CardContent sx={{ p: 4 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-                      <Box display="flex" alignItems="center" gap={3}>
-                        <Avatar
-                          sx={{
-                            width: 80,
-                            height: 80,
-                            bgcolor: "rgba(255,255,255,0.2)",
-                            border: "3px solid rgba(255,255,255,0.3)",
-                          }}
-                        >
-                          <MedicalServicesIcon sx={{ fontSize: 40 }} />
-                        </Avatar>
-                        <Box>
-                          <Typography
-                            variant="h3"
-                            sx={{
-                              fontWeight: 700,
-                              color: "white",
-                              textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
-                              mb: 1,
-                            }}
-                          >
-                            Doctor Dashboard
-                          </Typography>
-                          <Typography variant="body1" sx={{ color: "rgba(255,255,255,0.9)" }}>
-                            Manage your patients and respond to queries
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box display="flex" gap={1} alignItems="center">
-                        {stats?.unreadQueries > 0 && (
-                          <Chip
-                            label={`${stats.unreadQueries} unread`}
-                            sx={{
-                              bgcolor: "rgba(255,255,255,0.2)",
-                              color: "white",
-                              fontWeight: 600,
-                            }}
-                          />
-                        )}
-                        <Button
-                          variant="contained"
-                          startIcon={<RefreshIcon />}
-                          onClick={loadDashboardData}
-                          sx={{
-                            bgcolor: "rgba(255,255,255,0.15)",
-                            "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-                          }}
-                        >
-                          Refresh
-                        </Button>
-                      </Box>
-                    </Box>
-                  </CardContent>
+                  <CardContent
+  sx={{
+    p: { xs: 2, md: 4 }
+  }}
+>
+  <Box
+    display="flex"
+    flexDirection={{ xs: "column", md: "row" }}
+    alignItems="center"
+    justifyContent="space-between"
+    textAlign={{ xs: "center", md: "left" }}
+    gap={2}
+  >
+    {/* LEFT SIDE */}
+    <Box
+      display="flex"
+      flexDirection={{ xs: "column", md: "row" }}
+      alignItems="center"
+      gap={2}
+    >
+      <Avatar
+        sx={{
+          width: { xs: 60, md: 80 },
+          height: { xs: 60, md: 80 },
+          bgcolor: "rgba(255,255,255,0.2)",
+          border: "3px solid rgba(255,255,255,0.3)"
+        }}
+      >
+        <MedicalServicesIcon sx={{ fontSize: { xs: 28, md: 40 } }} />
+      </Avatar>
+
+      <Box>
+        <Typography
+          sx={{
+            fontSize: { xs: "1.4rem", md: "2.5rem" },
+            fontWeight: 700,
+            color: "white",
+            mb: 0.5
+          }}
+        >
+          Doctor Dashboard
+        </Typography>
+
+        <Typography
+          sx={{
+            fontSize: { xs: "0.85rem", md: "1rem" },
+            color: "rgba(255,255,255,0.9)"
+          }}
+        >
+          Manage your patients and respond to queries
+        </Typography>
+      </Box>
+    </Box>
+
+    {/* RIGHT SIDE */}
+    <Box
+      display="flex"
+      flexDirection={{ xs: "column", sm: "row" }}
+      gap={1}
+      width={{ xs: "100%", md: "auto" }}
+      justifyContent={{ xs: "center", md: "flex-end" }}
+      alignItems="center"
+    >
+      {stats?.unreadQueries > 0 && (
+        <Chip
+          label={`${stats.unreadQueries} unread`}
+          sx={{
+            bgcolor: "rgba(255,255,255,0.2)",
+            color: "white",
+            fontWeight: 600,
+            width: { xs: "100%", sm: "auto" }
+          }}
+        />
+      )}
+
+      <Button
+        variant="contained"
+        startIcon={<RefreshIcon />}
+        onClick={loadDashboardData}
+        fullWidth
+        sx={{
+          bgcolor: "rgba(255,255,255,0.15)",
+          "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
+          width: { xs: "100%", sm: "auto" }
+        }}
+      >
+        Refresh
+      </Button>
+    </Box>
+  </Box>
+</CardContent>
                 </Card>
               </Zoom>
 
