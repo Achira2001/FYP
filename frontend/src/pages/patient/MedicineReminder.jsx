@@ -35,7 +35,9 @@ import {
   ButtonGroup,
   ThemeProvider,
   createTheme,
-  CssBaseline
+  CssBaseline,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Medication,
@@ -141,6 +143,8 @@ const darkTheme = createTheme({
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const MedicalReminderSystem = () => {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const [activeTab, setActiveTab] = useState(0);
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -562,16 +566,21 @@ const MedicalReminderSystem = () => {
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
+              variant={isDesktop ? 'fullWidth' : 'scrollable'}
+              scrollButtons={isDesktop ? false : 'auto'}
               allowScrollButtonsMobile
               sx={{
                 '& .MuiTab-root': {
-                  minHeight: 70,
-                  minWidth: 120,   // important for spacing
+                  minHeight: 78,
+                  minWidth: isDesktop ? 0 : 120,
+                  flex: isDesktop ? 1 : '0 0 auto',
                   textTransform: 'none',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
+                  fontSize: isDesktop ? '0.95rem' : '0.85rem',
+                  fontWeight: 700,
+                  px: isDesktop ? 2 : 1.5,
+                },
+                '& .MuiTabs-flexContainer': {
+                  width: '100%',
                 },
                 '& .MuiTabs-scrollButtons': {
                   color: '#667eea'
@@ -590,9 +599,13 @@ const MedicalReminderSystem = () => {
 
           <Grid container spacing={2.5}>
             {/* Left Column - Add Medication */}
-            <Grid item xs={12} lg={8}>
+            <Grid item xs={12} lg={9}>
               <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-                <CardContent sx={{ p: 3 }}>
+                <CardContent
+                  sx={{
+                    p: isDesktop ? 4 : 3,
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <Avatar sx={{ bgcolor: currentDrugType.color, width: 48, height: 48, mr: 2 }}>
                       {currentDrugType.icon}
@@ -607,224 +620,297 @@ const MedicalReminderSystem = () => {
                     </Box>
                   </Box>
 
-                  <Grid container spacing={2.5}>
-                    <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ mb: 1.5, color: 'primary.main', fontSize: '1.1rem' }}>
+                  <Grid
+                    container
+                    spacing={isDesktop ? 3 : 2.5}
+                    sx={{
+                      '& .form-section-title': {
+                        mb: isDesktop ? 2 : 1.5,
+                        color: 'primary.main',
+                        fontSize: isDesktop ? '1.15rem' : '1.1rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.2px',
+                      },
+                      '& .section-box': {
+                        p: isDesktop ? 2.5 : 0,
+                        borderRadius: isDesktop ? 3 : 0,
+                        border: isDesktop ? '1px solid rgba(102, 126, 234, 0.12)' : 'none',
+                        background: isDesktop ? 'rgba(255,255,255,0.015)' : 'transparent',
+                      }
+                    }}
+                  >
+                    <Grid item xs={12} className="section-box">
+                      <Typography className="form-section-title">
                         Basic Information
                       </Typography>
-                    </Grid>
 
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Subcategory *</InputLabel>
-                        <Select
-                          value={currentMedication.drugSubcategory}
-                          onChange={(e) => setCurrentMedication(prev => ({ ...prev, drugSubcategory: e.target.value }))}
-                          label="Subcategory *"
-                        >
-                          {currentDrugType.subcategories.map(sub => (
-                            <MenuItem key={sub} value={sub}>{sub}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
+                      <Grid container spacing={isDesktop ? 2.5 : 2}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Subcategory *</InputLabel>
+                            <Select
+                              value={currentMedication.drugSubcategory}
+                              onChange={(e) => setCurrentMedication(prev => ({ ...prev, drugSubcategory: e.target.value }))}
+                              label="Subcategory *"
+                            >
+                              {currentDrugType.subcategories.map(sub => (
+                                <MenuItem key={sub} value={sub}>{sub}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
 
-                    <Grid item xs={12} md={6}>
-                      <TextField
-                        label="Medicine Name *"
-                        value={currentMedication.name}
-                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, name: e.target.value }))}
-                        fullWidth
-                        size="small"
-                      />
-                    </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            label="Medicine Name *"
+                            value={currentMedication.name}
+                            onChange={(e) => setCurrentMedication(prev => ({ ...prev, name: e.target.value }))}
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
 
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        label="Dosage *"
-                        value={currentMedication.dosage}
-                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, dosage: e.target.value }))}
-                        placeholder="e.g., 500mg"
-                        fullWidth
-                        size="small"
-                      />
-                    </Grid>
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            label="Dosage *"
+                            value={currentMedication.dosage}
+                            onChange={(e) => setCurrentMedication(prev => ({ ...prev, dosage: e.target.value }))}
+                            placeholder="e.g., 500mg"
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
 
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        label="Quantity"
-                        type="number"
-                        value={currentMedication.quantity}
-                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                        fullWidth
-                        size="small"
-                      />
-                    </Grid>
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            label="Quantity"
+                            type="number"
+                            value={currentMedication.quantity}
+                            onChange={(e) => setCurrentMedication(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
 
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        label="Duration (Days)"
-                        type="number"
-                        value={currentMedication.reminderDays}
-                        onChange={(e) => setCurrentMedication(prev => ({ ...prev, reminderDays: parseInt(e.target.value) || 7 }))}
-                        fullWidth
-                        size="small"
-                      />
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            label="Duration (Days)"
+                            type="number"
+                            value={currentMedication.reminderDays}
+                            onChange={(e) => setCurrentMedication(prev => ({ ...prev, reminderDays: parseInt(e.target.value) || 7 }))}
+                            fullWidth
+                            size="small"
+                          />
+                        </Grid>
+                      </Grid>
                     </Grid>
 
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 1.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
-                      <Typography variant="h6" sx={{ mb: 1.5, color: 'primary.main', fontSize: '1.1rem' }}>
+                      <Divider sx={{ my: isDesktop ? 0.5 : 1.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
+                    </Grid>
+
+                    <Grid item xs={12} className="section-box">
+                      <Typography className="form-section-title">
                         Schedule & Timing
                       </Typography>
-                    </Grid>
 
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
-                        Time Periods *
-                      </Typography>
-                      <ToggleButtonGroup
-                        value={currentMedication.timePeriods}
-                        onChange={handleTimePeriodChange}
-                        sx={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: 1.5,
-                          '& .MuiToggleButton-root': {
-                            flex: '1 1 calc(25% - 12px)',
-                            minWidth: 120,
-                            border: '2px solid rgba(102, 126, 234, 0.2)',
-                            borderRadius: 2,
-                            p: 1.5,
-                            '&.Mui-selected': {
-                              bgcolor: currentDrugType.color + '20',
-                              borderColor: currentDrugType.color,
-                              color: currentDrugType.color,
-                            }
-                          }
-                        }}
-                      >
-                        {timePeriods.map(period => (
-                          <ToggleButton key={period.key} value={period.key}>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.3 }}>
-                                {period.label}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
-                                {calculateReminderTime(period.key, currentMedication.mealRelation)}
-                              </Typography>
-                            </Box>
-                          </ToggleButton>
-                        ))}
-                      </ToggleButtonGroup>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Meal Relation</InputLabel>
-                        <Select
-                          value={currentMedication.mealRelation}
-                          onChange={(e) => setCurrentMedication(prev => ({ ...prev, mealRelation: e.target.value }))}
-                          label="Meal Relation"
-                        >
-                          {mealRelations.map(relation => (
-                            <MenuItem key={relation.key} value={relation.key}>
-                              {relation.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <Button
-                        variant="outlined"
-                        onClick={() => setShowMealTimes(!showMealTimes)}
-                        endIcon={<ExpandMore sx={{ transform: showMealTimes ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />}
-                        fullWidth
-                        size="small"
-                        sx={{ height: '40px' }}
-                      >
-                        Meal Times Settings
-                      </Button>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Collapse in={showMealTimes}>
-                        <Paper sx={{ p: 2.5, bgcolor: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
-                          <Typography variant="subtitle2" sx={{ mb: 2, display: 'flex', alignItems: 'center', color: 'primary.main' }}>
-                            <Restaurant sx={{ mr: 1, fontSize: 20 }} />
-                            Configure Your Meal Times
+                      <Grid container spacing={isDesktop ? 2.5 : 2}>
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 700, mb: 1.5 }}>
+                            Time Periods *
                           </Typography>
-                          <Grid container spacing={1.5}>
-                            {Object.entries({ breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', night: 'Night' }).map(([key, label]) => (
-                              <Grid item xs={12} sm={6} md={3} key={key}>
-                                <TextField
-                                  label={label}
-                                  type="time"
-                                  value={mealTimes[key]}
-                                  onChange={(e) => handleMealTimeChange(key, e.target.value)}
-                                  fullWidth
-                                  size="small"
-                                  InputLabelProps={{ shrink: true }}
-                                />
-                              </Grid>
+
+                          <ToggleButtonGroup
+                            value={currentMedication.timePeriods}
+                            onChange={handleTimePeriodChange}
+                            sx={{
+                              display: 'grid',
+                              width: '100%',
+                              gridTemplateColumns: isDesktop ? 'repeat(4, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
+                              gap: 1.5,
+                              '& .MuiToggleButton-root': {
+                                border: '2px solid rgba(102, 126, 234, 0.2)',
+                                borderRadius: 2,
+                                p: isDesktop ? 2 : 1.5,
+                                minHeight: isDesktop ? 88 : undefined,
+                                textAlign: 'center',
+                                '&.Mui-selected': {
+                                  bgcolor: currentDrugType.color + '20',
+                                  borderColor: currentDrugType.color,
+                                  color: currentDrugType.color,
+                                }
+                              }
+                            }}
+                          >
+                            {timePeriods.map(period => (
+                              <ToggleButton key={period.key} value={period.key}>
+                                <Box sx={{ textAlign: 'center', width: '100%' }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.4 }}>
+                                    {period.label}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
+                                    {calculateReminderTime(period.key, currentMedication.mealRelation)}
+                                  </Typography>
+                                </Box>
+                              </ToggleButton>
                             ))}
-                          </Grid>
-                        </Paper>
-                      </Collapse>
+                          </ToggleButtonGroup>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Meal Relation</InputLabel>
+                            <Select
+                              value={currentMedication.mealRelation}
+                              onChange={(e) => setCurrentMedication(prev => ({ ...prev, mealRelation: e.target.value }))}
+                              label="Meal Relation"
+                            >
+                              {mealRelations.map(relation => (
+                                <MenuItem key={relation.key} value={relation.key}>
+                                  {relation.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setShowMealTimes(!showMealTimes)}
+                            endIcon={
+                              <ExpandMore
+                                sx={{
+                                  transform: showMealTimes ? 'rotate(180deg)' : 'none',
+                                  transition: 'transform 0.3s'
+                                }}
+                              />
+                            }
+                            fullWidth
+                            size="small"
+                            sx={{ height: '40px' }}
+                          >
+                            Meal Times Settings
+                          </Button>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <Collapse in={showMealTimes}>
+                            <Paper
+                              sx={{
+                                p: 2.5,
+                                bgcolor: 'rgba(102, 126, 234, 0.05)',
+                                border: '1px solid rgba(102, 126, 234, 0.2)',
+                                borderRadius: 3
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                sx={{ mb: 2, display: 'flex', alignItems: 'center', color: 'primary.main', fontWeight: 700 }}
+                              >
+                                <Restaurant sx={{ mr: 1, fontSize: 20 }} />
+                                Configure Your Meal Times
+                              </Typography>
+
+                              <Grid container spacing={1.5}>
+                                {Object.entries({
+                                  breakfast: 'Breakfast',
+                                  lunch: 'Lunch',
+                                  dinner: 'Dinner',
+                                  night: 'Night'
+                                }).map(([key, label]) => (
+                                  <Grid item xs={12} sm={6} md={3} key={key}>
+                                    <TextField
+                                      label={label}
+                                      type="time"
+                                      value={mealTimes[key]}
+                                      onChange={(e) => handleMealTimeChange(key, e.target.value)}
+                                      fullWidth
+                                      size="small"
+                                      InputLabelProps={{ shrink: true }}
+                                    />
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            </Paper>
+                          </Collapse>
+                        </Grid>
+                      </Grid>
                     </Grid>
 
                     <Grid item xs={12}>
-                      <Divider sx={{ my: 1.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
-                      <Typography variant="h6" sx={{ mb: 1.5, color: 'primary.main', fontSize: '1.1rem' }}>
+                      <Divider sx={{ my: isDesktop ? 0.5 : 1.5, borderColor: 'rgba(102, 126, 234, 0.1)' }} />
+                    </Grid>
+
+                    <Grid item xs={12} className="section-box">
+                      <Typography className="form-section-title">
                         Reminder Methods
                       </Typography>
-                    </Grid>
 
-                    <Grid item xs={12}>
-                      <Paper sx={{ p: 2.5, bgcolor: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                      <Paper
+                        sx={{
+                          p: isDesktop ? 2.5 : 2.5,
+                          bgcolor: 'rgba(102, 126, 234, 0.05)',
+                          border: '1px solid rgba(102, 126, 234, 0.2)',
+                          borderRadius: 3
+                        }}
+                      >
                         <Grid container spacing={2}>
                           {[
                             { key: 'smsEnabled', icon: <Sms />, label: 'SMS' },
                             { key: 'emailEnabled', icon: <Email />, label: 'Email' },
                           ].map(method => (
-                            <Grid item xs={6} sm={3} key={method.key}>
-                              <FormControlLabel
-                                control={
-                                  <Switch
-                                    checked={currentMedication.reminderSettings[method.key]}
-                                    onChange={(e) => setCurrentMedication(prev => ({
-                                      ...prev,
-                                      reminderSettings: {
-                                        ...prev.reminderSettings,
-                                        [method.key]: e.target.checked
-                                      }
-                                    }))}
-                                    color="primary"
-                                    size="small"
-                                  />
-                                }
-                                label={
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                                    {React.cloneElement(method.icon, { sx: { fontSize: 18 } })}
-                                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{method.label}</Typography>
-                                  </Box>
-                                }
-                              />
+                            <Grid item xs={12} sm={6} md={6} key={method.key}>
+                              <Box
+                                sx={{
+                                  p: isDesktop ? 1.5 : 0,
+                                  borderRadius: 2,
+                                  border: isDesktop ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                                  bgcolor: isDesktop ? 'rgba(255,255,255,0.02)' : 'transparent',
+                                }}
+                              >
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      checked={currentMedication.reminderSettings[method.key]}
+                                      onChange={(e) => setCurrentMedication(prev => ({
+                                        ...prev,
+                                        reminderSettings: {
+                                          ...prev.reminderSettings,
+                                          [method.key]: e.target.checked
+                                        }
+                                      }))}
+                                      color="primary"
+                                      size="small"
+                                    />
+                                  }
+                                  label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                                      {React.cloneElement(method.icon, { sx: { fontSize: 18 } })}
+                                      <Typography variant="body2" sx={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                                        {method.label}
+                                      </Typography>
+                                    </Box>
+                                  }
+                                />
+                              </Box>
                             </Grid>
                           ))}
                         </Grid>
                       </Paper>
                     </Grid>
 
-                    <Grid item xs={12}>
+                    <Grid item xs={12} className="section-box">
+                      <Typography className="form-section-title">
+                        Additional Notes
+                      </Typography>
+
                       <TextField
                         label="Additional Notes"
                         value={currentMedication.notes}
                         onChange={(e) => setCurrentMedication(prev => ({ ...prev, notes: e.target.value }))}
                         multiline
-                        rows={2}
+                        rows={isDesktop ? 3 : 2}
                         placeholder="Special instructions, side effects, doctor's notes..."
                         fullWidth
                         size="small"
@@ -833,28 +919,55 @@ const MedicalReminderSystem = () => {
 
                     {currentMedication.timePeriods.length > 0 && (
                       <Grid item xs={12}>
-                        <Paper sx={{ p: 2.5, bgcolor: 'rgba(3, 218, 198, 0.1)', border: '1px solid rgba(3, 218, 198, 0.3)', borderRadius: 2 }}>
-                          <Typography variant="subtitle1" sx={{ mb: 1.5, color: 'success.main', display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
+                        <Paper
+                          sx={{
+                            p: 2.5,
+                            bgcolor: 'rgba(3, 218, 198, 0.1)',
+                            border: '1px solid rgba(3, 218, 198, 0.3)',
+                            borderRadius: 3
+                          }}
+                        >
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              mb: 1.5,
+                              color: 'success.main',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              fontWeight: 700
+                            }}
+                          >
                             <Timer />
                             Reminder Schedule Preview
                           </Typography>
+
                           <Grid container spacing={1.5}>
                             {currentMedication.timePeriods.map(period => (
                               <Grid item xs={12} sm={6} md={3} key={period}>
-                                <Box sx={{
-                                  p: 1.5,
-                                  bgcolor: 'background.paper',
-                                  borderRadius: 2,
-                                  border: '1px solid rgba(3, 218, 198, 0.2)',
-                                  textAlign: 'center'
-                                }}>
-                                  <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.7rem' }}>
+                                <Box
+                                  sx={{
+                                    p: 1.8,
+                                    bgcolor: 'background.paper',
+                                    borderRadius: 2,
+                                    border: '1px solid rgba(3, 218, 198, 0.2)',
+                                    textAlign: 'center',
+                                    minHeight: isDesktop ? 110 : undefined,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.72rem' }}
+                                  >
                                     {period}
                                   </Typography>
                                   <Typography variant="h6" sx={{ color: 'success.main', fontWeight: 700, my: 0.5 }}>
                                     {calculateReminderTime(period, currentMedication.mealRelation)}
                                   </Typography>
-                                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                  <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
                                     {currentMedication.reminderDays} days
                                   </Typography>
                                 </Box>
@@ -896,7 +1009,18 @@ const MedicalReminderSystem = () => {
               <Grid container spacing={2.5}>
                 {/* Active Medications */}
                 <Grid item xs={12}>
-                  <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid rgba(102, 126, 234, 0.2)', height: '100%' }}>
+                  <Card
+                    elevation={0}
+                    sx={{
+                      borderRadius: 4,
+                      border: '1px solid rgba(102, 126, 234, 0.2)',
+                      overflow: 'hidden',
+                      background: isDesktop
+                        ? 'linear-gradient(135deg, #1a1f2e 0%, #20263e 45%, #252b4a 100%)'
+                        : undefined,
+                      boxShadow: isDesktop ? '0 18px 40px rgba(0,0,0,0.22)' : undefined,
+                    }}
+                  >
                     <CardContent sx={{ p: 2.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
                         <Box>
