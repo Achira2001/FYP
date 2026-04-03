@@ -1,0 +1,68 @@
+{
+  "BMI_Category": [
+    "Normal",
+    "Obese",
+    "Overweight",
+    "Underweight"
+  ],
+  "Age_Group": [
+    "Adult",
+    "MiddleAge",
+    "Senior",
+    "Young"
+  ],
+  "Gender": [
+    "Female",
+    "Male",
+    "Other"
+  ],
+  "Chronic_Disease": [
+    "Diabetes",
+    "Heart Disease",
+    "Hypertension",
+    "None",
+    "Obesity"
+  ],
+  "Genetic_Risk_Factor": [
+    "No",
+    "Yes"
+  ],
+  "Allergies": [
+    "Gluten Intolerance",
+    "Lactose Intolerance",
+    "None",
+    "Nut Allergy"
+  ],
+  "Alcohol_Consumption": [
+    "No",
+    "Yes"
+  ],
+  "Smoking_Habit": [
+    "No",
+    "Yes"
+  ],
+  "Dietary_Habits": [
+    "Keto",
+    "Regular",
+    "Vegan",
+    "Vegetarian"
+  ],
+  "Preferred_Cuisine": [
+    "Asian",
+    "Indian",
+    "Mediterranean",
+    "Western"
+  ],
+  "Food_Aversions": [
+    "None",
+    "Salty",
+    "Spicy",
+    "Sweet"
+  ],
+  "Recommended_Meal_Plan": [
+    "Balanced Diet",
+    "High-Protein Diet",
+    "Low-Carb Diet",
+    "Low-Fat Diet"
+  ]
+}
