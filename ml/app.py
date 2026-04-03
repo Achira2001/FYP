@@ -32,12 +32,19 @@ from ocr_processor import process_medical_report
 
 
 app = Flask(__name__)
-CORS(app)
+
+CORS(
+    app,
+    supports_credentials=True,
+    resources={r"/*": {"origins": "*"}}
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, 'models')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
-MAX_FILE_SIZE = 10 * 1024 * 1024   # 10 MB
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -48,6 +55,62 @@ NODEJS_API_URL = os.environ.get(
     'http://localhost:5000/api/diet-plans'
 )
 
+PORT = int(os.environ.get('PORT', 5001))
+DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+
+
+# HELPERS
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def load_models():
+    global models, metadata, label_encoders
+
+    try:
+        # Regression models
+        for name in ['calories', 'protein', 'carbs', 'fats']:
+            path = os.path.join(MODELS_DIR, f'{name}_model.ubj')
+            m = xgb.XGBRegressor()
+            m.load_model(path)
+            models[name] = m
+            print(f"   Loaded {name}_model.ubj")
+
+        # Meal plan: rule-based
+        print("   Meal plan: using rule-based clinical logic")
+
+        # Metadata
+        with open(os.path.join(MODELS_DIR, 'metadata.json'), 'r') as f:
+            metadata = json.load(f)
+        print("   Loaded metadata.json")
+
+        # Label encoders
+        label_encoders = joblib.load(os.path.join(MODELS_DIR, 'label_encoders.joblib'))
+        print("   Loaded label_encoders.joblib")
+
+        # Version log
+        saved_sklearn = metadata.get('sklearn_version', 'unknown')
+        saved_xgb = metadata.get('xgboost_version', 'unknown')
+        import sklearn
+        print(f"\n  Trained with sklearn={saved_sklearn} xgboost={saved_xgb}")
+        print(f"  Running with sklearn={sklearn.__version__} xgboost={xgb.__version__}")
+
+        return True
+
+    except FileNotFoundError as e:
+        print(f"\n Model file not found: {e}")
+        print("  Expected in ml/models/:")
+        print("  calories_model.ubj, protein_model.ubj, carbs_model.ubj, fats_model.ubj,")
+        print("  label_encoders.joblib, metadata.json")
+        return False
+
+    except Exception as e:
+        print(f" Error loading models: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 
 # GLOBALS
 
@@ -56,66 +119,18 @@ models         = {}
 metadata       = {}
 label_encoders = {}
 
+print("\n" + "=" * 50)
+print(" Loading ML models...")
+print("=" * 50)
 
-# HELPERS
+MODELS_LOADED = load_models()
 
+if MODELS_LOADED:
+    print(" Models loaded successfully")
+else:
+    print(" Models failed to load")
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def load_models():
-  
-    global models, metadata, label_encoders
-
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    MODELS_DIR = os.path.join(BASE_DIR, 'models')
-
-    try:
-        #  Regression models
-        for name in ['calories', 'protein', 'carbs', 'fats']:
-            path = os.path.join(MODELS_DIR, f'{name}_model.ubj')
-            m = xgb.XGBRegressor()
-            m.load_model(path)
-            models[name] = m
-            print(f"   Loaded {name}_model.ubj")
-
-        #  Meal plan: rule-based 
-        print("   Meal plan: using rule-based clinical logic (no ML model)")
-
-        #  Metadata
-        with open(os.path.join(MODELS_DIR, 'metadata.json'), 'r') as f:
-            metadata = json.load(f)
-        print("   Loaded metadata.json")
-
-        #  Label encoders
-        label_encoders = joblib.load(os.path.join(MODELS_DIR, 'label_encoders.joblib'))
-        print("   Loaded label_encoders.joblib")
-
-        # Log the versions the models were trained with
-        saved_sklearn = metadata.get('sklearn_version', 'unknown')
-        saved_xgb     = metadata.get('xgboost_version', 'unknown')
-        import sklearn
-        print(f"\n  Trained with  sklearn={saved_sklearn}  xgboost={saved_xgb}")
-        print(f"  Running with  sklearn={sklearn.__version__}  xgboost={xgb.__version__}")
-
-        return True
-
-    except FileNotFoundError as e:
-        print(f"\n Model file not found: {e}")
-        print("  Make sure you extracted diet_models.zip into the models/ folder.")
-        print("  Expected files: calories_model.ubj, protein_model.ubj,")
-        print("                  carbs_model.ubj, fats_model.ubj,")
-        print("                  label_encoders.joblib, metadata.json")
-        return False
-    except Exception as e:
-        print(f" Error loading models: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-
-
+    
 
 # RULE-BASED MEAL PLAN  
 
@@ -629,20 +644,16 @@ if __name__ == '__main__':
     print(" Starting Diet Recommendation API Server")
     print("=" * 50)
 
-    if load_models():
+    if MODELS_LOADED:
         print("\n Server is ready!")
         print("  - Calories Model  : Loaded")
         print("  - Protein Model   : Loaded")
         print("  - Carbs Model     : Loaded")
         print("  - Fats Model      : Loaded")
         print("  - Meal Plan       : Rule-Based Clinical Logic ")
+        print(f"  - Port            : {PORT}")
         print("\n" + "=" * 50)
 
-        PORT = int(os.environ.get('PORT', 5001))
-        DEBUG = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-
         app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
-
     else:
-        print("\n Failed to load models.")
-
+        print("\n Failed to load models. Server not started.")
